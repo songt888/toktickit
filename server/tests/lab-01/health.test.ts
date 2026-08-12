@@ -11,4 +11,12 @@ describe("GET /api/health", () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok", service: "TokTickIT API" });
   });
+
+  it("returns 200 even when the client sends a cache validator", async () => {
+    const res = await request(app)
+      .get("/api/health")
+      .set("If-None-Match", '"cached-health-response"');
+
+    expect(res.status).toBe(200);
+  });
 });

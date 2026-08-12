@@ -9,6 +9,14 @@ void getPrisma;
 // Supertest can import `app` without opening a port. Do not merge these files.
 export const app = express();
 
+// API status/data responses must be revalidated on every request so clients
+// receive HTTP 200 instead of a browser cache-based 304 response.
+app.disable("etag");
+app.use((_req: Request, res: Response, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 app.use(cors());          // already wired: lets the Vite dev server call this API
 app.use(express.json());
 

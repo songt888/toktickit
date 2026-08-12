@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+# env & secrets
+.env
+*.env
+!.env.example
+# build output
+dist/
+build/
+*.tsbuildinfo
+# TypeScript compiler output next to source files
+client/src/**/*.js
+client/tests/**/*.js
+server/src/**/*.js
+server/tests/**/*.js
+server/prisma/**/*.js
+# prisma
+server/prisma/*.db
+# logs & OS
+*.log
+.DS_Store

@@ -52,11 +52,7 @@ cp server/.env.example server/.env
 cp client/.env.example client/.env
 ```
 
-Replace the placeholder `DATABASE_URL` in `server/.env` with the local Docker database URL shown below. Keep `server/.env` private; it is ignored by Git.
-
-```env
-DATABASE_URL="postgresql://toktickit:toktickit@localhost:5432/toktickit?schema=public"
-```
+The default `DATABASE_URL` connects to the Docker database above. Keep `server/.env` private; it is ignored by Git.
 
 Initialize Prisma and seed the request categories:
 

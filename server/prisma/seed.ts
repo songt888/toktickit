@@ -1,4 +1,5 @@
 import { getPrisma } from "../src/prisma.js";
+import { categoryNames, seedCategories } from "../src/categorySeed.js";
 
 // Issue 3 — seed the four supported categories.
 // The four names are: Account and Access, Hardware, Software, Network.
@@ -6,17 +7,8 @@ import { getPrisma } from "../src/prisma.js";
 // Hint: prisma.category.upsert({ where:{name}, update:{}, create:{name} }).
 async function main() {
   const prisma = getPrisma();
-  const names = ["Account and Access", "Hardware", "Software", "Network"];
-
-  for (const name of names) {
-    await prisma.category.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  }
-
-  console.log(`Seeded ${names.length} categories.`);
+  await seedCategories(prisma);
+  console.log(`Seeded ${categoryNames.length} categories.`);
 }
 
 main()

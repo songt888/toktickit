@@ -14,6 +14,7 @@
 | 7 | Diagnose why DevTools showed HTTP 304 instead of 200. | I tested the live endpoint with a cache validator, then disabled ETag and added `Cache-Control: no-store`. |
 | 8 | Check Git branches, upstreams, tracked secrets, commits, and Pull Requests. | I used Git status/log/diff checks and verified branch/PR state before committing or pushing. |
 
+
 ## Reflection
 The prompts became more effective when they named the exact acceptance criterion,
 file, expected response, and verification command. I treated generated code as a

@@ -10,6 +10,12 @@ X-Requester-Id: <active requester id>
 
 This header is not authentication. The frontend stores the selected id in the documented temporary context and sends it for requester-owned calls. The backend validates that the requester exists and is active.
 
+For every requester-owned endpoint, the header is processed before resource lookup:
+
+- Missing, blank, non-numeric, or non-positive `X-Requester-Id` returns HTTP 400 with `{ "error": "Requester context is required" }`.
+- A well-formed id for a missing or inactive Requester returns HTTP 404 with `{ "error": "Requester not found" }`.
+- A valid active Requester requesting another user's resource returns HTTP 404 with `{ "error": "Resource not found" }`.
+
 ## 2. Common Responses
 
 ```json
@@ -81,7 +87,7 @@ The requester id comes from the validated header, not an arbitrary body value. S
 }
 ```
 
-Statuses: 201 created, 400 validation failure, 404 inactive/missing reference, 409 conflict, and 500 safe unexpected failure.
+Statuses: 201 created, 400 validation failure or malformed requester context, 404 inactive/missing requester or reference, and 500 safe unexpected failure. Ticket creation has no 409 response because the approved contract defines no ticket-creation conflict condition.
 
 ## 5. My Tickets
 
@@ -129,15 +135,15 @@ Required header: `X-Requester-Id`. Returns the owned Ticket, related reference n
 
 ### POST /api/tickets/:id/attachments
 
-Multipart form field: `file`. The API accepts JPG/JPEG, PNG, WEBP, and PDF, with a maximum of 5 MB per file and five active attachments per Ticket. Returns 201 with metadata. Returns 400 for invalid form data, 404 for missing/not-owned Ticket, 413 for an oversized file, 415 for an unsupported type, and 500 for safe upload failure.
+Multipart form field: `file`. The API accepts JPG/JPEG, PNG, WEBP, and PDF, with a maximum of 5 MB per file and five active attachments per Ticket. Returns 201 with metadata. Returns 400 for invalid form data or malformed requester context, 404 for missing/not-owned Ticket, 409 when the Ticket already has five active attachments, 413 for an oversized file, 415 for an unsupported type, and 500 for safe upload failure.
 
 ### GET /api/tickets/:id/attachments
 
-Returns metadata for active and removed attachments belonging to the owned Ticket. Removed records remain visible as metadata.
+Returns metadata for active and removed attachments belonging to the owned Ticket. Removed records remain visible as metadata. Missing or malformed requester context returns 400; an unknown/inactive requester or non-owned Ticket returns 404.
 
 ### GET /api/attachments/:id/download
 
-Returns the file only when it belongs to the selected requester and is active. Removed, missing, or unauthorized attachments return 404.
+Returns the file only when it belongs to the selected requester and is active. Missing or malformed requester context returns 400. Removed, missing, or unauthorized attachments return 404.
 
 ### PATCH /api/attachments/:id/remove
 
@@ -147,7 +153,7 @@ Request:
 { "reason": "No longer needed" }
 ```
 
-The reason must be 5-500 trimmed characters. The API sets `removedAt` and `removalReason` without deleting the metadata. Returns 200 for success, 400 for invalid reason, 404 for missing/not-owned attachment, and 409 if already removed.
+The reason must be 5-500 trimmed characters. The API sets `removedAt` and `removalReason` without deleting the metadata. Returns 200 for success, 400 for invalid reason or malformed requester context, 404 for missing/not-owned attachment or unknown/inactive requester, and 409 if already removed.
 
 ## 8. Ownership and Failure Rules
 

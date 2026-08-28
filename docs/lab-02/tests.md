@@ -20,6 +20,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pending |
 | API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pending |
 | API-07 | Integration | AC-02 | Idempotent seed and inactive requester behavior | `server/tests/lab-02/seed.test.ts` | No duplicates | Pending |
+| API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/requester-context.api.test.ts` | Safe 400/404 responses | Pending |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, and continue | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pending |
 | UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pending |
 | UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pending |
@@ -32,6 +33,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pending |
 | E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pending |
 | E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pending |
+| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/seed.test.ts`; `server/tests/lab-02/requester-context.api.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts` | All documented checks pass from `main` | Pending |
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -52,7 +54,8 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | AC-13 | API-06, UI-05, E2E-03 |
 | AC-14 | API-06, UI-05, E2E-03 |
 | AC-15 | STYLE-01, RESP-01, RESP-02, RESP-03 |
-| AC-16 | All final commands and release verification |
+| AC-16 | RELEASE-01 |
+| AC-17 | API-08 |
 
 ## 4. Responsive and Visual Checklist
 

@@ -75,6 +75,7 @@ The IT department needs a professional, responsive way for end users to describe
 - BR-20: Removed files cannot be downloaded or previewed.
 - BR-21: List pages default to page 1 and page size 10; permitted page sizes are 10, 25, and 50.
 - BR-22: List sorting uses a permitted field and a stable secondary sort by id descending.
+- BR-23: A requester-owned endpoint with a missing, blank, non-numeric, or non-positive `X-Requester-Id` returns HTTP 400 with a safe requester-context error. A well-formed id for a missing or inactive requester returns 404; a valid active requester requesting another user's resource also receives 404.
 
 ## 6. UI Specification Summary
 
@@ -82,11 +83,99 @@ The interface uses the Zen Green system defined in `ui-spec.md`. It includes a r
 
 ## 7. Data Changes
 
-The Prisma schema shall contain `RequesterUser`, `RelatedSystem`, `Ticket`, `Attachment`, and the existing `Category` model. A RequesterUser owns many Tickets, a Ticket belongs to one RequesterUser and one Category, a Ticket may use one RelatedSystem, and a Ticket has many Attachments. Ticket Number is unique. Attachment removal uses nullable `removedAt` and `removalReason`. The schema must include foreign keys, timestamps, enum values, and indexes justified by list queries.
+The Prisma schema shall contain the following models and fields. The existing Category model gains `isActive` so the API can enforce BR-13. RelatedSystem also has `isActive` because reference endpoints return active records only.
+
+```prisma
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  NEW
+}
+
+model RequesterUser {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+
+  @@index([isActive, name])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+}
+
+model RelatedSystem {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tickets   Ticket[]
+
+  @@index([isActive, name])
+}
+
+model Ticket {
+  id                Int            @id @default(autoincrement())
+  ticketNumber      String         @unique
+  ticketDate        DateTime       @default(now())
+  requesterId       Int
+  categoryId        Int
+  relatedSystemId   Int
+  summary           String
+  description       String
+  requestedPriority TicketPriority
+  currentStatus     TicketStatus   @default(NEW)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  requester         RequesterUser  @relation(fields: [requesterId], references: [id])
+  category          Category       @relation(fields: [categoryId], references: [id])
+  relatedSystem     RelatedSystem  @relation(fields: [relatedSystemId], references: [id])
+  attachments       Attachment[]
+
+  @@index([requesterId, updatedAt, id])
+  @@index([requesterId, categoryId])
+  @@index([requesterId, requestedPriority])
+  @@index([requesterId, currentStatus])
+}
+
+model Attachment {
+  id             Int       @id @default(autoincrement())
+  ticketId       Int
+  originalName   String    @db.VarChar(255)
+  storedName     String    @unique
+  mimeType       String
+  sizeBytes      Int
+  createdAt      DateTime  @default(now())
+  removedAt      DateTime?
+  removalReason  String?   @db.VarChar(500)
+  ticket         Ticket    @relation(fields: [ticketId], references: [id])
+
+  @@index([ticketId, removedAt])
+}
+```
+
+`ticketNumber` is not generated with `MAX(id)+1`, because that is race-prone. The migration creates a PostgreSQL sequence named `ticket_number_seq` with `START 1 INCREMENT 1`. The ticket service calls `SELECT nextval('ticket_number_seq')` inside the same database transaction as the Ticket insert, formats the returned value as `TKT-YYYYMMDD-XXXXXX`, and inserts it into the `@unique` `ticketNumber` column. Sequence gaps are acceptable; duplicate numbers are not.
+
+A RequesterUser owns many Tickets, a Ticket belongs to one RequesterUser, one Category, and one RelatedSystem, and a Ticket has many Attachments. Attachment removal uses nullable `removedAt` and `removalReason`. The schema fields, foreign keys, timestamps, enums, unique constraints, and indexes above are the database design to be implemented by the migration.
 
 ## 8. API Contract Summary
 
-The full request and response shapes are defined in `api-spec.md`. Requester-owned endpoints require `X-Requester-Id`. Reference data endpoints return active records. Ticket creation returns HTTP 201 and the saved Ticket. List retrieval returns items plus pagination metadata. Invalid input returns 400, missing or unauthorized resources return 404, unsupported uploads return 415, oversized uploads return 413, conflicts return 409 where applicable, and unexpected failures return safe 500 messages.
+The full request and response shapes are defined in `api-spec.md`. Requester-owned endpoints require `X-Requester-Id`. Reference data endpoints return active records. Ticket creation returns HTTP 201 and the saved Ticket. List retrieval returns items plus pagination metadata. Invalid input returns 400, missing or unauthorized resources return 404, unsupported uploads return 415, oversized uploads return 413, and only the explicitly documented attachment state/limit conflicts return 409. Unexpected failures return safe 500 messages.
 
 ## 9. Acceptance Criteria
 
@@ -106,6 +195,7 @@ The full request and response shapes are defined in `api-spec.md`. Requester-own
 - AC-14: Given a removed attachment, when any requester requests its file, then the file is not downloadable or previewable.
 - AC-15: Given desktop, tablet, and mobile widths, when each screen is opened, then controls remain readable without clipping or horizontal page scrolling.
 - AC-16: Given the final repository, when documented tests run from main, then all required tests pass without skips.
+- AC-17: Given a requester-owned endpoint, when `X-Requester-Id` is missing or malformed, then the API returns HTTP 400 with a safe requester-context error; a well-formed but unknown/inactive requester returns HTTP 404.
 
 ## 10. Definition of Done
 

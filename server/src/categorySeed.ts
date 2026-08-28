@@ -11,8 +11,8 @@ export async function seedCategories(prisma: Pick<PrismaClient, "category">) {
   for (const name of categoryNames) {
     await prisma.category.upsert({
       where: { name },
-      update: {},
-      create: { name },
+      update: { isActive: true },
+      create: { name, isActive: true },
     });
   }
 }

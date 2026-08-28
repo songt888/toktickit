@@ -37,6 +37,14 @@ function listResponse(items: api.TicketListItem[], totalItems = items.length, to
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
   window.localStorage.clear();
@@ -71,6 +79,8 @@ describe("My Tickets UI", () => {
     expect((await screen.findAllByText("Laptop battery drains quickly")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("Hardware")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("Campus Wi-Fi")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("HIGH", { selector: "span.badge.text-bg-warning" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("NEW", { selector: "span.badge.text-bg-primary" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Create Ticket" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Create Ticket" }));
@@ -148,5 +158,26 @@ describe("My Tickets UI", () => {
 
     expect((await screen.findAllByText("VPN access request")).length).toBeGreaterThan(0);
     expect(screen.queryAllByText("Laptop battery drains quickly")).toHaveLength(0);
+  });
+
+  it("ignores an older ticket response when a newer request finishes first", async () => {
+    const firstRequest = deferred<api.TicketListResponse>();
+    const secondRequest = deferred<api.TicketListResponse>();
+    const getTickets = vi.spyOn(api, "getMyTickets")
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockReturnValueOnce(secondRequest.promise);
+    const user = await openMyTickets();
+
+    await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(1));
+    await user.type(screen.getByLabelText("Search Tickets"), "vpn");
+    await user.click(screen.getByRole("button", { name: "Apply filters" }));
+    await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(2));
+
+    secondRequest.resolve(listResponse([benTicket]));
+    expect((await screen.findAllByText("VPN access request")).length).toBeGreaterThan(0);
+
+    firstRequest.resolve(listResponse([ariTicket]));
+    await firstRequest.promise;
+    await waitFor(() => expect(screen.queryAllByText("Laptop battery drains quickly")).toHaveLength(0));
   });
 });

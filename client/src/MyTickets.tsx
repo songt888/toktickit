@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Category,
   getCategories,
@@ -69,29 +69,65 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
   const [result, setResult] = useState<TicketListResponse | null>(null);
   const [state, setState] = useState<PageState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [referenceState, setReferenceState] = useState<PageState>("loading");
+  const [referenceErrorMessage, setReferenceErrorMessage] = useState("");
+  const ticketRequestSequence = useRef(0);
+  const referenceRequestSequence = useRef(0);
+
+  async function loadReferences() {
+    const requestSequence = ++referenceRequestSequence.current;
+    setReferenceState("loading");
+    setReferenceErrorMessage("");
+
+    try {
+      const [loadedCategories, loadedSystems] = await Promise.all([
+        getCategories(),
+        getRelatedSystems(),
+      ]);
+      if (requestSequence !== referenceRequestSequence.current) return;
+      setCategories(loadedCategories);
+      setRelatedSystems(loadedSystems);
+      setReferenceState("success");
+    } catch (error) {
+      if (requestSequence !== referenceRequestSequence.current) return;
+      setReferenceState("error");
+      setReferenceErrorMessage(
+        error instanceof Error ? error.message : "Unable to load ticket filters.",
+      );
+    }
+  }
 
   async function loadPage() {
+    const requestSequence = ++ticketRequestSequence.current;
     setState("loading");
     setErrorMessage("");
 
     try {
-      const [loadedTickets, loadedCategories, loadedSystems] = await Promise.all([
-        getMyTickets(requester.id, filters),
-        getCategories(),
-        getRelatedSystems(),
-      ]);
+      const loadedTickets = await getMyTickets(requester.id, filters);
+      if (requestSequence !== ticketRequestSequence.current) return;
       setResult(loadedTickets);
-      setCategories(loadedCategories);
-      setRelatedSystems(loadedSystems);
       setState("success");
     } catch (error) {
+      if (requestSequence !== ticketRequestSequence.current) return;
       setState("error");
       setErrorMessage(error instanceof Error ? error.message : "Unable to load My Tickets.");
     }
   }
 
   useEffect(() => {
+    void loadReferences();
+
+    return () => {
+      referenceRequestSequence.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
     void loadPage();
+
+    return () => {
+      ticketRequestSequence.current += 1;
+    };
   }, [requester.id, filters]);
 
   function updateDraft(field: keyof FilterDraft, value: string) {
@@ -112,6 +148,11 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
     setFilters((current) => ({ ...current, page }));
   }
 
+  function retryLoading() {
+    if (referenceState === "error") void loadReferences();
+    void loadPage();
+  }
+
   const hasFilters = Boolean(
     filters.search ||
       filters.categoryId ||
@@ -121,9 +162,26 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
   );
   const items = result?.items ?? [];
   const pagination = result?.pagination;
+  const isLoading = state === "loading" || referenceState === "loading";
+  const hasError = state === "error" || referenceState === "error";
+  const canShowResults = state === "success" && referenceState === "success";
+  const displayedErrorMessage = state === "error" ? errorMessage : referenceErrorMessage;
   const noResultsMessage = hasFilters
     ? "No tickets match your search or filters."
     : "No tickets yet. Create your first ticket.";
+
+  function priorityBadgeClass(priority: TicketPriority): string {
+    switch (priority) {
+      case "LOW": return "text-bg-secondary";
+      case "MEDIUM": return "text-bg-info";
+      case "HIGH": return "text-bg-warning text-dark";
+      case "URGENT": return "text-bg-danger";
+    }
+  }
+
+  function statusBadgeClass(status: TicketListItem["currentStatus"]): string {
+    return status === "NEW" ? "text-bg-primary" : "text-bg-secondary";
+  }
 
   const renderRow = (ticket: TicketListItem) => (
     <tr key={ticket.id}>
@@ -131,8 +189,8 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
       <td>{ticket.summary}</td>
       <td>{ticket.category.name}</td>
       <td>{ticket.relatedSystem.name}</td>
-      <td><span className="badge text-bg-light border">{ticket.currentStatus}</span></td>
-      <td><span className="badge text-bg-success">{ticket.requestedPriority}</span></td>
+      <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
+      <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
       <td>{formatDate(ticket.updatedAt)}</td>
     </tr>
   );
@@ -261,23 +319,23 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
           </div>
         </form>
 
-        {state === "loading" && <p role="status">Loading My Tickets…</p>}
+        {isLoading && <p role="status">Loading My Tickets…</p>}
 
-        {state === "error" && (
+        {hasError && (
           <div className="alert alert-danger" role="alert">
             <p className="mb-2">Unable to load My Tickets.</p>
-            <p className="small mb-3">{errorMessage}</p>
-            <button className="btn btn-outline-danger" type="button" onClick={() => void loadPage()}>
+            <p className="small mb-3">{displayedErrorMessage}</p>
+            <button className="btn btn-outline-danger" type="button" onClick={retryLoading}>
               Try again
             </button>
           </div>
         )}
 
-        {state === "success" && items.length === 0 && (
+        {canShowResults && items.length === 0 && (
           <p className="alert alert-info" role="status">{noResultsMessage}</p>
         )}
 
-        {state === "success" && items.length > 0 && (
+        {canShowResults && items.length > 0 && (
           <>
             <div className="table-responsive d-none d-md-block">
               <table className="table align-middle" aria-label="My Tickets list">
@@ -304,8 +362,8 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
                   <dl className="row small mb-0">
                     <dt className="col-5">Category</dt><dd className="col-7">{ticket.category.name}</dd>
                     <dt className="col-5">Related System</dt><dd className="col-7">{ticket.relatedSystem.name}</dd>
-                    <dt className="col-5">Status</dt><dd className="col-7">{ticket.currentStatus}</dd>
-                    <dt className="col-5">Priority</dt><dd className="col-7">{ticket.requestedPriority}</dd>
+                    <dt className="col-5">Status</dt><dd className="col-7"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
+                    <dt className="col-5">Priority</dt><dd className="col-7"><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></dd>
                     <dt className="col-5">Last Updated</dt><dd className="col-7">{formatDate(ticket.updatedAt)}</dd>
                   </dl>
                 </article>

@@ -23,7 +23,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/requester-context.api.test.ts` | Safe 400/404 responses | Pending |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, validation, persistence, and switching | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pass (5 tests) |
 | UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pass (5 tests) |
-| UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pass (5 tests) |
+| UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pass (6 tests) |
 | UI-04 | UI | AC-09, AC-10 | Read-only Ticket Detail and safe failure | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Correct access behavior | Pending |
 | UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pending |
 | STYLE-01 | UI style | AC-04, AC-15 | Required classes, labels, errors, focus, buttons | `client/tests/lab-02/ui-style.test.tsx` | Contract styles present | Pending |
@@ -169,10 +169,10 @@ Vite production build completed successfully.
 
 client: npm test -- --reporter=dot
 Test Files  4 passed (4)
-Tests       19 passed (19)
+Tests       20 passed (20)
 ```
 
-The branch-level evidence is complete for Issue #21. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
+The branch-level evidence is complete for Issue #21. The UI regression coverage includes request sequencing and value-specific priority/status badge classes. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
 
 ## 7. Known Limitations or Deferred Tests
 

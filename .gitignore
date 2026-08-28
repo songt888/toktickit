@@ -8,6 +8,7 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+.vite/
 # TypeScript compiler output next to source files
 client/src/**/*.js
 client/tests/**/*.js
@@ -16,6 +17,9 @@ server/tests/**/*.js
 server/prisma/**/*.js
 # prisma
 server/prisma/*.db
+# runtime attachment files; keep only an empty directory marker if needed
+server/uploads/*
+!server/uploads/.gitkeep
 # logs & OS
 *.log
 .DS_Store

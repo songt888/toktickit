@@ -10,19 +10,19 @@ No required test may be skipped, disabled, or reconstructed after implementation
 
 | Test ID | Level | Acceptance Criteria | What it tests | Test file | Expected result | Final |
 |---|---|---|---|---|---|---|
-| UNIT-01 | Unit | AC-03 | Ticket Number format and uniqueness input | `server/tests/lab-02/ticket-number.test.ts` | Valid unique format | Pending |
-| UNIT-02 | Unit | AC-04, AC-12 | Ticket and attachment validation boundaries | `server/tests/lab-02/validation.test.ts` | Invalid input rejected | Pending |
+| UNIT-01 | Unit | AC-03 | Ticket Number format and uniqueness input | `server/tests/lab-02/ticket-number.test.ts` | Valid unique format | Pass (2 tests) |
+| UNIT-02 | Unit | AC-04, AC-12 | Ticket and attachment validation boundaries | `server/tests/lab-02/validation.test.ts` | Invalid input rejected | Pass (3 tests) |
 | UNIT-03 | Unit | AC-08 | Query parsing, permitted sort, and pagination | `server/tests/lab-02/query-options.test.ts` | Stable safe options | Pending |
 | API-01 | API | AC-01, AC-02 | Active requester retrieval | `server/tests/lab-02/requesters.api.test.ts` | Active users only | Pass (1 test) |
-| API-02 | API | AC-03, AC-04 | Valid and invalid ticket creation | `server/tests/lab-02/create-ticket.api.test.ts` | 201 or documented 400 | Pending |
-| API-03 | API | AC-03 | Ticket Number, status, and requesterId persistence | `server/tests/lab-02/create-ticket.api.test.ts` | Saved values correct | Pending |
+| API-02 | API | AC-03, AC-04 | Valid and invalid ticket creation | `server/tests/lab-02/create-ticket.api.test.ts` | 201 or documented 400 | Pass (2 tests) |
+| API-03 | API | AC-03 | Ticket Number, status, and requesterId persistence | `server/tests/lab-02/create-ticket.api.test.ts` | Saved values correct | Pass (1 test) |
 | API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pending |
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pending |
 | API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pending |
 | API-07 | Integration | AC-02, AC-03, AC-04 | Migration-backed seed, active/inactive reference data, and idempotent rerun | `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts` | Schema, active-reference, and seed rules pass | Pass (3 tests) |
 | API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/requester-context.api.test.ts` | Safe 400/404 responses | Pending |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, validation, persistence, and switching | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pass (5 tests) |
-| UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pending |
+| UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pass (5 tests) |
 | UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pending |
 | UI-04 | UI | AC-09, AC-10 | Read-only Ticket Detail and safe failure | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Correct access behavior | Pending |
 | UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pending |
@@ -126,6 +126,28 @@ TypeScript build completed successfully.
 ```
 
 This is feature-branch evidence for Issue 18. The final-results table remains pending until the complete Lab 2 suite is verified from `main`.
+
+### Issue 20 verification on the feature branch
+
+The Create Ticket API and UI checks passed after the Issue #20 implementation:
+
+```text
+server: npm run build
+TypeScript build completed successfully.
+
+server: npm test
+Test Files  9 passed (9)
+Tests       17 passed (17)
+
+client: npm run build
+Vite production build completed successfully.
+
+client: npm test
+Test Files  3 passed (3)
+Tests       14 passed (14)
+```
+
+The API evidence covers active Related System retrieval, requester-context validation, active reference validation, sequence-formatted Ticket Numbers, persisted requester/category/system values, and `NEW` status. The UI evidence covers API-loaded fields, field-level validation, duplicate-submit prevention, generated-number success, preserved values after failure, and invalid attachment type/size/count messages.
 
 ## 7. Known Limitations or Deferred Tests
 

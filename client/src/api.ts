@@ -11,6 +11,34 @@ export interface Requester {
   email: string;
 }
 
+export interface RelatedSystem {
+  id: number;
+  name: string;
+}
+
+export type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+export interface CreateTicketInput {
+  categoryId: number;
+  relatedSystemId: number;
+  summary: string;
+  description: string;
+  requestedPriority: TicketPriority;
+}
+
+export interface Ticket {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  requesterId: number;
+  categoryId: number;
+  relatedSystemId: number;
+  summary: string;
+  description: string;
+  requestedPriority: TicketPriority;
+  currentStatus: "NEW";
+}
+
 export const REQUESTER_STORAGE_KEY = "toktickit.developmentRequesterId";
 
 export interface SystemStatus {
@@ -25,6 +53,44 @@ export async function getRequesters(): Promise<Requester[]> {
   }
 
   return (await response.json()) as Requester[];
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const response = await fetch(`${API_URL}/api/categories`);
+  if (!response.ok) {
+    throw new Error(`Category request failed (${response.status})`);
+  }
+
+  return (await response.json()) as Category[];
+}
+
+export async function getRelatedSystems(): Promise<RelatedSystem[]> {
+  const response = await fetch(`${API_URL}/api/related-systems`);
+  if (!response.ok) {
+    throw new Error(`Related System request failed (${response.status})`);
+  }
+
+  return (await response.json()) as RelatedSystem[];
+}
+
+export async function createTicket(
+  requesterId: number,
+  input: CreateTicketInput,
+): Promise<Ticket> {
+  const response = await fetch(`${API_URL}/api/tickets`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requester-Id": String(requesterId),
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Ticket request failed (${response.status})`);
+  }
+
+  return (await response.json()) as Ticket;
 }
 
 export function readRequesterId(): number | null {

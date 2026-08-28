@@ -19,7 +19,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pending |
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pending |
 | API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pending |
-| API-07 | Integration | AC-02 | Migration-backed seed, active/inactive requester data, and idempotent rerun | `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts` | Schema and seed rules pass | Pass (3 tests) |
+| API-07 | Integration | AC-02, AC-03, AC-04 | Migration-backed seed, active/inactive reference data, and idempotent rerun | `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts` | Schema, active-reference, and seed rules pass | Pass (3 tests) |
 | API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/requester-context.api.test.ts` | Safe 400/404 responses | Pending |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, and continue | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pending |
 | UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pending |
@@ -108,10 +108,10 @@ npx prisma migrate deploy
 2 migrations found; both migrations applied successfully.
 
 npm run prisma:seed
-Seeded 4 categories, 6 related systems, and 5 requesters.
+Seeded 5 categories, 7 related systems, and 5 requesters.
 
 npm run prisma:seed
-Seeded 4 categories, 6 related systems, and 5 requesters.
+Seeded 5 categories, 7 related systems, and 5 requesters.
 
 npm test -- tests/lab-02
 Test Files  2 passed (2)

@@ -1,7 +1,12 @@
 import type { PrismaClient } from "@prisma/client";
 import { pathToFileURL } from "node:url";
 import { getPrisma } from "../src/prisma.js";
-import { categoryNames, seedCategories } from "../src/categorySeed.js";
+import {
+  categoryNames,
+  inactiveCategoryNames,
+  seedCategories,
+  seedInactiveCategories,
+} from "../src/categorySeed.js";
 
 export const relatedSystemNames = [
   "Email and Collaboration",
@@ -11,6 +16,8 @@ export const relatedSystemNames = [
   "Business Application",
   "Identity and Access",
 ] as const;
+
+export const inactiveRelatedSystemNames = ["Legacy System"] as const;
 
 export const requesterSeeds = [
   { name: "Ari Suksan", email: "ari.suksan@example.com", isActive: true },
@@ -26,12 +33,21 @@ export async function seedLab2Data(
   prisma: Pick<PrismaClient, "category" | "relatedSystem" | "requesterUser">,
 ) {
   await seedCategories(prisma);
+  await seedInactiveCategories(prisma);
 
   for (const name of relatedSystemNames) {
     await prisma.relatedSystem.upsert({
       where: { name },
       update: { isActive: true },
       create: { name, isActive: true },
+    });
+  }
+
+  for (const name of inactiveRelatedSystemNames) {
+    await prisma.relatedSystem.upsert({
+      where: { name },
+      update: { isActive: false },
+      create: { name, isActive: false },
     });
   }
 
@@ -47,7 +63,7 @@ export async function seedLab2Data(
   }
 
   console.log(
-    `Seeded ${categoryNames.length} categories, ${relatedSystemNames.length} related systems, and ${requesterSeeds.length} requesters.`,
+    `Seeded ${categoryNames.length + inactiveCategoryNames.length} categories, ${relatedSystemNames.length + inactiveRelatedSystemNames.length} related systems, and ${requesterSeeds.length} requesters.`,
   );
 }
 

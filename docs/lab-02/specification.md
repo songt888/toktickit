@@ -175,6 +175,8 @@ model Attachment {
 
 A RequesterUser owns many Tickets, a Ticket belongs to one RequesterUser, one Category, and one RelatedSystem, and a Ticket has many Attachments. Attachment removal uses nullable `removedAt` and `removalReason`. The schema fields, foreign keys, timestamps, enums, unique constraints, and indexes above are the database design to be implemented by the migration.
 
+The repeatable seed creates four active Categories plus one inactive `Legacy Requests` fixture, six active Related Systems plus one inactive `Legacy System` fixture, and four active RequesterUsers plus one inactive RequesterUser. Reference-data endpoints and ticket validation must use only active Categories and Related Systems; the inactive fixtures exist to exercise that rejection path.
+
 ## 8. API Contract Summary
 
 The full request and response shapes are defined in `api-spec.md`. Requester-owned endpoints require `X-Requester-Id`. Reference data endpoints return active records. Ticket creation returns HTTP 201 and the saved Ticket. List retrieval returns items plus pagination metadata. Invalid input returns 400, missing or unauthorized resources return 404, unsupported uploads return 415, oversized uploads return 413, and only the explicitly documented attachment state/limit conflicts return 409. Unexpected failures return safe 500 messages.

@@ -116,6 +116,8 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tickets   Ticket[]
+
+  @@index([isActive, name])
 }
 
 model RelatedSystem {

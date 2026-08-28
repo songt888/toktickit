@@ -129,7 +129,7 @@ Only Tickets owned by the selected requester are returned. Invalid query values 
 
 ### GET /api/tickets/:id
 
-Required header: `X-Requester-Id`. Returns the owned Ticket, related reference names, and attachment metadata. Returns 200 for an owned Ticket, 404 for missing or not-owned data, and 500 for a safe unexpected failure.
+Required header: `X-Requester-Id`. Returns the owned Ticket, related reference names, and attachment metadata. Returns 200 for an owned Ticket, 400 for missing or malformed requester context, 404 for an unknown/inactive requester or missing/not-owned data, and 500 for a safe unexpected failure.
 
 ## 7. Attachments
 

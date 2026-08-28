@@ -39,6 +39,7 @@ app.get("/api/health", (_req: Request, res: Response) => {
 app.get("/api/categories", async (_req: Request, res: Response) => {
   try {
     const categories = await getPrisma().category.findMany({
+      where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { id: "asc" },
     });

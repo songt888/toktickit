@@ -4,6 +4,11 @@ import { TicketPriority } from "@prisma/client";
 import { getPrisma } from "./prisma.js";
 import { parseRequesterId, REQUESTER_CONTEXT_ERROR } from "./requesterContext.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
+import {
+  buildTicketOrderBy,
+  buildTicketWhere,
+  parseTicketListQuery,
+} from "./ticketQuery.js";
 import { validateCreateTicketInput } from "./ticketValidation.js";
 // getPrisma() is your lazy database handle. Call it INSIDE a route when you
 // need the DB (Issue 4). It is intentionally unused until then.
@@ -142,6 +147,67 @@ app.post("/api/tickets", async (req: Request, res: Response) => {
     }
 
     res.status(500).json({ error: "Unable to create ticket" });
+  }
+});
+
+app.get("/api/tickets", async (req: Request, res: Response) => {
+  const requesterId = parseRequesterId(req);
+  if (requesterId === null) {
+    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
+    return;
+  }
+
+  const parsedQuery = parseTicketListQuery(req.query as Record<string, unknown>);
+  if (!parsedQuery.value) {
+    res.status(400).json({ error: parsedQuery.error });
+    return;
+  }
+
+  try {
+    const database = getPrisma();
+    const requester = await database.requesterUser.findFirst({
+      where: { id: requesterId, isActive: true },
+      select: { id: true },
+    });
+    if (!requester) {
+      res.status(404).json({ error: "Requester not found" });
+      return;
+    }
+
+    const where = buildTicketWhere(requesterId, parsedQuery.value);
+    const skip = (parsedQuery.value.page - 1) * parsedQuery.value.pageSize;
+    const [totalItems, items] = await database.$transaction([
+      database.ticket.count({ where }),
+      database.ticket.findMany({
+        where,
+        orderBy: buildTicketOrderBy(parsedQuery.value),
+        skip,
+        take: parsedQuery.value.pageSize,
+        select: {
+          id: true,
+          ticketNumber: true,
+          ticketDate: true,
+          summary: true,
+          requestedPriority: true,
+          currentStatus: true,
+          updatedAt: true,
+          category: { select: { id: true, name: true } },
+          relatedSystem: { select: { id: true, name: true } },
+        },
+      }),
+    ]);
+
+    res.status(200).json({
+      items,
+      pagination: {
+        page: parsedQuery.value.page,
+        pageSize: parsedQuery.value.pageSize,
+        totalItems,
+        totalPages: Math.ceil(totalItems / parsedQuery.value.pageSize),
+      },
+    });
+  } catch {
+    res.status(500).json({ error: "Unable to load tickets" });
   }
 });
 

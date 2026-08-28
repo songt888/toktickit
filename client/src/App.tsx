@@ -8,10 +8,12 @@ import {
   Requester,
   saveRequesterId,
 } from "./api.js";
+import CreateTicket from "./CreateTicket.js";
 
 // UI states you must handle for Issue 4: idle, loading, success, error.
 type UiState = "idle" | "loading" | "success" | "error";
 type RequesterState = "loading" | "success" | "error";
+type ActivePage = "status" | "create";
 
 export default function App() {
   const [state, setState] = useState<UiState>("idle");
@@ -22,6 +24,7 @@ export default function App() {
   const [selectedRequesterId, setSelectedRequesterId] = useState<number | null>(null);
   const [currentRequester, setCurrentRequester] = useState<Requester | null>(null);
   const [requesterError, setRequesterError] = useState("");
+  const [activePage, setActivePage] = useState<ActivePage>("status");
 
   async function loadRequesters() {
     setRequesterState("loading");
@@ -74,6 +77,7 @@ export default function App() {
     setState("idle");
     setCategories([]);
     setErrorMessage("");
+    setActivePage("status");
   }
 
   async function handleCheck() {
@@ -110,10 +114,26 @@ export default function App() {
       {currentRequester && (
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
-            <a className="nav-link active fw-semibold" href="#my-tickets" aria-current="page">
+            <a
+              className={`nav-link${activePage === "status" ? " active fw-semibold" : ""}`}
+              href="#my-tickets"
+              aria-current={activePage === "status" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActivePage("status");
+              }}
+            >
               My Tickets
             </a>
-            <a className="nav-link" href="#create-ticket">
+            <a
+              className={`nav-link${activePage === "create" ? " active fw-semibold" : ""}`}
+              href="#create-ticket"
+              aria-current={activePage === "create" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActivePage("create");
+              }}
+            >
               Create Ticket
             </a>
           </div>
@@ -184,6 +204,8 @@ export default function App() {
           )}
         </div>
       </section>
+
+      {currentRequester && activePage === "create" && <CreateTicket requester={currentRequester} />}
 
       <button className="btn btn-success" onClick={handleCheck} disabled={state === "loading"}>
         {state === "loading" ? "Loading…" : "Check System"}

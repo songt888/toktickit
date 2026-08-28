@@ -348,7 +348,11 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 aria-invalid={Boolean(errors.attachments)}
                 aria-describedby={errors.attachments ? "attachments-error" : "attachments-help"}
               />
-              <div id="attachments-help" className="form-text">JPG, JPEG, PNG, WEBP, or PDF; up to 5 MB each and 5 files.</div>
+              <div id="attachments-help" className="form-text">
+                JPG, JPEG, PNG, WEBP, or PDF; up to 5 MB each and 5 files. Files are validated in
+                this Issue but are not saved yet; attachment upload is implemented in the separate
+                Attachment lifecycle Issue.
+              </div>
               {fieldError("attachments")}
               {attachments.length > 0 && (
                 <ul className="small mt-2 mb-0" aria-label="Selected attachments">

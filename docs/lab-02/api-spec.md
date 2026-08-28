@@ -24,6 +24,20 @@ For every requester-owned endpoint, the header is processed before resource look
 
 The server must not expose stack traces, database URLs, filesystem paths, or internal exception messages.
 
+Validation failures may include a field-level breakdown while keeping the common safe `error` field:
+
+```json
+{
+  "error": "Validation failed",
+  "fieldErrors": {
+    "summary": "Summary must be between 5 and 120 characters."
+  }
+}
+```
+
+`fieldErrors` is an object whose keys are request field names and whose values are safe messages for
+those fields. It is returned only when the endpoint contract documents field-level validation.
+
 ## 3. Reference Data
 
 ### GET /api/requesters?active=true

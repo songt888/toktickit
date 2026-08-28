@@ -1,4 +1,4 @@
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../src/App.js";
@@ -8,11 +8,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+beforeEach(() => {
+  vi.spyOn(api, "getRequesters").mockResolvedValue([]);
+});
+
 describe("App", () => {
   // WORKED EXAMPLE — provided for you.
-  it("renders the TokTickIT heading", () => {
+  it("renders the TokTickIT heading", async () => {
     render(<App />);
     expect(screen.getByText(/TokTickIT/i)).toBeInTheDocument();
+    expect(await screen.findByText("No active Development Requesters are available.")).toBeInTheDocument();
   });
 
   it("shows Online and the categories returned by the API on success", async () => {

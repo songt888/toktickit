@@ -43,7 +43,7 @@ describe("App", () => {
     render(<App />);
     await userEvent.setup().click(screen.getByRole("button", { name: "Check System" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Checking backend status");
+    expect(screen.getByText("Checking backend status…")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Loading…" })).toBeDisabled();
   });
 

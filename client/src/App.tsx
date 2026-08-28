@@ -148,7 +148,7 @@ export default function App() {
           )}
 
           {requesterState === "success" && !currentRequester && requesters.length === 0 && (
-            <p className="alert alert-warning mb-0">
+            <p className="alert alert-warning mb-0" role="status">
               No active Development Requesters are available.
             </p>
           )}

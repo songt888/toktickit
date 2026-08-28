@@ -32,6 +32,7 @@ app.get("/api/health", (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // Lab 2 Issue 3 — Development Requester context
 // This is a temporary testing selector, not authentication.
+// The `active=true` query is an explicit contract marker; this endpoint is intentionally active-only.
 // ---------------------------------------------------------------------------
 app.get("/api/requesters", async (_req: Request, res: Response) => {
   try {

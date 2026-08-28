@@ -139,6 +139,11 @@ Response:
 
 Only Tickets owned by the selected requester are returned. Invalid query values return 400. The default order is `updatedAt desc`, then `id desc`.
 
+The `search` value is trimmed and performs a case-insensitive substring match against
+`ticketNumber`, `summary`, and `description`. The response item includes `id`, `ticketNumber`,
+`ticketDate`, `summary`, `requestedPriority`, `currentStatus`, `updatedAt`, and active reference
+objects named `category` and `relatedSystem`.
+
 ## 6. Ticket Detail
 
 ### GET /api/tickets/:id

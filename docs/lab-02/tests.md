@@ -12,18 +12,18 @@ No required test may be skipped, disabled, or reconstructed after implementation
 |---|---|---|---|---|---|---|
 | UNIT-01 | Unit | AC-03 | Ticket Number format and uniqueness input | `server/tests/lab-02/ticket-number.test.ts` | Valid unique format | Pass (2 tests) |
 | UNIT-02 | Unit | AC-04, AC-12 | Ticket and attachment validation boundaries | `server/tests/lab-02/validation.test.ts` | Invalid input rejected | Pass (3 tests) |
-| UNIT-03 | Unit | AC-08 | Query parsing, permitted sort, and pagination | `server/tests/lab-02/query-options.test.ts` | Stable safe options | Pending |
+| UNIT-03 | Unit | AC-08 | Query parsing, permitted sort, and pagination | `server/tests/lab-02/query-options.test.ts` | Stable safe options | Pass (4 tests) |
 | API-01 | API | AC-01, AC-02 | Active requester retrieval | `server/tests/lab-02/requesters.api.test.ts` | Active users only | Pass (1 test) |
 | API-02 | API | AC-03, AC-04 | Valid and invalid ticket creation | `server/tests/lab-02/create-ticket.api.test.ts` | 201 or documented 400 | Pass (2 tests) |
 | API-03 | API | AC-03 | Ticket Number, status, and requesterId persistence | `server/tests/lab-02/create-ticket.api.test.ts` | Saved values correct | Pass (1 test) |
-| API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pending |
+| API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pass (4 tests) |
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pending |
 | API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pending |
 | API-07 | Integration | AC-02, AC-03, AC-04 | Migration-backed seed, active/inactive reference data, and idempotent rerun | `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts` | Schema, active-reference, and seed rules pass | Pass (3 tests) |
 | API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/requester-context.api.test.ts` | Safe 400/404 responses | Pending |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, validation, persistence, and switching | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pass (5 tests) |
 | UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pass (5 tests) |
-| UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pending |
+| UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pass (6 tests) |
 | UI-04 | UI | AC-09, AC-10 | Read-only Ticket Detail and safe failure | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Correct access behavior | Pending |
 | UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pending |
 | STYLE-01 | UI style | AC-04, AC-15 | Required classes, labels, errors, focus, buttons | `client/tests/lab-02/ui-style.test.tsx` | Contract styles present | Pending |
@@ -148,6 +148,31 @@ Tests       14 passed (14)
 ```
 
 The API evidence covers active Related System retrieval, requester-context validation, active reference validation, sequence-formatted Ticket Numbers, persisted requester/category/system values, and `NEW` status. The UI evidence covers API-loaded fields, field-level validation, duplicate-submit prevention, generated-number success, preserved values after failure, and invalid attachment type/size/count messages.
+
+### Issue 21 verification on the feature branch
+
+The My Tickets API and UI checks passed after the Issue #21 implementation. The API tests use PostgreSQL-backed tickets for two requesters and verify ownership isolation, response shape, search, filters, sorting, pagination, and invalid requester/query handling. The UI tests verify API-backed rendering, controls, empty/no-results/error states, retry behavior, pagination, Create Ticket navigation, and requester switching.
+
+```text
+server: npm run prisma:seed
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+server: npm run build
+TypeScript build completed successfully.
+
+server: npm test -- --reporter=dot
+Test Files  11 passed (11)
+Tests       25 passed (25)
+
+client: npm run build
+Vite production build completed successfully.
+
+client: npm test -- --reporter=dot
+Test Files  4 passed (4)
+Tests       20 passed (20)
+```
+
+The branch-level evidence is complete for Issue #21. The UI regression coverage includes request sequencing and value-specific priority/status badge classes. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
 
 ## 7. Known Limitations or Deferred Tests
 

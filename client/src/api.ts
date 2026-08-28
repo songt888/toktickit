@@ -39,6 +39,40 @@ export interface Ticket {
   currentStatus: "NEW";
 }
 
+export interface TicketListItem {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  summary: string;
+  requestedPriority: TicketPriority;
+  currentStatus: "NEW";
+  updatedAt: string;
+  category: Category;
+  relatedSystem: RelatedSystem;
+}
+
+export interface TicketListResponse {
+  items: TicketListItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
+export interface TicketListOptions {
+  search?: string;
+  categoryId?: number;
+  relatedSystemId?: number;
+  requestedPriority?: TicketPriority;
+  currentStatus?: "NEW";
+  sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority";
+  order?: "asc" | "desc";
+  page?: number;
+  pageSize?: 10 | 25 | 50;
+}
+
 export const REQUESTER_STORAGE_KEY = "toktickit.developmentRequesterId";
 
 export interface SystemStatus {
@@ -91,6 +125,26 @@ export async function createTicket(
   }
 
   return (await response.json()) as Ticket;
+}
+
+export async function getMyTickets(
+  requesterId: number,
+  options: TicketListOptions = {},
+): Promise<TicketListResponse> {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+
+  const queryString = query.toString();
+  const response = await fetch(`${API_URL}/api/tickets${queryString ? `?${queryString}` : ""}`, {
+    headers: { "X-Requester-Id": String(requesterId) },
+  });
+  if (!response.ok) {
+    throw new Error(`Ticket list request failed (${response.status})`);
+  }
+
+  return (await response.json()) as TicketListResponse;
 }
 
 export function readRequesterId(): number | null {

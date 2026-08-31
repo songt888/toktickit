@@ -113,6 +113,28 @@ describe("Create Ticket UI", () => {
     });
   });
 
+  it("uploads selected attachments after the ticket is created", async () => {
+    const user = await openCreateTicket();
+    vi.spyOn(api, "createTicket").mockResolvedValue(createdTicket);
+    const upload = vi.spyOn(api, "uploadAttachment").mockResolvedValue({
+      id: 501,
+      originalName: "evidence.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 8,
+      createdAt: "2026-08-31T04:00:00.000Z",
+      removedAt: null,
+      removalReason: null,
+    });
+
+    await fillValidForm(user);
+    const file = new File(["evidence"], "evidence.pdf", { type: "application/pdf" });
+    fireEvent.change(screen.getByLabelText(/Attachments/), { target: { files: [file] } });
+    await user.click(screen.getByRole("button", { name: "Create Ticket" }));
+
+    expect(upload).toHaveBeenCalledWith(createdTicket.requesterId, createdTicket.id, file);
+    expect(await screen.findByText("Attachments uploaded: 1/1.")).toBeInTheDocument();
+  });
+
   it("preserves entered values and shows a safe error when creation fails", async () => {
     const user = await openCreateTicket();
     vi.spyOn(api, "createTicket").mockRejectedValue(new Error("Ticket request failed (500)"));

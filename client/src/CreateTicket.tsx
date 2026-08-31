@@ -10,6 +10,7 @@ import {
   Requester,
   Ticket,
   TicketPriority,
+  uploadAttachment,
 } from "./api.js";
 
 type FormValues = {
@@ -95,6 +96,9 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
   const [referenceError, setReferenceError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [successTicket, setSuccessTicket] = useState<Ticket | null>(null);
+  const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+  const [uploadedAttachmentCount, setUploadedAttachmentCount] = useState(0);
+  const [attachmentUploadError, setAttachmentUploadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function loadReferences() {
@@ -147,6 +151,28 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
     setSubmitError("");
   }
 
+  async function uploadPendingAttachments(ticketId: number, files: File[]) {
+    setAttachmentUploadError("");
+    let remaining = [...files];
+
+    for (const file of files) {
+      try {
+        await uploadAttachment(requester.id, ticketId, file);
+        remaining = remaining.slice(1);
+        setPendingUploads([...remaining]);
+        setUploadedAttachmentCount((count) => count + 1);
+      } catch (error) {
+        setPendingUploads(remaining);
+        setAttachmentUploadError(
+          error instanceof Error
+            ? `Ticket created, but an attachment could not be uploaded. ${error.message}`
+            : "Ticket created, but an attachment could not be uploaded. Please try again.",
+        );
+        return;
+      }
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
@@ -169,6 +195,11 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
     try {
       const ticket = await createTicket(requester.id, input);
       setSuccessTicket(ticket);
+      setPendingUploads([...attachments]);
+      setUploadedAttachmentCount(0);
+      if (attachments.length > 0) {
+        await uploadPendingAttachments(ticket.id, attachments);
+      }
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -186,6 +217,9 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
     setErrors({});
     setSubmitError("");
     setSuccessTicket(null);
+    setPendingUploads([]);
+    setUploadedAttachmentCount(0);
+    setAttachmentUploadError("");
   }
 
   const fieldError = (field: keyof FormValues | "attachments") =>
@@ -227,6 +261,24 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
             <p className="fw-semibold mb-1">Ticket created successfully.</p>
             <p className="mb-2">Ticket Number: <strong>{successTicket.ticketNumber}</strong></p>
             <p className="mb-3">Status: {successTicket.currentStatus}</p>
+            {attachments.length > 0 && (
+              <p className="mb-3">
+                Attachments uploaded: {uploadedAttachmentCount}/{attachments.length}.
+              </p>
+            )}
+            {attachmentUploadError && (
+              <div className="alert alert-warning" role="alert">
+                <p className="mb-2">{attachmentUploadError}</p>
+                <button
+                  className="btn btn-outline-warning"
+                  type="button"
+                  onClick={() => void uploadPendingAttachments(successTicket.id, pendingUploads)}
+                  disabled={submitting || pendingUploads.length === 0}
+                >
+                  Retry attachment upload
+                </button>
+              </div>
+            )}
             <button className="btn btn-outline-success" type="button" onClick={startAnotherTicket}>
               Create another ticket
             </button>
@@ -234,7 +286,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          <fieldset disabled={referenceState !== "ready" || submitting}>
+          <fieldset disabled={referenceState !== "ready" || submitting || successTicket !== null}>
             <legend className="visually-hidden">Ticket details</legend>
 
             <div className="mb-3">
@@ -349,9 +401,8 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 aria-describedby={errors.attachments ? "attachments-error" : "attachments-help"}
               />
               <div id="attachments-help" className="form-text">
-                JPG, JPEG, PNG, WEBP, or PDF; up to 5 MB each and 5 files. Files are validated in
-                this Issue but are not saved yet; attachment upload is implemented in the separate
-                Attachment lifecycle Issue.
+                JPG, JPEG, PNG, WEBP, or PDF; up to 5 MB each and 5 files. Files upload after the
+                Ticket is created.
               </div>
               {fieldError("attachments")}
               {attachments.length > 0 && (

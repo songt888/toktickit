@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getTicketDetail } from "./api.js";
+import { ApiRequestError, getTicketDetail } from "./api.js";
 import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
 
 type DetailState = "loading" | "success" | "error";
@@ -33,12 +33,14 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
   const [ticket, setTicket] = useState<TicketDetailData | null>(null);
   const [state, setState] = useState<DetailState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const requestSequence = useRef(0);
 
   async function loadDetail() {
     const sequence = ++requestSequence.current;
     setState("loading");
     setErrorMessage("");
+    setErrorStatus(null);
 
     try {
       const loadedTicket = await getTicketDetail(requesterId, ticketId);
@@ -49,6 +51,7 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
       if (sequence !== requestSequence.current) return;
       setState("error");
       setErrorMessage(error instanceof Error ? error.message : "Unable to load Ticket Detail.");
+      setErrorStatus(error instanceof ApiRequestError ? error.status : null);
     }
   }
 
@@ -60,7 +63,7 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
     };
   }, [requesterId, ticketId]);
 
-  const notFound = errorMessage.includes("(404)");
+  const notFound = errorStatus === 404;
 
   return (
     <section id="ticket-detail" className="card border-0 shadow-sm mb-4" aria-labelledby="ticket-detail-title">

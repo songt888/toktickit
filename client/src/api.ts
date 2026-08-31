@@ -99,6 +99,13 @@ export interface SystemStatus {
   categories: Category[];
 }
 
+export class ApiRequestError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
 export async function getRequesters(): Promise<Requester[]> {
   const response = await fetch(`${API_URL}/api/requesters?active=true`);
   if (!response.ok) {
@@ -171,7 +178,7 @@ export async function getTicketDetail(requesterId: number, ticketId: number): Pr
     headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
-    throw new Error(`Ticket detail request failed (${response.status})`);
+    throw new ApiRequestError(`Ticket detail request failed (${response.status})`, response.status);
   }
 
   return (await response.json()) as TicketDetail;

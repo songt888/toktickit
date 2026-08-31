@@ -51,6 +51,7 @@ describe("GET /api/tickets/:id", () => {
           storedName: `issue22-active-${Date.now()}.png`,
           mimeType: "image/png",
           sizeBytes: 2048,
+          createdAt: new Date("2026-08-29T00:30:00.000Z"),
         },
       }),
       prisma.attachment.create({
@@ -60,6 +61,7 @@ describe("GET /api/tickets/:id", () => {
           storedName: `issue22-removed-${Date.now()}.pdf`,
           mimeType: "application/pdf",
           sizeBytes: 4096,
+          createdAt: new Date("2026-08-29T01:00:00.000Z"),
           removedAt: new Date("2026-08-29T01:00:00.000Z"),
           removalReason: "No longer needed",
         },
@@ -137,6 +139,12 @@ describe("GET /api/tickets/:id", () => {
       .set("X-Requester-Id", "not-a-number");
     expect(malformedHeader.status).toBe(400);
     expect(malformedHeader.body).toEqual({ error: "Requester context is required" });
+
+    const unknownRequester = await request(app)
+      .get(`/api/tickets/${ownedTicketId}`)
+      .set("X-Requester-Id", "999999999");
+    expect(unknownRequester.status).toBe(404);
+    expect(unknownRequester.body).toEqual({ error: "Requester not found" });
 
     const inactiveRequester = await prisma.requesterUser.findFirst({ where: { isActive: false } });
     if (!inactiveRequester) throw new Error("Inactive requester fixture is missing");

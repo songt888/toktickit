@@ -106,6 +106,37 @@ describe("My Tickets UI", () => {
     expect(await screen.findByRole("heading", { name: "Create Ticket" })).toBeInTheDocument();
   });
 
+  it("preserves list query state and active navigation after returning from detail", async () => {
+    const getTickets = vi.spyOn(api, "getMyTickets").mockImplementation(async (_requesterId, options = {}) => ({
+      items: [ariTicket],
+      pagination: {
+        page: options.page ?? 1,
+        pageSize: options.pageSize ?? 10,
+        totalItems: 21,
+        totalPages: 3,
+      },
+    }));
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(ariTicketDetail);
+    const user = await openMyTickets();
+
+    await user.type(screen.getByLabelText("Search Tickets"), "battery");
+    await user.selectOptions(screen.getByLabelText("Category"), String(categories[0].id));
+    await user.click(screen.getByRole("button", { name: "Apply filters" }));
+    await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(2));
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByText("Showing page 2 of 3 (21 tickets)")).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "View details" })[0]);
+    expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
+
+    await user.click(screen.getByRole("button", { name: "Back to My Tickets" }));
+    expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Search Tickets")).toHaveValue("battery");
+    expect(screen.getByLabelText("Category")).toHaveValue(String(categories[0].id));
+    expect(screen.getByText("Showing page 2 of 3 (21 tickets)")).toBeInTheDocument();
+  });
+
   it("applies search, filter, sorting, page size, and pagination controls", async () => {
     const getTickets = vi.spyOn(api, "getMyTickets").mockResolvedValue(
       listResponse([ariTicket], 11, 2),

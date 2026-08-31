@@ -124,9 +124,9 @@ export default function App() {
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
             <a
-              className={`nav-link${activePage === "tickets" ? " active fw-semibold" : ""}`}
+              className={`nav-link${activePage === "tickets" || activePage === "detail" ? " active fw-semibold" : ""}`}
               href="#my-tickets"
-              aria-current={activePage === "tickets" ? "page" : undefined}
+              aria-current={activePage === "tickets" || activePage === "detail" ? "page" : undefined}
               onClick={(event) => {
                 event.preventDefault();
                 setActivePage("tickets");
@@ -214,12 +214,17 @@ export default function App() {
         </div>
       </section>
 
-      {currentRequester && activePage === "tickets" && (
-        <MyTickets
-          requester={currentRequester}
-          onCreateTicket={() => setActivePage("create")}
-          onOpenTicket={handleOpenTicket}
-        />
+      {currentRequester && (activePage === "tickets" || activePage === "detail") && (
+        <div
+          className={activePage === "detail" ? "d-none" : undefined}
+          aria-hidden={activePage === "detail" ? true : undefined}
+        >
+          <MyTickets
+            requester={currentRequester}
+            onCreateTicket={() => setActivePage("create")}
+            onOpenTicket={handleOpenTicket}
+          />
+        </div>
       )}
 
       {currentRequester && activePage === "create" && <CreateTicket requester={currentRequester} />}

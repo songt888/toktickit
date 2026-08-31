@@ -90,7 +90,7 @@ describe("Ticket Detail UI", () => {
 
   it("shows a not-found failure and can retry", async () => {
     vi.spyOn(api, "getTicketDetail")
-      .mockRejectedValueOnce(new Error("Ticket detail request failed (404)"))
+      .mockRejectedValueOnce(new api.ApiRequestError("The API returned a not-found response.", 404))
       .mockResolvedValue(detail);
     const user = userEvent.setup();
 

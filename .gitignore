@@ -20,6 +20,9 @@ server/prisma/*.db
 # runtime attachment files; keep only an empty directory marker if needed
 server/uploads/*
 !server/uploads/.gitkeep
+# Playwright generated output; committed visual evidence lives in screenshots/.
+test-results/
+artifacts/lab-02/playwright-report/
 # logs & OS
 *.log
 .DS_Store

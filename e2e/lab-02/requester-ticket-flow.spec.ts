@@ -79,10 +79,17 @@ test("covers requester selection, ticket creation, detail, attachments, and requ
     fullPage: true,
   });
 
+  const requestersResponse = await request.get(`${apiBaseURL}/api/requesters?active=true`);
+  expect(requestersResponse.status()).toBe(200);
+  const requesters = await requestersResponse.json() as Array<{ id: number; name: string }>;
+  const ben = requesters.find((requester) => requester.name === "Ben Chaiyo");
+  if (!ben) throw new Error("Ben Chaiyo was not returned by the active requester API");
+
   const forbidden = await request.get(`${apiBaseURL}/api/tickets/${createdTicket!.id}`, {
-    headers: { "X-Requester-Id": "2" },
+    headers: { "X-Requester-Id": String(ben.id) },
   });
   expect(forbidden.status()).toBe(404);
+  await expect(forbidden.json()).resolves.toEqual({ error: "Resource not found" });
 
   await page.getByRole("button", { name: "Change Requester" }).click();
   await chooseRequester(page, requesterB);

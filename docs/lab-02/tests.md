@@ -245,14 +245,21 @@ Tests       29 passed (29)
 ```
 
 The responsive/accessibility run checks 1280px desktop, 820px tablet, and 390px mobile
-viewports for labels, keyboard focus, active navigation, and no horizontal overflow. Screenshots
-are stored under `artifacts/lab-02/screenshots/`:
+viewports for labels, keyboard focus, active navigation, and no horizontal overflow on the
+My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored under
+`artifacts/lab-02/screenshots/`:
 
 - `desktop-create-ticket-success.png`
 - `desktop-ticket-detail-removed.png`
 - `responsive-create-ticket.png`
 - `tablet-create-ticket.png`
 - `mobile-create-ticket.png`
+- `responsive-my-tickets.png`
+- `tablet-my-tickets.png`
+- `mobile-my-tickets.png`
+- `responsive-ticket-detail.png`
+- `tablet-ticket-detail.png`
+- `mobile-ticket-detail.png`
 
 The branch-level evidence is complete for Issue #24. Final release verification remains
 pending until the approved pull request is merged and the complete Lab 2 suite is run from

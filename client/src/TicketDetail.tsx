@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getTicketDetail, TicketDetail, TicketPriority } from "./api.js";
+import { getTicketDetail } from "./api.js";
+import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
 
 type DetailState = "loading" | "success" | "error";
 
@@ -29,7 +30,7 @@ function priorityBadgeClass(priority: TicketPriority): string {
 }
 
 export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDetailProps) {
-  const [ticket, setTicket] = useState<TicketDetail | null>(null);
+  const [ticket, setTicket] = useState<TicketDetailData | null>(null);
   const [state, setState] = useState<DetailState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const requestSequence = useRef(0);

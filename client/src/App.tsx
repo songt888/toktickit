@@ -10,11 +10,12 @@ import {
 } from "./api.js";
 import CreateTicket from "./CreateTicket.js";
 import MyTickets from "./MyTickets.js";
+import TicketDetail from "./TicketDetail.js";
 
 // UI states you must handle for Issue 4: idle, loading, success, error.
 type UiState = "idle" | "loading" | "success" | "error";
 type RequesterState = "loading" | "success" | "error";
-type ActivePage = "status" | "tickets" | "create";
+type ActivePage = "status" | "tickets" | "create" | "detail";
 
 export default function App() {
   const [state, setState] = useState<UiState>("idle");
@@ -26,6 +27,7 @@ export default function App() {
   const [currentRequester, setCurrentRequester] = useState<Requester | null>(null);
   const [requesterError, setRequesterError] = useState("");
   const [activePage, setActivePage] = useState<ActivePage>("status");
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   async function loadRequesters() {
     setRequesterState("loading");
@@ -79,6 +81,12 @@ export default function App() {
     setCategories([]);
     setErrorMessage("");
     setActivePage("status");
+    setSelectedTicketId(null);
+  }
+
+  function handleOpenTicket(ticketId: number) {
+    setSelectedTicketId(ticketId);
+    setActivePage("detail");
   }
 
   async function handleCheck() {
@@ -207,10 +215,22 @@ export default function App() {
       </section>
 
       {currentRequester && activePage === "tickets" && (
-        <MyTickets requester={currentRequester} onCreateTicket={() => setActivePage("create")} />
+        <MyTickets
+          requester={currentRequester}
+          onCreateTicket={() => setActivePage("create")}
+          onOpenTicket={handleOpenTicket}
+        />
       )}
 
       {currentRequester && activePage === "create" && <CreateTicket requester={currentRequester} />}
+
+      {currentRequester && activePage === "detail" && selectedTicketId !== null && (
+        <TicketDetail
+          requesterId={currentRequester.id}
+          ticketId={selectedTicketId}
+          onBack={() => setActivePage("tickets")}
+        />
+      )}
 
       <button className="btn btn-success" onClick={handleCheck} disabled={state === "loading"}>
         {state === "loading" ? "Loading…" : "Check System"}

@@ -211,6 +211,74 @@ app.get("/api/tickets", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/tickets/:id", async (req: Request, res: Response) => {
+  const requesterId = parseRequesterId(req);
+  if (requesterId === null) {
+    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
+    return;
+  }
+
+  const ticketId = Number(req.params.id);
+  if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(ticketId) || ticketId <= 0) {
+    res.status(404).json({ error: "Resource not found" });
+    return;
+  }
+
+  try {
+    const database = getPrisma();
+    const requester = await database.requesterUser.findFirst({
+      where: { id: requesterId, isActive: true },
+      select: { id: true },
+    });
+    if (!requester) {
+      res.status(404).json({ error: "Requester not found" });
+      return;
+    }
+
+    const ticket = await database.ticket.findFirst({
+      where: { id: ticketId, requesterId },
+      select: {
+        id: true,
+        ticketNumber: true,
+        ticketDate: true,
+        requesterId: true,
+        categoryId: true,
+        relatedSystemId: true,
+        summary: true,
+        description: true,
+        requestedPriority: true,
+        currentStatus: true,
+        createdAt: true,
+        updatedAt: true,
+        requester: { select: { id: true, name: true, email: true } },
+        category: { select: { id: true, name: true } },
+        relatedSystem: { select: { id: true, name: true } },
+        attachments: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: {
+            id: true,
+            originalName: true,
+            mimeType: true,
+            sizeBytes: true,
+            createdAt: true,
+            removedAt: true,
+            removalReason: true,
+          },
+        },
+      },
+    });
+
+    if (!ticket) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    res.status(200).json(ticket);
+  } catch {
+    res.status(500).json({ error: "Unable to load ticket" });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Issue 4 — Category list
 // Add:  GET /api/categories

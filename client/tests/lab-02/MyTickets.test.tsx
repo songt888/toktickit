@@ -30,6 +30,19 @@ const benTicket: api.TicketListItem = {
   requestedPriority: "LOW",
 };
 
+const ariTicketDetail: api.TicketDetail = {
+  ...ariTicket,
+  requesterId: requesterA.id,
+  categoryId: categories[0].id,
+  relatedSystemId: relatedSystems[0].id,
+  createdAt: ariTicket.ticketDate,
+  description: "A ticket detail fixture for navigation testing.",
+  requester: requesterA,
+  category: categories[0],
+  relatedSystem: relatedSystems[0],
+  attachments: [],
+};
+
 function listResponse(items: api.TicketListItem[], totalItems = items.length, totalPages = 1): api.TicketListResponse {
   return {
     items,
@@ -73,6 +86,7 @@ async function openMyTickets() {
 describe("My Tickets UI", () => {
   it("shows API-backed ticket fields and the Create Ticket action", async () => {
     vi.spyOn(api, "getMyTickets").mockResolvedValue(listResponse([ariTicket]));
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(ariTicketDetail);
     const user = await openMyTickets();
 
     expect((await screen.findAllByText("TKT-20260829-000101")).length).toBeGreaterThan(0);
@@ -82,6 +96,11 @@ describe("My Tickets UI", () => {
     expect(screen.getAllByText("HIGH", { selector: "span.badge.text-bg-warning" }).length).toBeGreaterThan(0);
     expect(screen.getAllByText("NEW", { selector: "span.badge.text-bg-primary" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Create Ticket" })).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole("button", { name: "View details" })[0]);
+    expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to My Tickets" }));
+    expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Create Ticket" }));
     expect(await screen.findByRole("heading", { name: "Create Ticket" })).toBeInTheDocument();

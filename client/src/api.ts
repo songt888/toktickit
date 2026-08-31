@@ -39,6 +39,25 @@ export interface Ticket {
   currentStatus: "NEW";
 }
 
+export interface AttachmentMetadata {
+  id: number;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+  removedAt: string | null;
+  removalReason: string | null;
+}
+
+export interface TicketDetail extends Ticket {
+  requester: Requester;
+  category: Category;
+  relatedSystem: RelatedSystem;
+  createdAt: string;
+  updatedAt: string;
+  attachments: AttachmentMetadata[];
+}
+
 export interface TicketListItem {
   id: number;
   ticketNumber: string;
@@ -145,6 +164,17 @@ export async function getMyTickets(
   }
 
   return (await response.json()) as TicketListResponse;
+}
+
+export async function getTicketDetail(requesterId: number, ticketId: number): Promise<TicketDetail> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
+    headers: { "X-Requester-Id": String(requesterId) },
+  });
+  if (!response.ok) {
+    throw new Error(`Ticket detail request failed (${response.status})`);
+  }
+
+  return (await response.json()) as TicketDetail;
 }
 
 export function readRequesterId(): number | null {

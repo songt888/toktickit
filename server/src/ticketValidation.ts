@@ -82,3 +82,14 @@ export function validateAttachment(file: {
 
   return null;
 }
+
+export function validateRemovalReason(reason: unknown): string | null {
+  if (typeof reason !== "string") return "Removal reason is required.";
+
+  const trimmed = reason.trim();
+  if (trimmed.length < 5 || trimmed.length > 500) {
+    return "Removal reason must be between 5 and 500 characters.";
+  }
+
+  return null;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiRequestError, getTicketDetail } from "./api.js";
 import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
+import AttachmentSection from "./AttachmentSection.js";
 
 type DetailState = "loading" | "success" | "error";
 
@@ -12,12 +13,6 @@ export interface TicketDetailProps {
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace(".0", "")} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".0", "")} MB`;
 }
 
 function priorityBadgeClass(priority: TicketPriority): string {
@@ -122,34 +117,11 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
               </dl>
             </section>
 
-            <section aria-labelledby="ticket-attachments-title">
-              <h3 id="ticket-attachments-title" className="h5 mb-3">Attachments</h3>
-              {ticket.attachments.length === 0 && (
-                <p className="alert alert-info" role="status">No attachments for this ticket.</p>
-              )}
-              {ticket.attachments.length > 0 && (
-                <ul className="list-group" aria-label="Ticket attachment metadata">
-                  {ticket.attachments.map((attachment) => (
-                    <li key={attachment.id} className="list-group-item">
-                      <div className="d-flex flex-wrap justify-content-between gap-2">
-                        <strong className="text-break">{attachment.originalName}</strong>
-                        <span className={`badge ${attachment.removedAt ? "text-bg-secondary" : "text-bg-success"}`}>
-                          {attachment.removedAt ? "Removed" : "Active"}
-                        </span>
-                      </div>
-                      <p className="small text-secondary mb-0">
-                        {attachment.mimeType} · {formatBytes(attachment.sizeBytes)} · Added {formatDateTime(attachment.createdAt)}
-                      </p>
-                      {attachment.removedAt && (
-                        <p className="small mb-0" role="status">
-                          Removed {formatDateTime(attachment.removedAt)}{attachment.removalReason ? `: ${attachment.removalReason}` : ""}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <AttachmentSection
+              requesterId={requesterId}
+              ticketId={ticket.id}
+              initialAttachments={ticket.attachments}
+            />
           </>
         )}
       </div>

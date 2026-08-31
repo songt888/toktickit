@@ -18,14 +18,14 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | API-03 | API | AC-03 | Ticket Number, status, and requesterId persistence | `server/tests/lab-02/create-ticket.api.test.ts` | Saved values correct | Pass (1 test) |
 | API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pass (4 tests) |
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pass (3 tests) |
-| API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pending |
+| API-06 | API | AC-11, AC-12, AC-13, AC-14 | Attachment lifecycle and ownership | `server/tests/lab-02/attachments.api.test.ts` | Rules enforced | Pass (5 tests) |
 | API-07 | Integration | AC-02, AC-03, AC-04 | Migration-backed seed, active/inactive reference data, and idempotent rerun | `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts` | Schema, active-reference, and seed rules pass | Pass (3 tests) |
 | API-08 | API | AC-17 | Missing, malformed, unknown, and inactive requester context | `server/tests/lab-02/ticket-detail.api.test.ts` | Safe 400/404 responses | Pass (1 test; 4 scenarios) |
 | UI-01 | UI | AC-01, AC-02 | Requester selection loading, empty, failure, validation, persistence, and switching | `client/tests/lab-02/RequesterSelection.test.tsx` | Correct states | Pass (5 tests) |
-| UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pass (5 tests) |
+| UI-02 | UI | AC-03, AC-04, AC-05, AC-12 | Create Ticket fields, validation, busy, success, failure | `client/tests/lab-02/CreateTicket.test.tsx` | Correct UI behavior | Pass (6 tests) |
 | UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pass (7 tests) |
 | UI-04 | UI | AC-09, AC-10 | Read-only Ticket Detail and safe failure | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Correct access behavior | Pass (3 tests) |
-| UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pending |
+| UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pass (3 tests) |
 | STYLE-01 | UI style | AC-04, AC-15 | Required classes, labels, errors, focus, buttons | `client/tests/lab-02/ui-style.test.tsx` | Contract styles present | Pending |
 | RESP-01 | Responsive | AC-15 | Desktop viewport and screenshot | `e2e/lab-02/requester-ticket-flow.spec.ts` | No clipping/overflow | Pending |
 | RESP-02 | Responsive | AC-15 | Tablet viewport and screenshot | `e2e/lab-02/requester-ticket-flow.spec.ts` | No clipping/overflow | Pending |
@@ -195,6 +195,31 @@ Tests       24 passed (24)
 ```
 
 The branch-level evidence is complete for Issue #22. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
+
+### Issue 23 verification on the feature branch
+
+The Attachment lifecycle API and UI checks cover permitted uploads, generated storage names,
+metadata retrieval, active-file download, five-active-file enforcement, upload failure handling,
+owner isolation, soft removal with a required reason, retained removed metadata, and blocked
+removed-file download. Uploads are written under the ignored `server/uploads/` directory.
+
+```text
+server: npm run build
+TypeScript build completed successfully.
+
+server: npm test -- --reporter=dot
+Test Files  13 passed (13)
+Tests       33 passed (33)
+
+client: npm run build
+Vite production build completed successfully.
+
+client: npm test -- --reporter=dot
+Test Files  6 passed (6)
+Tests       28 passed (28)
+```
+
+The branch-level evidence is complete for Issue #23. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
 
 ## 7. Known Limitations or Deferred Tests
 

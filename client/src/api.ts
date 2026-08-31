@@ -184,6 +184,70 @@ export async function getTicketDetail(requesterId: number, ticketId: number): Pr
   return (await response.json()) as TicketDetail;
 }
 
+export async function uploadAttachment(
+  requesterId: number,
+  ticketId: number,
+  file: File,
+): Promise<AttachmentMetadata> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
+    method: "POST",
+    headers: { "X-Requester-Id": String(requesterId) },
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Attachment upload failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as AttachmentMetadata;
+}
+
+export async function getTicketAttachments(
+  requesterId: number,
+  ticketId: number,
+): Promise<AttachmentMetadata[]> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
+    headers: { "X-Requester-Id": String(requesterId) },
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Attachment list request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as AttachmentMetadata[];
+}
+
+export async function downloadAttachment(requesterId: number, attachmentId: number): Promise<Blob> {
+  const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/download`, {
+    headers: { "X-Requester-Id": String(requesterId) },
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Attachment download failed (${response.status})`, response.status);
+  }
+
+  return response.blob();
+}
+
+export async function removeAttachment(
+  requesterId: number,
+  attachmentId: number,
+  reason: string,
+): Promise<AttachmentMetadata> {
+  const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/remove`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requester-Id": String(requesterId),
+    },
+    body: JSON.stringify({ reason }),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Attachment removal failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as AttachmentMetadata;
+}
+
 export function readRequesterId(): number | null {
   const value = window.localStorage.getItem(REQUESTER_STORAGE_KEY);
   if (!value || !/^\d+$/.test(value)) return null;

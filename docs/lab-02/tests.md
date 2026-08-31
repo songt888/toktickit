@@ -26,13 +26,13 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | UI-03 | UI | AC-06, AC-07, AC-08 | My Tickets list controls and states | `client/tests/lab-02/MyTickets.test.tsx` | Correct list behavior | Pass (7 tests) |
 | UI-04 | UI | AC-09, AC-10 | Read-only Ticket Detail and safe failure | `client/tests/lab-02/RequesterTicketDetail.test.tsx` | Correct access behavior | Pass (3 tests) |
 | UI-05 | UI | AC-11, AC-13, AC-14 | Attachment states, reason, and blocked removed file | `client/tests/lab-02/AttachmentSection.test.tsx` | Correct attachment behavior | Pass (3 tests) |
-| STYLE-01 | UI style | AC-04, AC-15 | Required classes, labels, errors, focus, buttons | `client/tests/lab-02/ui-style.test.tsx` | Contract styles present | Pending |
-| RESP-01 | Responsive | AC-15 | Desktop viewport and screenshot | `e2e/lab-02/requester-ticket-flow.spec.ts` | No clipping/overflow | Pending |
-| RESP-02 | Responsive | AC-15 | Tablet viewport and screenshot | `e2e/lab-02/requester-ticket-flow.spec.ts` | No clipping/overflow | Pending |
-| RESP-03 | Responsive | AC-15 | Mobile viewport and screenshot | `e2e/lab-02/requester-ticket-flow.spec.ts` | No clipping/overflow | Pending |
-| E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pending |
-| E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pending |
-| E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pending |
+| STYLE-01 | UI style | AC-04, AC-15 | Required classes, labels, errors, focus, buttons | `client/tests/lab-02/ui-style.test.tsx` | Contract styles present | Pass (1 test) |
+| RESP-01 | Responsive | AC-15 | Desktop viewport and screenshot | `e2e/lab-02/responsive.spec.ts` | No clipping/overflow | Pass (1 test) |
+| RESP-02 | Responsive | AC-15 | Tablet viewport and screenshot | `e2e/lab-02/responsive.spec.ts` | No clipping/overflow | Pass (1 test) |
+| RESP-03 | Responsive | AC-15 | Mobile viewport and screenshot | `e2e/lab-02/responsive.spec.ts` | No clipping/overflow | Pass (1 test) |
+| E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pass (1 test) |
+| E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pass (1 test) |
+| E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pass (1 test) |
 | RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts` | All documented checks pass from `main` | Pending |
 
 ## 3. Acceptance-Criterion Traceability
@@ -226,3 +226,34 @@ The branch-level evidence is complete for Issue #23. Final release verification 
 - Real authentication and role-based authorization are deferred to Lab 3.
 - IT Staff workflow and collaboration features are outside Lab 2.
 - Local attachment storage is a Lab 2 demonstration choice and must not be treated as production storage.
+
+### Issue 24 verification on the feature branch
+
+Playwright covers the full requester workflow on desktop and the responsive/accessibility
+contract at desktop, tablet, and mobile widths. The workflow creates a real ticket, uploads
+`01-health.png`, verifies the generated Ticket Number, opens Ticket Detail, downloads the
+attachment, soft-removes it, checks cross-requester rejection, and switches to Ben Chaiyo
+without showing Ari Suksan's ticket.
+
+```text
+npm run test:e2e
+4 passed
+
+client: npm test -- --reporter=dot
+Test Files  7 passed (7)
+Tests       29 passed (29)
+```
+
+The responsive/accessibility run checks 1280px desktop, 820px tablet, and 390px mobile
+viewports for labels, keyboard focus, active navigation, and no horizontal overflow. Screenshots
+are stored under `artifacts/lab-02/screenshots/`:
+
+- `desktop-create-ticket-success.png`
+- `desktop-ticket-detail-removed.png`
+- `responsive-create-ticket.png`
+- `tablet-create-ticket.png`
+- `mobile-create-ticket.png`
+
+The branch-level evidence is complete for Issue #24. Final release verification remains
+pending until the approved pull request is merged and the complete Lab 2 suite is run from
+`main`.

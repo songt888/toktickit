@@ -148,7 +148,42 @@ objects named `category` and `relatedSystem`.
 
 ### GET /api/tickets/:id
 
-Required header: `X-Requester-Id`. Returns the owned Ticket, related reference names, and attachment metadata. Returns 200 for an owned Ticket, 400 for missing or malformed requester context, 404 for an unknown/inactive requester or missing/not-owned data, and 500 for a safe unexpected failure.
+Required header: `X-Requester-Id`. Returns the owned Ticket, related reference objects, and attachment metadata. The response does not expose internal stored filenames or attachment actions:
+
+```json
+{
+  "id": 1,
+  "ticketNumber": "TKT-20260831-000001",
+  "ticketDate": "2026-08-31T00:00:00.000Z",
+  "requesterId": 1,
+  "categoryId": 1,
+  "relatedSystemId": 2,
+  "summary": "Laptop battery drains quickly",
+  "description": "The battery falls below 20 percent after a short session.",
+  "requestedPriority": "MEDIUM",
+  "currentStatus": "NEW",
+  "createdAt": "2026-08-31T00:01:00.000Z",
+  "updatedAt": "2026-08-31T00:01:00.000Z",
+  "requester": { "id": 1, "name": "Ariya Example", "email": "ariya@example.test" },
+  "category": { "id": 1, "name": "Account and Access" },
+  "relatedSystem": { "id": 2, "name": "Campus Wi-Fi" },
+  "attachments": [
+    {
+      "id": 1,
+      "originalName": "error.png",
+      "mimeType": "image/png",
+      "sizeBytes": 2048,
+      "createdAt": "2026-08-31T00:02:00.000Z",
+      "removedAt": null,
+      "removalReason": null
+    }
+  ]
+}
+```
+
+Attachment metadata includes active and removed records. Removed records retain `removedAt` and
+`removalReason`; download and removal actions are covered by the later Attachment lifecycle work.
+Returns 200 for an owned Ticket, 400 for missing or malformed requester context, 404 for an unknown/inactive requester or missing/not-owned data, and 500 for a safe unexpected failure.
 
 ## 7. Attachments
 

@@ -59,9 +59,10 @@ function formatDate(value: string): string {
 export interface MyTicketsProps {
   requester: Requester;
   onCreateTicket: () => void;
+  onOpenTicket: (ticketId: number) => void;
 }
 
-export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps) {
+export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: MyTicketsProps) {
   const [draft, setDraft] = useState<FilterDraft>(defaultDraft);
   const [filters, setFilters] = useState<TicketListOptions>(optionsFromDraft(defaultDraft));
   const [categories, setCategories] = useState<Category[]>([]);
@@ -192,6 +193,11 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
       <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
       <td>{formatDate(ticket.updatedAt)}</td>
+      <td>
+        <button className="btn btn-outline-success btn-sm" type="button" onClick={() => onOpenTicket(ticket.id)}>
+          View details
+        </button>
+      </td>
     </tr>
   );
 
@@ -348,6 +354,7 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
                     <th scope="col">Status</th>
                     <th scope="col">Priority</th>
                     <th scope="col">Last Updated</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>{items.map(renderRow)}</tbody>
@@ -366,6 +373,9 @@ export default function MyTickets({ requester, onCreateTicket }: MyTicketsProps)
                     <dt className="col-5">Priority</dt><dd className="col-7"><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></dd>
                     <dt className="col-5">Last Updated</dt><dd className="col-7">{formatDate(ticket.updatedAt)}</dd>
                   </dl>
+                  <button className="btn btn-outline-success btn-sm mt-3" type="button" onClick={() => onOpenTicket(ticket.id)}>
+                    View details
+                  </button>
                 </article>
               ))}
             </div>

@@ -10,11 +10,12 @@ import {
 } from "./api.js";
 import CreateTicket from "./CreateTicket.js";
 import MyTickets from "./MyTickets.js";
+import TicketDetail from "./TicketDetail.js";
 
 // UI states you must handle for Issue 4: idle, loading, success, error.
 type UiState = "idle" | "loading" | "success" | "error";
 type RequesterState = "loading" | "success" | "error";
-type ActivePage = "status" | "tickets" | "create";
+type ActivePage = "status" | "tickets" | "create" | "detail";
 
 export default function App() {
   const [state, setState] = useState<UiState>("idle");
@@ -26,6 +27,7 @@ export default function App() {
   const [currentRequester, setCurrentRequester] = useState<Requester | null>(null);
   const [requesterError, setRequesterError] = useState("");
   const [activePage, setActivePage] = useState<ActivePage>("status");
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   async function loadRequesters() {
     setRequesterState("loading");
@@ -79,6 +81,12 @@ export default function App() {
     setCategories([]);
     setErrorMessage("");
     setActivePage("status");
+    setSelectedTicketId(null);
+  }
+
+  function handleOpenTicket(ticketId: number) {
+    setSelectedTicketId(ticketId);
+    setActivePage("detail");
   }
 
   async function handleCheck() {
@@ -116,9 +124,9 @@ export default function App() {
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
             <a
-              className={`nav-link${activePage === "tickets" ? " active fw-semibold" : ""}`}
+              className={`nav-link${activePage === "tickets" || activePage === "detail" ? " active fw-semibold" : ""}`}
               href="#my-tickets"
-              aria-current={activePage === "tickets" ? "page" : undefined}
+              aria-current={activePage === "tickets" || activePage === "detail" ? "page" : undefined}
               onClick={(event) => {
                 event.preventDefault();
                 setActivePage("tickets");
@@ -206,11 +214,28 @@ export default function App() {
         </div>
       </section>
 
-      {currentRequester && activePage === "tickets" && (
-        <MyTickets requester={currentRequester} onCreateTicket={() => setActivePage("create")} />
+      {currentRequester && (activePage === "tickets" || activePage === "detail") && (
+        <div
+          className={activePage === "detail" ? "d-none" : undefined}
+          aria-hidden={activePage === "detail" ? true : undefined}
+        >
+          <MyTickets
+            requester={currentRequester}
+            onCreateTicket={() => setActivePage("create")}
+            onOpenTicket={handleOpenTicket}
+          />
+        </div>
       )}
 
       {currentRequester && activePage === "create" && <CreateTicket requester={currentRequester} />}
+
+      {currentRequester && activePage === "detail" && selectedTicketId !== null && (
+        <TicketDetail
+          requesterId={currentRequester.id}
+          ticketId={selectedTicketId}
+          onBack={() => setActivePage("tickets")}
+        />
+      )}
 
       <button className="btn btn-success" onClick={handleCheck} disabled={state === "loading"}>
         {state === "loading" ? "Loading…" : "Check System"}

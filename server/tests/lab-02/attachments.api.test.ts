@@ -126,6 +126,24 @@ describe("Attachment lifecycle API", () => {
     }
     const sixth = await upload(countTicketId, "file-six.pdf", "application/pdf");
     expect(sixth.status).toBe(409);
+
+    const concurrentTicketId = await createTicket("Concurrent attachment count fixture");
+    for (let index = 0; index < 4; index += 1) {
+      const response = await upload(concurrentTicketId, `concurrent-${index}.png`);
+      expect(response.status).toBe(201);
+    }
+
+    const concurrentResponses = await Promise.all([
+      upload(concurrentTicketId, "concurrent-a.png"),
+      upload(concurrentTicketId, "concurrent-b.png"),
+    ]);
+    expect(concurrentResponses.map((response) => response.status).sort()).toEqual([201, 409]);
+
+    const concurrentMetadata = await request(app)
+      .get(`/api/tickets/${concurrentTicketId}/attachments`)
+      .set("X-Requester-Id", String(ownerId));
+    expect(concurrentMetadata.status).toBe(200);
+    expect(concurrentMetadata.body).toHaveLength(5);
   });
 
   it("allows owner download but rejects cross-requester and removed-file access", async () => {

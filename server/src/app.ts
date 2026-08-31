@@ -141,6 +141,8 @@ app.get("/api/related-systems", async (_req: Request, res: Response) => {
 
 class ReferenceNotFoundError extends Error {}
 
+class ActiveAttachmentLimitError extends Error {}
+
 app.post("/api/tickets", async (req: Request, res: Response) => {
   const requesterId = parseRequesterId(req);
   if (requesterId === null) {
@@ -398,6 +400,8 @@ app.post(
       return;
     }
 
+    let storedPath: string | null = null;
+
     try {
       if (!(await hasActiveRequester(requesterId))) {
         res.status(404).json({ error: "Requester not found" });
@@ -409,21 +413,24 @@ app.post(
         return;
       }
 
-      const activeCount = await getPrisma().attachment.count({
-        where: { ticketId, removedAt: null },
-      });
-      if (activeCount >= attachmentLimits.maxFiles) {
-        res.status(409).json({ error: "A Ticket can have no more than five active attachments" });
-        return;
-      }
+      const attachment = await getPrisma().$transaction(async (transaction) => {
+        // Serialize the count-and-insert pair for this ticket so concurrent
+        // uploads cannot both pass the five-active-attachments check.
+        await transaction.$executeRaw`SELECT pg_advisory_xact_lock(${ticketId})`;
 
-      const storedName = `${randomUUID()}${storedExtensionByMimeType[file.mimetype]}`;
-      const storedPath = path.join(attachmentStorageDir, storedName);
-      await mkdir(attachmentStorageDir, { recursive: true });
-      await writeFile(storedPath, file.buffer, { flag: "wx" });
+        const activeCount = await transaction.attachment.count({
+          where: { ticketId, removedAt: null },
+        });
+        if (activeCount >= attachmentLimits.maxFiles) {
+          throw new ActiveAttachmentLimitError();
+        }
 
-      try {
-        const attachment = await getPrisma().attachment.create({
+        const storedName = `${randomUUID()}${storedExtensionByMimeType[file.mimetype]}`;
+        storedPath = path.join(attachmentStorageDir, storedName);
+        await mkdir(attachmentStorageDir, { recursive: true });
+        await writeFile(storedPath, file.buffer, { flag: "wx" });
+
+        return transaction.attachment.create({
           data: {
             ticketId,
             originalName: safeOriginalName(file.originalname),
@@ -441,14 +448,23 @@ app.post(
             removalReason: true,
           },
         });
+      });
 
-        res.status(201).json(attachment);
-      } catch (error) {
-        await unlink(storedPath).catch(() => undefined);
-        throw error;
+      // The transaction committed, so the generated file now belongs to the
+      // persisted attachment and must not be removed by the error cleanup.
+      storedPath = null;
+      res.status(201).json(attachment);
+    } catch (error) {
+      if (error instanceof ActiveAttachmentLimitError) {
+        res.status(409).json({ error: "A Ticket can have no more than five active attachments" });
+        return;
       }
-    } catch {
+
       res.status(500).json({ error: "Unable to upload attachment" });
+    } finally {
+      // If the transaction failed after writing the file, do not leave an
+      // orphaned object in storage.
+      if (storedPath) await unlink(storedPath).catch(() => undefined);
     }
   },
 );

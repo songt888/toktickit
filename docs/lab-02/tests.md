@@ -263,6 +263,12 @@ viewports for labels, keyboard focus, active navigation, and no horizontal overf
 My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored under
 `artifacts/lab-02/screenshots/`:
 
+- `create-ticket-validation-error.png`
+- `create-ticket-submitting.png`
+- `create-ticket-api-failure.png`
+- `create-ticket-invalid-attachment.png`
+- `my-tickets-empty.png`
+- `my-tickets-no-results.png`
 - `desktop-create-ticket-success.png`
 - `desktop-ticket-detail-removed.png`
 - `responsive-create-ticket.png`
@@ -297,7 +303,7 @@ client: npm run build
 Vite production build completed successfully.
 
 root: npm run test:e2e
-Not rerun during this documentation-only restart.
+4 passed
 
 server: npm test -- tests/lab-02 --reporter=dot
 Test Files  10 passed (10)
@@ -310,5 +316,7 @@ Issue 25 documentation checks completed on this branch:
   merge evidence for PRs #26-#33.
 - `ai-use.md` contains nine concrete example prompts and a critical-thinking reflection.
 - This file contains test paths, results, traceability, and the responsive screenshot evidence.
+- Required validation, submitting, API-failure, invalid-attachment, empty-list, and no-results
+  screenshots are stored under `artifacts/lab-02/screenshots/`.
 - `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
 - A final release PR from `lab2-staging` to `main` has not been opened yet by instruction.

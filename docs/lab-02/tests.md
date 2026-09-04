@@ -1,4 +1,14 @@
-# Lab 2 Test Plan and Results
+# Lab 2 — Test Plan and Evidence
+
+All Lab 2 test files live under `server/tests/lab-02/`, `client/tests/lab-02/`, and
+`e2e/lab-02/`.
+
+| # | Tool | Test | Result |
+|---|------|------|--------|
+| 1 | Vitest + Supertest | Lab 2 unit, PostgreSQL, seed, API, validation, and ownership tests | PASS — 10 files, 29 tests |
+| 2 | Vitest + Testing Library | Requester selection, ticket creation/list/detail, attachments, and UI-style tests | PASS — 6 files, 25 tests |
+| 3 | Playwright | Full requester ticket and attachment workflow | PASS |
+| 4 | Playwright | Desktop, tablet, and mobile responsive/accessibility checks | PASS — 3 viewports |
 
 ## 1. Test Strategy
 
@@ -33,7 +43,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pass (1 test) |
 | E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pass (1 test) |
 | E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pass (1 test) |
-| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts` | All documented checks pass from `main` | Pending |
+| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass from `main` | Pending |
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -74,7 +84,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 
 ```bash
 cd server
-npm test
+npm test -- tests/lab-02 --reporter=dot
 npm run build
 npx prisma migrate deploy
 npm run prisma:seed
@@ -92,16 +102,16 @@ with the Lab 1 feature branch and are not part of the Lab 2 application test run
 
 ## 6. Final Results
 
-The results below are the latest release-branch evidence. They must be rerun from the final
-`main` branch after the release PR is approved and merged.
+The results below are the latest Lab 2-only evidence from the documentation release branch.
+They must be rerun from the final `main` branch after the release PR is approved and merged.
 
 | Level | Command/result | Final status |
 |---|---|---|
-| Unit | Server unit tests | Pass on release branch (33 total server tests) |
-| API/integration | Server API and seed tests | Pass on release branch (13 files, 33 tests) |
-| UI | Client Vitest tests | Pass on release branch (7 files, 29 tests) |
+| Unit/API/integration | `server: npm test -- tests/lab-02 --reporter=dot` | Pass on release branch (10 files, 29 tests) |
+| UI | `client: npm test -- --reporter=dot` | Pass on release branch (6 files, 25 tests) |
 | Responsive/visual | Playwright screenshots and checklist | Pass on release branch (desktop/tablet/mobile) |
-| E2E | Requester ticket flow | Pass on release branch (4 projects) |
+| E2E | Requester ticket flow | Pass on release branch (4 tests) |
+| Final `main` verification | RELEASE-01 | Pending until release PR is merged |
 
 ### Issue 18 verification on the feature branch
 
@@ -289,9 +299,9 @@ Vite production build completed successfully.
 root: npm run test:e2e
 Not rerun during this documentation-only restart.
 
-server: npm test -- --reporter=dot
-Test Files  13 passed (13)
-Tests       33 passed (33)
+server: npm test -- tests/lab-02 --reporter=dot
+Test Files  10 passed (10)
+Tests       29 passed (29)
 ```
 
 Issue 25 documentation checks completed on this branch:

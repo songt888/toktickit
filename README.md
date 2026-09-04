@@ -123,11 +123,11 @@ Backend:
 
 ```bash
 cd server
-npm test
+npm test -- tests/lab-02 --reporter=dot
 npm run build
 ```
 
-The backend tests use Vitest and Supertest.
+The command above runs only the Lab 2 backend tests. They use Vitest and Supertest.
 
 End-to-end and responsive checks from the repository root:
 

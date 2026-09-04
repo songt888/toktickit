@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Category,
-  checkSystem,
   clearRequesterId,
   getRequesters,
   readRequesterId,
@@ -12,21 +10,16 @@ import CreateTicket from "./CreateTicket.js";
 import MyTickets from "./MyTickets.js";
 import TicketDetail from "./TicketDetail.js";
 
-// UI states you must handle for Issue 4: idle, loading, success, error.
-type UiState = "idle" | "loading" | "success" | "error";
 type RequesterState = "loading" | "success" | "error";
-type ActivePage = "status" | "tickets" | "create" | "detail";
+type ActivePage = "tickets" | "create" | "detail";
 
 export default function App() {
-  const [state, setState] = useState<UiState>("idle");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
   const [requesterState, setRequesterState] = useState<RequesterState>("loading");
   const [requesters, setRequesters] = useState<Requester[]>([]);
   const [selectedRequesterId, setSelectedRequesterId] = useState<number | null>(null);
   const [currentRequester, setCurrentRequester] = useState<Requester | null>(null);
   const [requesterError, setRequesterError] = useState("");
-  const [activePage, setActivePage] = useState<ActivePage>("status");
+  const [activePage, setActivePage] = useState<ActivePage>("tickets");
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
 
   async function loadRequesters() {
@@ -71,36 +64,20 @@ export default function App() {
 
     saveRequesterId(selectedRequester.id);
     setCurrentRequester(selectedRequester);
+    setActivePage("create");
   }
 
   function handleChangeRequester() {
     clearRequesterId();
     setSelectedRequesterId(null);
     setCurrentRequester(null);
-    setState("idle");
-    setCategories([]);
-    setErrorMessage("");
-    setActivePage("status");
+    setActivePage("tickets");
     setSelectedTicketId(null);
   }
 
   function handleOpenTicket(ticketId: number) {
     setSelectedTicketId(ticketId);
     setActivePage("detail");
-  }
-
-  async function handleCheck() {
-    setState("loading");
-    setErrorMessage("");
-
-    try {
-      const result = await checkSystem();
-      setCategories(result.categories);
-      setState(result.online ? "success" : "error");
-    } catch (error) {
-      setState("error");
-      setErrorMessage(error instanceof Error ? error.message : "Unable to reach the API.");
-    }
   }
 
   return (
@@ -237,34 +214,6 @@ export default function App() {
         />
       )}
 
-      <button className="btn btn-success" onClick={handleCheck} disabled={state === "loading"}>
-        {state === "loading" ? "Loading…" : "Check System"}
-      </button>
-
-      {state === "loading" && (
-        <p className="mt-4" role="status">
-          Checking backend status…
-        </p>
-      )}
-
-      {state === "success" && (
-        <section className="mt-4" aria-label="System status">
-          <p className="text-success fw-bold">Online</p>
-          <h2 className="h5">Request categories</h2>
-          <ul>
-            {categories.map((category) => (
-              <li key={category.id}>{category.name}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {state === "error" && (
-        <section className="mt-4" role="alert" aria-label="System status">
-          <p className="text-danger fw-bold">Offline</p>
-          <p>{errorMessage || "Unable to reach the API."}</p>
-        </section>
-      )}
     </div>
   );
 }

@@ -87,6 +87,9 @@ cd ..
 npx playwright test
 ```
 
+The client test command on the Lab 2 branch is scoped to `tests/lab-02/`; Lab 1 UI tests remain
+with the Lab 1 feature branch and are not part of the Lab 2 application test run.
+
 ## 6. Final Results
 
 The results below are the latest release-branch evidence. They must be rerun from the final
@@ -241,8 +244,8 @@ npm run test:e2e
 4 passed
 
 client: npm test -- --reporter=dot
-Test Files  7 passed (7)
-Tests       29 passed (29)
+Test Files  6 passed (6)
+Tests       25 passed (25)
 ```
 
 The responsive/accessibility run checks 1280px desktop, 820px tablet, and 390px mobile
@@ -277,8 +280,8 @@ server: npm run build
 TypeScript build completed successfully.
 
 client: npm test -- --reporter=dot
-Test Files  7 passed (7)
-Tests       29 passed (29)
+Test Files  6 passed (6)
+Tests       25 passed (25)
 
 client: npm run build
 Vite production build completed successfully.

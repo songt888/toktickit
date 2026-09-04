@@ -34,7 +34,8 @@ describe("TokTickIT UI style and accessibility contract", () => {
     expect(screen.getByLabelText(/Description/)).toHaveClass("form-control");
     expect(screen.getByLabelText(/Attachments/)).toHaveClass("form-control");
     expect(screen.getByRole("button", { name: "Create Ticket" })).toHaveClass("btn-success");
-    expect(screen.getByRole("button", { name: "Check System" })).toHaveClass("btn-success");
+    expect(screen.queryByRole("button", { name: "Check System" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Request categories" })).not.toBeInTheDocument();
     expect(screen.getByText("Category", { exact: true })).toBeInTheDocument();
     expect(screen.getByText("Related System", { exact: true })).toBeInTheDocument();
     const requiredMarkers = screen.getAllByText("*", { exact: true });

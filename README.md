@@ -1,6 +1,6 @@
 # TokTickIT
 
-TokTickIT is an IT service desk application with a React + TypeScript frontend and an Express + TypeScript backend. The backend uses Prisma and PostgreSQL to store IT request categories.
+TokTickIT is an IT service desk application with a React + TypeScript frontend and an Express + TypeScript backend. The backend uses Prisma and PostgreSQL for requester-specific tickets, categories, related systems, and attachment metadata.
 
 ## Requirements
 
@@ -54,7 +54,7 @@ cp client/.env.example client/.env
 
 The default `DATABASE_URL` connects to the Docker database above. Keep `server/.env` private; it is ignored by Git.
 
-Initialize Prisma and seed the request categories:
+Initialize Prisma and seed the Lab 2 reference data:
 
 ```bash
 cd server
@@ -63,12 +63,17 @@ npx prisma migrate deploy
 npm run prisma:seed
 ```
 
-The seed creates the following categories and is safe to run more than once:
+The seed is safe to run more than once. It creates four active categories, one inactive category
+fixture, six active related systems, one inactive related-system fixture, four active requesters,
+and one inactive requester fixture. The active categories are:
 
 - Account and Access
 - Hardware
 - Software
 - Network
+
+The inactive fixtures are used to test that inactive database records cannot be selected for new
+tickets.
 
 ## Run the application
 
@@ -90,6 +95,20 @@ npm run dev
 
 Vite normally serves the frontend at `http://localhost:5173`.
 
+The main requester workflow is:
+
+1. Select an active Development Requester. This selector is a Lab 2 test context, not login or
+   authentication.
+2. Create a ticket with a category, related system, summary, description, priority, and optional
+   attachment.
+3. Open My Tickets to search, filter, sort, paginate, and view only the selected requester's
+   tickets.
+4. Open Ticket Detail to view read-only ticket data and attachment metadata.
+
+Attachments accept JPG/JPEG, PNG, WEBP, and PDF files up to 5 MB each, with no more than five
+active files per ticket. Files are stored locally under `server/uploads/`, which is ignored by
+Git. Removing an attachment keeps its metadata but prevents further download.
+
 ## Tests and builds
 
 Frontend:
@@ -109,3 +128,14 @@ npm run build
 ```
 
 The backend tests use Vitest and Supertest.
+
+End-to-end and responsive checks from the repository root:
+
+```bash
+npm install
+npm run test:e2e
+npm run test:e2e:headed
+```
+
+Lab 2 specifications and evidence are in [`docs/lab-02/`](docs/lab-02/), including the API
+contract, UI contract, test traceability, peer-review record, and AI-use reflection.

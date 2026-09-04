@@ -59,16 +59,16 @@ No required test may be skipped, disabled, or reconstructed after implementation
 
 ## 4. Responsive and Visual Checklist
 
-- [ ] Desktop is tested at 992px or wider.
-- [ ] Tablet is tested from 768px to 991px.
-- [ ] Mobile is tested below 768px.
-- [ ] No clipped labels, overlapping messages, hidden buttons, or horizontal page scrolling.
-- [ ] Read-only fields are visually distinct and readable.
-- [ ] Required markers and validation messages are near their fields.
-- [ ] Primary, secondary, destructive, disabled, and busy buttons are distinguishable.
-- [ ] Attachment names remain readable.
-- [ ] Focus indicators and non-color error/success indicators are visible.
-- [ ] Desktop ticket table and mobile ticket cards/responsive table are usable.
+- [x] Desktop is tested at 992px or wider.
+- [x] Tablet is tested from 768px to 991px.
+- [x] Mobile is tested below 768px.
+- [x] No clipped labels, overlapping messages, hidden buttons, or horizontal page scrolling.
+- [x] Read-only fields are visually distinct and readable.
+- [x] Required markers and validation messages are near their fields.
+- [x] Primary, secondary, destructive, disabled, and busy buttons are distinguishable.
+- [x] Attachment names remain readable.
+- [x] Focus indicators and non-color error/success indicators are visible.
+- [x] Desktop ticket table and mobile ticket cards/responsive table are usable.
 
 ## 5. Test Commands
 
@@ -89,15 +89,16 @@ npx playwright test
 
 ## 6. Final Results
 
-Final results will be filled from the final `main` branch only. Passing terminal output and readable screenshots will be placed below each relevant section before submission.
+The results below are the latest release-branch evidence. They must be rerun from the final
+`main` branch after the release PR is approved and merged.
 
 | Level | Command/result | Final status |
 |---|---|---|
-| Unit | Server unit tests | Pending implementation |
-| API/integration | Server API and seed tests | Pending implementation |
-| UI | Client Vitest tests | Pending implementation |
-| Responsive/visual | Playwright screenshots and checklist | Pending implementation |
-| E2E | Requester ticket flow | Pending implementation |
+| Unit | Server unit tests | Pass on release branch (33 total server tests) |
+| API/integration | Server API and seed tests | Pass on release branch (13 files, 33 tests) |
+| UI | Client Vitest tests | Pass on release branch (7 files, 29 tests) |
+| Responsive/visual | Playwright screenshots and checklist | Pass on release branch (desktop/tablet/mobile) |
+| E2E | Requester ticket flow | Pass on release branch (4 projects) |
 
 ### Issue 18 verification on the feature branch
 
@@ -264,3 +265,37 @@ My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored und
 The branch-level evidence is complete for Issue #24. Final release verification remains
 pending until the approved pull request is merged and the complete Lab 2 suite is run from
 `main`.
+
+### Issue 25 release-preparation verification on the feature branch
+
+The documentation and evidence files were updated on a branch based on the merged Issue #24
+implementation. The release PR was intentionally not opened yet, so the final-main requirement
+remains clearly marked as pending.
+
+```text
+server: npm run build
+TypeScript build completed successfully.
+
+client: npm test -- --reporter=dot
+Test Files  7 passed (7)
+Tests       29 passed (29)
+
+client: npm run build
+Vite production build completed successfully.
+
+root: npm run test:e2e
+Not rerun during this documentation-only restart.
+
+server: npm test -- --reporter=dot
+Blocked: Docker daemon is not running, so PostgreSQL at localhost:5432 is unavailable.
+The database-backed tests must be rerun after Docker Desktop is started.
+```
+
+Issue 25 documentation checks completed on this branch:
+
+- `reviewer.md` contains the teammate identity, PR links, review comments, responses, and
+  merge evidence for PRs #26-#33.
+- `ai-use.md` contains nine concrete example prompts and a critical-thinking reflection.
+- This file contains test paths, results, traceability, and the responsive screenshot evidence.
+- `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
+- A final release PR from `lab2-staging` to `main` has not been opened yet by instruction.

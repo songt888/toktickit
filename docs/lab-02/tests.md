@@ -287,8 +287,8 @@ root: npm run test:e2e
 Not rerun during this documentation-only restart.
 
 server: npm test -- --reporter=dot
-Blocked: Docker daemon is not running, so PostgreSQL at localhost:5432 is unavailable.
-The database-backed tests must be rerun after Docker Desktop is started.
+Test Files  13 passed (13)
+Tests       33 passed (33)
 ```
 
 Issue 25 documentation checks completed on this branch:

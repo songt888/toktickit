@@ -261,25 +261,7 @@ Tests       25 passed (25)
 The responsive/accessibility run checks 1280px desktop, 820px tablet, and 390px mobile
 viewports for labels, keyboard focus, active navigation, and no horizontal overflow on the
 My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored under
-`artifacts/lab-02/screenshots/`:
-
-- `create-ticket-validation-error.png`
-- `create-ticket-submitting.png`
-- `create-ticket-api-failure.png`
-- `create-ticket-invalid-attachment.png`
-- `my-tickets-empty.png`
-- `my-tickets-no-results.png`
-- `desktop-create-ticket-success.png`
-- `desktop-ticket-detail-removed.png`
-- `responsive-create-ticket.png`
-- `tablet-create-ticket.png`
-- `mobile-create-ticket.png`
-- `responsive-my-tickets.png`
-- `tablet-my-tickets.png`
-- `mobile-my-tickets.png`
-- `responsive-ticket-detail.png`
-- `tablet-ticket-detail.png`
-- `mobile-ticket-detail.png`
+`artifacts/lab-02/screenshots/` and mapped to the submission parts below.
 
 The branch-level evidence is complete for Issue #24. Final release verification remains
 pending until the approved pull request is merged and the complete Lab 2 suite is run from
@@ -310,13 +292,49 @@ Test Files  10 passed (10)
 Tests       29 passed (29)
 ```
 
+#### Submission screenshot index
+
+**Part 6 — Create Ticket states**
+
+- `create-ticket-initial.png` — initial form with the selected requester and API-loaded controls.
+- `create-ticket-validation-error.png` — required-field validation messages.
+- `create-ticket-submitting.png` — disabled form and `Creating…` busy button.
+- `desktop-create-ticket-success.png` — backend-generated Ticket Number and attachment upload `1/1`.
+- `create-ticket-api-failure.png` — safe HTTP 500 message with entered values preserved.
+- `create-ticket-invalid-attachment.png` — rejected unsupported attachment type.
+
+**Part 7 — My Tickets behavior**
+
+- `my-tickets-search-applied.png` — search value applied with the matching owned ticket.
+- `my-tickets-filter-sort-applied.png` — Network/HIGH filters with Ticket Number ascending sort.
+- `my-tickets-pagination-page-2.png` — real second page and pagination metadata.
+- `my-tickets-empty.png` — empty-list state.
+- `my-tickets-no-results.png` — no-results state after a search.
+- `my-tickets-requester-switch.png` — Ben Chaiyo selected without Ari Suksan's evidence ticket.
+
+**Part 8 — Ticket Detail and Attachments**
+
+- `ticket-detail-active-attachment-download.png` — active uploaded attachment and Download action;
+  the Playwright workflow completed the download before capturing the image.
+- `desktop-ticket-detail-removed.png` — soft-removed attachment retained as unavailable metadata.
+- `cross-requester-attachment-404.png` — safe `Resource not found` body returned to Ben Chaiyo;
+  the evidence workflow asserted the actual HTTP status was 404 before capturing the response.
+
+**Part 9 — Responsive evidence**
+
+- Create Ticket: `responsive-create-ticket.png`, `tablet-create-ticket.png`,
+  `mobile-create-ticket.png`.
+- My Tickets: `responsive-my-tickets.png`, `tablet-my-tickets.png`,
+  `mobile-my-tickets.png`.
+- Ticket Detail: `responsive-ticket-detail.png`, `tablet-ticket-detail.png`,
+  `mobile-ticket-detail.png`.
+
 Issue 25 documentation checks completed on this branch:
 
 - `reviewer.md` contains the teammate identity, PR links, review comments, responses, and
   merge evidence for PRs #26-#33.
 - `ai-use.md` contains nine concrete example prompts and a critical-thinking reflection.
 - This file contains test paths, results, traceability, and the responsive screenshot evidence.
-- Required validation, submitting, API-failure, invalid-attachment, empty-list, and no-results
-  screenshots are stored under `artifacts/lab-02/screenshots/`.
+- The Part 6–9 screenshot index records the required states and reviewer-requested evidence.
 - `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
 - A final release PR from `lab2-staging` to `main` has not been opened yet by instruction.

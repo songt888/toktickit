@@ -15,7 +15,7 @@
 | 7 | Diagnose the Prisma P1001 database error without changing working application code. | I confirmed PostgreSQL was unavailable, started the Docker container, and reran migration, seed, and tests before deciding that no code fix was needed. |
 | 8 | Review the E2E implementation for race conditions, viewport gaps, fragile selectors, ownership weaknesses, and missing evidence. | I replaced fragile requester assumptions, added exact cross-requester checks, and measured overflow on My Tickets and Ticket Detail as well as Create Ticket. |
 
-## Reflection
+## My Reflection
 
 The prompts were most useful when they named a specific requirement, file, failure case, and
 verification method. I treated generated code and documentation as proposals rather than final

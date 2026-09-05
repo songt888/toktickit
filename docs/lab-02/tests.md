@@ -317,8 +317,9 @@ Tests       29 passed (29)
 - `ticket-detail-active-attachment-download.png` — active uploaded attachment and Download action;
   the Playwright workflow completed the download before capturing the image.
 - `desktop-ticket-detail-removed.png` — soft-removed attachment retained as unavailable metadata.
-- `cross-requester-attachment-404.png` — safe `Resource not found` body returned to Ben Chaiyo;
-  the evidence workflow asserted the actual HTTP status was 404 before capturing the response.
+- `cross-requester-attachment-404.png` — Ari Suksan is identified as the attachment owner,
+  while Ben Chaiyo's request shows the attachment endpoint, `X-Requester-Id`, HTTP 404 status,
+  and safe `Resource not found` response together.
 
 **Part 9 — Responsive evidence**
 

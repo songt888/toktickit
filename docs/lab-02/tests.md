@@ -43,7 +43,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pass (1 test) |
 | E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pass (1 test) |
 | E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pass (1 test) |
-| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass from `main` | Pending |
+| RELEASE-01 | Release | AC-16 | Run the complete server, client, build, migration/seed, and Playwright verification suite on the release candidate, then repeat it from `main` after merge with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass before and after release merge | Pass on release candidate `0dfa5f3` (29 server, 25 client, 4 Playwright); repeat on `main` after PR #35 merges |
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -102,8 +102,9 @@ with the Lab 1 feature branch and are not part of the Lab 2 application test run
 
 ## 6. Final Results
 
-The results below are the latest Lab 2-only evidence from the documentation release branch.
-They must be rerun from the final `main` branch after the release PR is approved and merged.
+The results below are the latest Lab 2-only evidence from release candidate `0dfa5f3` on
+`lab2-staging`. The same commands will be rerun from `main` after release PR #35 is approved
+and merged so the final merge commit can be recorded without leaving the release candidate unverified.
 
 | Level | Command/result | Final status |
 |---|---|---|
@@ -111,7 +112,7 @@ They must be rerun from the final `main` branch after the release PR is approved
 | UI | `client: npm test -- --reporter=dot` | Pass on release branch (6 files, 25 tests) |
 | Responsive/visual | Playwright screenshots and checklist | Pass on release branch (desktop/tablet/mobile) |
 | E2E | Requester ticket flow | Pass on release branch (4 tests) |
-| Final `main` verification | RELEASE-01 | Pending until release PR is merged |
+| Release verification | RELEASE-01 | Pass on `lab2-staging` at `0dfa5f3`; repeat on `main` after PR #35 merges |
 
 ### Issue 18 verification on the feature branch
 
@@ -139,7 +140,8 @@ npm run build
 TypeScript build completed successfully.
 ```
 
-This is feature-branch evidence for Issue 18. The final-results table remains pending until the complete Lab 2 suite is verified from `main`.
+This is feature-branch evidence for Issue 18. The complete release-candidate verification is
+recorded in the Final Results table above.
 
 ### Issue 20 verification on the feature branch
 
@@ -186,7 +188,9 @@ Test Files  4 passed (4)
 Tests       20 passed (20)
 ```
 
-The branch-level evidence is complete for Issue #21. The UI regression coverage includes request sequencing and value-specific priority/status badge classes. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
+The branch-level evidence is complete for Issue #21. The UI regression coverage includes request
+sequencing and value-specific priority/status badge classes, and it is included in the complete
+release-candidate pass recorded above.
 
 ### Issue 22 verification on the feature branch
 
@@ -208,7 +212,8 @@ Test Files  5 passed (5)
 Tests       24 passed (24)
 ```
 
-The branch-level evidence is complete for Issue #22. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
+The branch-level evidence is complete for Issue #22 and is included in the complete
+release-candidate pass recorded above.
 
 ### Issue 23 verification on the feature branch
 
@@ -233,7 +238,8 @@ Test Files  6 passed (6)
 Tests       28 passed (28)
 ```
 
-The branch-level evidence is complete for Issue #23. Final release verification remains pending until the approved pull request is merged and the complete Lab 2 suite is run from `main`.
+The branch-level evidence is complete for Issue #23 and is included in the complete
+release-candidate pass recorded above.
 
 ## 7. Known Limitations or Deferred Tests
 
@@ -263,15 +269,15 @@ viewports for labels, keyboard focus, active navigation, and no horizontal overf
 My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored under
 `artifacts/lab-02/screenshots/` and mapped to the submission parts below.
 
-The branch-level evidence is complete for Issue #24. Final release verification remains
-pending until the approved pull request is merged and the complete Lab 2 suite is run from
-`main`.
+The branch-level evidence is complete for Issue #24 and is included in the complete
+release-candidate pass recorded above.
 
 ### Issue 25 release-preparation verification on the feature branch
 
 The documentation and evidence files were updated on a branch based on the merged Issue #24
-implementation. The release PR was intentionally not opened yet, so the final-main requirement
-remains clearly marked as pending.
+implementation. Release PR #35 is open from `lab2-staging` to `main`. The complete suite passed
+on release candidate `0dfa5f3`; after the PR is approved and merged, the same commands will be
+rerun from `main` and the merge commit SHA will be recorded.
 
 ```text
 server: npm run build
@@ -338,4 +344,4 @@ Issue 25 documentation checks completed on this branch:
 - This file contains test paths, results, traceability, and the responsive screenshot evidence.
 - The Part 6–9 screenshot index records the required states and reviewer-requested evidence.
 - `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
-- A final release PR from `lab2-staging` to `main` has not been opened yet by instruction.
+- Release PR #35 is open from `lab2-staging` to `main` and is awaiting formal peer approval.

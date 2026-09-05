@@ -68,6 +68,95 @@ test("covers requester selection, ticket creation, detail, attachments, and requ
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("01-health.png");
 
+  const requestersResponse = await request.get(`${apiBaseURL}/api/requesters?active=true`);
+  expect(requestersResponse.status()).toBe(200);
+  const requesters = await requestersResponse.json() as Array<{ id: number; name: string }>;
+  const ari = requesters.find((requester) => requester.name === "Ari Suksan");
+  const ben = requesters.find((requester) => requester.name === "Ben Chaiyo");
+  if (!ari || !ben) throw new Error("Ari Suksan and Ben Chaiyo must be returned by the active requester API");
+
+  const ownerDetail = await request.get(`${apiBaseURL}/api/tickets/${createdTicket!.id}`, {
+    headers: { "X-Requester-Id": String(ari.id) },
+  });
+  expect(ownerDetail.status()).toBe(200);
+  const ownerTicket = await ownerDetail.json() as {
+    attachments: Array<{ id: number; originalName: string; removedAt: string | null }>;
+  };
+  const activeAttachment = ownerTicket.attachments.find(
+    (attachment) => attachment.originalName === "01-health.png" && attachment.removedAt === null,
+  );
+  if (!activeAttachment) throw new Error("The uploaded active attachment was not returned in Ticket Detail");
+
+  const crossRequesterURL = `${apiBaseURL}/api/attachments/${activeAttachment.id}/download`;
+  const forbiddenAttachment = await request.get(crossRequesterURL, {
+    headers: { "X-Requester-Id": String(ben.id) },
+  });
+  expect(forbiddenAttachment.status()).toBe(404);
+  const forbiddenAttachmentBody = await forbiddenAttachment.json() as { error: string };
+  expect(forbiddenAttachmentBody).toEqual({ error: "Resource not found" });
+
+  const evidencePage = await page.context().newPage();
+  await evidencePage.setViewportSize({ width: 1280, height: 720 });
+  await evidencePage.setContent(`
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <title>Cross-requester attachment authorization evidence</title>
+        <style>
+          :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; }
+          body { margin: 0; background: #f4f7fb; color: #172033; }
+          main { max-width: 1040px; margin: 52px auto; padding: 0 32px; }
+          .card { background: white; border: 1px solid #d9e1ec; border-radius: 16px; box-shadow: 0 10px 28px rgba(23, 32, 51, .08); overflow: hidden; }
+          header { padding: 26px 30px; background: #173f5f; color: white; }
+          h1 { margin: 0 0 8px; font-size: 30px; }
+          header p { margin: 0; color: #dceaf5; }
+          .content { padding: 30px; }
+          .context { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+          .context div { padding: 16px; border-radius: 10px; background: #f7f9fc; border: 1px solid #e1e7f0; }
+          .label { display: block; margin-bottom: 5px; color: #667085; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+          .value { font-size: 19px; font-weight: 700; }
+          pre { margin: 10px 0 22px; padding: 18px; overflow-wrap: anywhere; white-space: pre-wrap; border-radius: 10px; background: #101828; color: #e6edf3; font: 16px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+          .result { display: flex; align-items: center; gap: 14px; padding: 18px; border: 1px solid #f1b8b3; border-radius: 10px; background: #fff2f0; }
+          .status { padding: 6px 11px; border-radius: 999px; background: #b42318; color: white; font-weight: 800; }
+          .safe { color: #7a271a; font: 17px ui-monospace, SFMono-Regular, Menlo, monospace; }
+          footer { margin-top: 18px; color: #667085; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <section class="card">
+            <header>
+              <h1>Cross-requester attachment access</h1>
+              <p>Verified against the running TokTickIT API</p>
+            </header>
+            <div class="content">
+              <div class="context">
+                <div><span class="label">Resource owner</span><span class="value">Ari Suksan — requester ID ${ari.id}</span></div>
+                <div><span class="label">Acting requester</span><span class="value">Ben Chaiyo — requester ID ${ben.id}</span></div>
+                <div><span class="label">Ticket</span><span class="value">${ticketNumber} — ID ${createdTicket!.id}</span></div>
+                <div><span class="label">Attachment</span><span class="value">01-health.png — ID ${activeAttachment.id}</span></div>
+              </div>
+              <span class="label">Request</span>
+              <pre>GET ${crossRequesterURL}\nX-Requester-Id: ${ben.id}</pre>
+              <span class="label">Actual API response</span>
+              <div class="result">
+                <span class="status">HTTP ${forbiddenAttachment.status()}</span>
+                <span class="safe">${JSON.stringify(forbiddenAttachmentBody)}</span>
+              </div>
+              <footer>The attachment was active and downloadable by its owner before this cross-requester check.</footer>
+            </div>
+          </section>
+        </main>
+      </body>
+    </html>
+  `);
+  await evidencePage.screenshot({
+    path: path.resolve("artifacts/lab-02/screenshots/cross-requester-attachment-404.png"),
+    fullPage: true,
+  });
+  await evidencePage.close();
+
   await page.getByRole("button", { name: "Remove" }).click();
   await page.getByLabel("Removal reason").fill("E2E cleanup after lifecycle verification");
   await page.getByRole("button", { name: "Confirm removal" }).click();
@@ -78,12 +167,6 @@ test("covers requester selection, ticket creation, detail, attachments, and requ
     path: path.resolve("artifacts/lab-02/screenshots/desktop-ticket-detail-removed.png"),
     fullPage: true,
   });
-
-  const requestersResponse = await request.get(`${apiBaseURL}/api/requesters?active=true`);
-  expect(requestersResponse.status()).toBe(200);
-  const requesters = await requestersResponse.json() as Array<{ id: number; name: string }>;
-  const ben = requesters.find((requester) => requester.name === "Ben Chaiyo");
-  if (!ben) throw new Error("Ben Chaiyo was not returned by the active requester API");
 
   const forbidden = await request.get(`${apiBaseURL}/api/tickets/${createdTicket!.id}`, {
     headers: { "X-Requester-Id": String(ben.id) },
@@ -98,7 +181,7 @@ test("covers requester selection, ticket creation, detail, attachments, and requ
   await expect(page.getByText(summary)).toHaveCount(0);
 
   await testInfo.attach("workflow-summary", {
-    body: Buffer.from(`Created ${ticketNumber}; owner download succeeded; removal completed; cross-requester access returned 404.`),
+    body: Buffer.from(`Created ${ticketNumber}; owner download succeeded; attachment and ticket cross-requester access returned 404; removal completed.`),
     contentType: "text/plain",
   });
 });

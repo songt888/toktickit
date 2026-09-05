@@ -1,4 +1,14 @@
-# Lab 2 Test Plan and Results
+# Lab 2 — Test Plan and Evidence
+
+All Lab 2 test files live under `server/tests/lab-02/`, `client/tests/lab-02/`, and
+`e2e/lab-02/`.
+
+| # | Tool | Test | Result |
+|---|------|------|--------|
+| 1 | Vitest + Supertest | Lab 2 unit, PostgreSQL, seed, API, validation, and ownership tests | PASS — 10 files, 29 tests |
+| 2 | Vitest + Testing Library | Requester selection, ticket creation/list/detail, attachments, and UI-style tests | PASS — 6 files, 25 tests |
+| 3 | Playwright | Full requester ticket and attachment workflow | PASS |
+| 4 | Playwright | Desktop, tablet, and mobile responsive/accessibility checks | PASS — 3 viewports |
 
 ## 1. Test Strategy
 
@@ -33,7 +43,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pass (1 test) |
 | E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pass (1 test) |
 | E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pass (1 test) |
-| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts` | All documented checks pass from `main` | Pending |
+| RELEASE-01 | Release | AC-16 | Run the final server, client, build, migration/seed, and Playwright verification suite from `main` with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass from `main` | Pending |
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -59,22 +69,22 @@ No required test may be skipped, disabled, or reconstructed after implementation
 
 ## 4. Responsive and Visual Checklist
 
-- [ ] Desktop is tested at 992px or wider.
-- [ ] Tablet is tested from 768px to 991px.
-- [ ] Mobile is tested below 768px.
-- [ ] No clipped labels, overlapping messages, hidden buttons, or horizontal page scrolling.
-- [ ] Read-only fields are visually distinct and readable.
-- [ ] Required markers and validation messages are near their fields.
-- [ ] Primary, secondary, destructive, disabled, and busy buttons are distinguishable.
-- [ ] Attachment names remain readable.
-- [ ] Focus indicators and non-color error/success indicators are visible.
-- [ ] Desktop ticket table and mobile ticket cards/responsive table are usable.
+- [x] Desktop is tested at 992px or wider.
+- [x] Tablet is tested from 768px to 991px.
+- [x] Mobile is tested below 768px.
+- [x] No clipped labels, overlapping messages, hidden buttons, or horizontal page scrolling.
+- [x] Read-only fields are visually distinct and readable.
+- [x] Required markers and validation messages are near their fields.
+- [x] Primary, secondary, destructive, disabled, and busy buttons are distinguishable.
+- [x] Attachment names remain readable.
+- [x] Focus indicators and non-color error/success indicators are visible.
+- [x] Desktop ticket table and mobile ticket cards/responsive table are usable.
 
 ## 5. Test Commands
 
 ```bash
 cd server
-npm test
+npm test -- tests/lab-02 --reporter=dot
 npm run build
 npx prisma migrate deploy
 npm run prisma:seed
@@ -87,17 +97,21 @@ cd ..
 npx playwright test
 ```
 
+The client test command on the Lab 2 branch is scoped to `tests/lab-02/`; Lab 1 UI tests remain
+with the Lab 1 feature branch and are not part of the Lab 2 application test run.
+
 ## 6. Final Results
 
-Final results will be filled from the final `main` branch only. Passing terminal output and readable screenshots will be placed below each relevant section before submission.
+The results below are the latest Lab 2-only evidence from the documentation release branch.
+They must be rerun from the final `main` branch after the release PR is approved and merged.
 
 | Level | Command/result | Final status |
 |---|---|---|
-| Unit | Server unit tests | Pending implementation |
-| API/integration | Server API and seed tests | Pending implementation |
-| UI | Client Vitest tests | Pending implementation |
-| Responsive/visual | Playwright screenshots and checklist | Pending implementation |
-| E2E | Requester ticket flow | Pending implementation |
+| Unit/API/integration | `server: npm test -- tests/lab-02 --reporter=dot` | Pass on release branch (10 files, 29 tests) |
+| UI | `client: npm test -- --reporter=dot` | Pass on release branch (6 files, 25 tests) |
+| Responsive/visual | Playwright screenshots and checklist | Pass on release branch (desktop/tablet/mobile) |
+| E2E | Requester ticket flow | Pass on release branch (4 tests) |
+| Final `main` verification | RELEASE-01 | Pending until release PR is merged |
 
 ### Issue 18 verification on the feature branch
 
@@ -240,27 +254,88 @@ npm run test:e2e
 4 passed
 
 client: npm test -- --reporter=dot
-Test Files  7 passed (7)
-Tests       29 passed (29)
+Test Files  6 passed (6)
+Tests       25 passed (25)
 ```
 
 The responsive/accessibility run checks 1280px desktop, 820px tablet, and 390px mobile
 viewports for labels, keyboard focus, active navigation, and no horizontal overflow on the
 My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored under
-`artifacts/lab-02/screenshots/`:
-
-- `desktop-create-ticket-success.png`
-- `desktop-ticket-detail-removed.png`
-- `responsive-create-ticket.png`
-- `tablet-create-ticket.png`
-- `mobile-create-ticket.png`
-- `responsive-my-tickets.png`
-- `tablet-my-tickets.png`
-- `mobile-my-tickets.png`
-- `responsive-ticket-detail.png`
-- `tablet-ticket-detail.png`
-- `mobile-ticket-detail.png`
+`artifacts/lab-02/screenshots/` and mapped to the submission parts below.
 
 The branch-level evidence is complete for Issue #24. Final release verification remains
 pending until the approved pull request is merged and the complete Lab 2 suite is run from
 `main`.
+
+### Issue 25 release-preparation verification on the feature branch
+
+The documentation and evidence files were updated on a branch based on the merged Issue #24
+implementation. The release PR was intentionally not opened yet, so the final-main requirement
+remains clearly marked as pending.
+
+```text
+server: npm run build
+TypeScript build completed successfully.
+
+client: npm test -- --reporter=dot
+Test Files  6 passed (6)
+Tests       25 passed (25)
+
+client: npm run build
+Vite production build completed successfully.
+
+root: npm run test:e2e
+4 passed
+
+server: npm test -- tests/lab-02 --reporter=dot
+Test Files  10 passed (10)
+Tests       29 passed (29)
+```
+
+#### Submission screenshot index
+
+**Part 6 — Create Ticket states**
+
+- `create-ticket-initial.png` — initial form with the selected requester and API-loaded controls.
+- `create-ticket-validation-error.png` — required-field validation messages.
+- `create-ticket-submitting.png` — disabled form and `Creating…` busy button.
+- `desktop-create-ticket-success.png` — backend-generated Ticket Number and attachment upload `1/1`.
+- `create-ticket-api-failure.png` — safe HTTP 500 message with entered values preserved.
+- `create-ticket-invalid-attachment.png` — rejected unsupported attachment type.
+
+**Part 7 — My Tickets behavior**
+
+- `my-tickets-search-applied.png` — search value applied with the matching owned ticket.
+- `my-tickets-filter-sort-applied.png` — Network/HIGH filters with Ticket Number ascending sort.
+- `my-tickets-pagination-page-2.png` — real second page and pagination metadata.
+- `my-tickets-empty.png` — empty-list state.
+- `my-tickets-no-results.png` — no-results state after a search.
+- `my-tickets-requester-switch.png` — Ben Chaiyo selected without Ari Suksan's evidence ticket.
+
+**Part 8 — Ticket Detail and Attachments**
+
+- `ticket-detail-active-attachment-download.png` — active uploaded attachment and Download action;
+  the Playwright workflow completed the download before capturing the image.
+- `desktop-ticket-detail-removed.png` — soft-removed attachment retained as unavailable metadata.
+- `cross-requester-attachment-404.png` — Ari Suksan is identified as the attachment owner,
+  while Ben Chaiyo's request shows the attachment endpoint, `X-Requester-Id`, HTTP 404 status,
+  and safe `Resource not found` response together.
+
+**Part 9 — Responsive evidence**
+
+- Create Ticket: `responsive-create-ticket.png`, `tablet-create-ticket.png`,
+  `mobile-create-ticket.png`.
+- My Tickets: `responsive-my-tickets.png`, `tablet-my-tickets.png`,
+  `mobile-my-tickets.png`.
+- Ticket Detail: `responsive-ticket-detail.png`, `tablet-ticket-detail.png`,
+  `mobile-ticket-detail.png`.
+
+Issue 25 documentation checks completed on this branch:
+
+- `reviewer.md` contains the teammate identity, PR links, review comments, responses, and
+  merge evidence for PRs #26-#33.
+- `ai-use.md` contains nine concrete example prompts and a critical-thinking reflection.
+- This file contains test paths, results, traceability, and the responsive screenshot evidence.
+- The Part 6–9 screenshot index records the required states and reviewer-requested evidence.
+- `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
+- A final release PR from `lab2-staging` to `main` has not been opened yet by instruction.

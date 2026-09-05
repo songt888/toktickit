@@ -16,6 +16,8 @@
 | [#31](https://github.com/songt888/toktickit/pull/31) | `feature/lab2-06-ticket-detail` | Reviewed, corrected, and merged |
 | [#32](https://github.com/songt888/toktickit/pull/32) | `feature/lab2-07-attachments` | Reviewed, corrected, and merged |
 | [#33](https://github.com/songt888/toktickit/pull/33) | `feature/lab2-08-e2e-responsive` | Reviewed, corrected, and merged |
+| [#34](https://github.com/songt888/toktickit/pull/34) | `feature/lab2-09-docs-release` | Reviewed, evidence corrections completed, and merged by `@stickkersz` |
+| [#35](https://github.com/songt888/toktickit/pull/35) | `lab2-staging` → `main` | [Formally approved by `@stickkersz`](https://github.com/songt888/toktickit/pull/35#pullrequestreview-5121978636) and merged |
 
 Reviewer comments I received: The reviewer requested clearer Prisma and API contracts, inactive
 reference fixtures, requester-context accessibility, documented validation responses, protection
@@ -55,4 +57,4 @@ commits and gave formal approval only after the requested changes were complete.
 - [x] Author and peer-reviewer identities are recorded.
 - [x] Authored and reviewed PR URLs are working links.
 - [x] Comments received, my responses, comments given, partner responses, and approvals are documented.
-- [ ] The Lab 2 release PR from `lab2-staging` to `main` is approved by Nattakit Prasertsak (@stickkersz) and recorded here.
+- [x] [Release PR #35](https://github.com/songt888/toktickit/pull/35) from `lab2-staging` to `main` was formally approved by Nattakit Prasertsak ([@stickkersz](https://github.com/stickkersz)) and merged as commit `b985c9a`.

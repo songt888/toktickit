@@ -85,12 +85,12 @@ All sizes must avoid clipped labels, overlapping validation, hidden buttons, unr
 
 ## 10. Visual Inspection Checklist
 
-- [ ] Zen Green tokens are used consistently.
-- [ ] Editable and read-only fields are distinguishable.
-- [ ] Field labels, required markers, and validation placement are consistent.
-- [ ] Button hierarchy and busy/disabled states are clear.
-- [ ] Desktop table and mobile representation are usable.
-- [ ] Priority and status badges are consistent.
-- [ ] Empty and no-results states are different and useful.
-- [ ] No clipping, overlap, or unintended horizontal scroll exists.
-- [ ] Screenshots are saved under `artifacts/lab-02/screenshots/`.
+- [x] Zen Green tokens are used consistently.
+- [x] Editable and read-only fields are distinguishable.
+- [x] Field labels, required markers, and validation placement are consistent.
+- [x] Button hierarchy and busy/disabled states are clear.
+- [x] Desktop table and mobile representation are usable.
+- [x] Priority and status badges are consistent.
+- [x] Empty and no-results states are different and useful.
+- [x] No clipping, overlap, or unintended horizontal scroll exists.
+- [x] Screenshots are saved under `artifacts/lab-02/screenshots/`.

@@ -43,7 +43,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | E2E-01 | E2E | AC-01, AC-03, AC-06, AC-09 | Select requester, create, list, and detail | `e2e/lab-02/requester-ticket-flow.spec.ts` | Complete flow passes | Pass (1 test) |
 | E2E-02 | E2E | AC-07, AC-10 | Switch requester and reject cross-owner access | `e2e/lab-02/requester-ticket-flow.spec.ts` | Data isolation passes | Pass (1 test) |
 | E2E-03 | E2E | AC-11, AC-13, AC-14 | Upload, download, soft-remove, blocked download | `e2e/lab-02/requester-ticket-flow.spec.ts` | Attachment flow passes | Pass (1 test) |
-| RELEASE-01 | Release | AC-16 | Run the complete server, client, build, migration/seed, and Playwright verification suite on the release candidate, then repeat it from `main` after merge with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass before and after release merge | Pass on release candidate `0dfa5f3` (29 server, 25 client, 4 Playwright); repeat on `main` after PR #35 merges |
+| RELEASE-01 | Release | AC-16 | Run the complete server, client, build, migration/seed, and Playwright verification suite on the release candidate, then repeat it from `main` after merge with no skipped tests | `server/tests/lab-02/ticket-number.test.ts`; `server/tests/lab-02/validation.test.ts`; `server/tests/lab-02/query-options.test.ts`; `server/tests/lab-02/requesters.api.test.ts`; `server/tests/lab-02/create-ticket.api.test.ts`; `server/tests/lab-02/my-tickets.api.test.ts`; `server/tests/lab-02/ticket-detail.api.test.ts`; `server/tests/lab-02/attachments.api.test.ts`; `server/tests/lab-02/data-foundation.test.ts`; `server/tests/lab-02/seed.test.ts`; `client/tests/lab-02/RequesterSelection.test.tsx`; `client/tests/lab-02/CreateTicket.test.tsx`; `client/tests/lab-02/MyTickets.test.tsx`; `client/tests/lab-02/RequesterTicketDetail.test.tsx`; `client/tests/lab-02/AttachmentSection.test.tsx`; `client/tests/lab-02/ui-style.test.tsx`; `e2e/lab-02/requester-ticket-flow.spec.ts`; `e2e/lab-02/responsive.spec.ts` | All documented checks pass before and after release merge | Pass on `main` merge commit `b985c9a` (29 server, 25 client, 4 Playwright; migrations, seed, and builds passed) |
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -102,17 +102,16 @@ with the Lab 1 feature branch and are not part of the Lab 2 application test run
 
 ## 6. Final Results
 
-The results below are the latest Lab 2-only evidence from release candidate `0dfa5f3` on
-`lab2-staging`. The same commands will be rerun from `main` after release PR #35 is approved
-and merged so the final merge commit can be recorded without leaving the release candidate unverified.
+The results below were rerun from final `main` merge commit `b985c9a` after release PR #35
+was formally approved and merged.
 
 | Level | Command/result | Final status |
 |---|---|---|
-| Unit/API/integration | `server: npm test -- tests/lab-02 --reporter=dot` | Pass on release branch (10 files, 29 tests) |
-| UI | `client: npm test -- --reporter=dot` | Pass on release branch (6 files, 25 tests) |
-| Responsive/visual | Playwright screenshots and checklist | Pass on release branch (desktop/tablet/mobile) |
-| E2E | Requester ticket flow | Pass on release branch (4 tests) |
-| Release verification | RELEASE-01 | Pass on `lab2-staging` at `0dfa5f3`; repeat on `main` after PR #35 merges |
+| Unit/API/integration | `server: npm test -- tests/lab-02 --reporter=dot` | Pass on `main` (10 files, 29 tests) |
+| UI | `client: npm test -- --reporter=dot` | Pass on `main` (6 files, 25 tests) |
+| Responsive/visual | Playwright screenshots and checklist | Pass on `main` (desktop/tablet/mobile) |
+| E2E | Requester ticket flow | Pass on `main` (4 tests) |
+| Release verification | RELEASE-01 | Pass on `main` at `b985c9a`; migrations, seed, server/client builds, and all suites passed |
 
 ### Issue 18 verification on the feature branch
 
@@ -272,14 +271,25 @@ My Tickets, Ticket Detail, and Create Ticket screens. Screenshots are stored und
 The branch-level evidence is complete for Issue #24 and is included in the complete
 release-candidate pass recorded above.
 
-### Issue 25 release-preparation verification on the feature branch
+### Issue 25 final release verification on `main`
 
-The documentation and evidence files were updated on a branch based on the merged Issue #24
-implementation. Release PR #35 is open from `lab2-staging` to `main`. The complete suite passed
-on release candidate `0dfa5f3`; after the PR is approved and merged, the same commands will be
-rerun from `main` and the merge commit SHA will be recorded.
+Release PR #35 was formally approved by Nattakit Prasertsak (`@stickkersz`) and merged from
+`lab2-staging` to `main`. The complete suite was rerun successfully from merge commit `b985c9a`.
 
 ```text
+main: git log -1 --oneline
+b985c9a Merge pull request #35 from songt888/lab2-staging
+
+server: npx prisma migrate deploy
+No pending migrations to apply.
+
+server: npm run prisma:seed
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+server: npm test -- tests/lab-02 --reporter=dot
+Test Files  10 passed (10)
+Tests       29 passed (29)
+
 server: npm run build
 TypeScript build completed successfully.
 
@@ -292,10 +302,6 @@ Vite production build completed successfully.
 
 root: npm run test:e2e
 4 passed
-
-server: npm test -- tests/lab-02 --reporter=dot
-Test Files  10 passed (10)
-Tests       29 passed (29)
 ```
 
 #### Submission screenshot index
@@ -339,9 +345,9 @@ Tests       29 passed (29)
 Issue 25 documentation checks completed on this branch:
 
 - `reviewer.md` contains the teammate identity, PR links, review comments, responses, and
-  merge evidence for PRs #26-#33.
+  merge evidence for PRs #26-#35.
 - `ai-use.md` contains nine concrete example prompts and a critical-thinking reflection.
 - This file contains test paths, results, traceability, and the responsive screenshot evidence.
 - The Part 6–9 screenshot index records the required states and reviewer-requested evidence.
 - `README.md` documents Lab 2 setup, migration, seed, run, test, E2E, and attachment behavior.
-- Release PR #35 is open from `lab2-staging` to `main` and is awaiting formal peer approval.
+- Release PR #35 was formally approved and merged from `lab2-staging` to `main`.

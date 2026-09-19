@@ -61,7 +61,8 @@ async function upsertUser(
 ) {
   const email = seed.email.trim().toLowerCase();
   const existing = await database.user.findUnique({ where: { email } });
-  const resetInitialPassword = existing?.passwordHash === MIGRATION_PLACEHOLDER_HASH;
+  const resetInitialPassword =
+    Boolean(initialPassword) && existing?.passwordHash === MIGRATION_PLACEHOLDER_HASH;
 
   if (existing) {
     return database.user.update({
@@ -154,18 +155,7 @@ async function upsertTicket(
 ) {
   return database.ticket.upsert({
     where: { ticketNumber: input.ticketNumber },
-    update: {
-      requesterId: input.requesterId,
-      ownerId: input.ownerId,
-      categoryId: input.categoryId,
-      relatedSystemId: input.relatedSystemId,
-      summary: input.summary,
-      description: input.description,
-      requestedPriority: input.requestedPriority,
-      itPriority: input.requestedPriority,
-      currentStatus: input.currentStatus,
-      problemAppearsResolved: input.problemAppearsResolved ?? false,
-    },
+    update: {},
     create: {
       ticketNumber: input.ticketNumber,
       requesterId: input.requesterId,

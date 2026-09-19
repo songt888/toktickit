@@ -4,13 +4,23 @@ import ChangePassword from "./ChangePassword.js";
 import CreateTicket from "./CreateTicket.js";
 import Login from "./Login.js";
 import MyTickets from "./MyTickets.js";
+import StaffTicketDetail from "./StaffTicketDetail.js";
+import StaffTicketQueue from "./StaffTicketQueue.js";
 import TicketDetail from "./TicketDetail.js";
 
-type ActivePage = "tickets" | "create" | "detail";
+type ActivePage = "tickets" | "create" | "detail" | "queue" | "staff-detail";
 type AuthMode = "checking" | "login" | "change-password" | "authenticated";
 
 function requesterFromUser(user: AuthUser): Requester {
   return { id: user.id, name: user.name, email: user.email };
+}
+
+function isOperationalRole(user: AuthUser | null): boolean {
+  return user?.role === "IT_STAFF" || user?.role === "ADMINISTRATOR";
+}
+
+function defaultPageForUser(user: AuthUser): ActivePage {
+  return isOperationalRole(user) ? "queue" : "tickets";
 }
 
 export default function App() {
@@ -25,6 +35,7 @@ export default function App() {
       .then(({ user }) => {
         if (cancelled) return;
         setAuthUser(user);
+        setActivePage(defaultPageForUser(user));
         setAuthMode(user.mustChangePassword ? "change-password" : "authenticated");
       })
       .catch((error) => {
@@ -48,14 +59,14 @@ export default function App() {
   function handleLogin(user: AuthUser) {
     setAuthUser(user);
     setSelectedTicketId(null);
-    setActivePage("tickets");
+    setActivePage(defaultPageForUser(user));
     setAuthMode(user.mustChangePassword ? "change-password" : "authenticated");
   }
 
   function handlePasswordChanged(user: AuthUser) {
     setAuthUser(user);
     setAuthMode("authenticated");
-    setActivePage("tickets");
+    setActivePage(defaultPageForUser(user));
   }
 
   async function handleLogout() {
@@ -75,8 +86,15 @@ export default function App() {
     setActivePage("detail");
   }
 
+  function handleOpenOperationalTicket(ticketId: number) {
+    setSelectedTicketId(ticketId);
+    setActivePage("staff-detail");
+  }
+
+  const operationalUser = isOperationalRole(authUser);
+
   return (
-    <div className="container py-4" style={{ maxWidth: 760 }}>
+    <div className="container py-4" style={{ maxWidth: operationalUser ? 1200 : 760 }}>
       <header className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <h1 className="h3 mb-0">
           TokTickIT <span className="text-success">IT Service Desk</span>
@@ -94,10 +112,10 @@ export default function App() {
         )}
       </header>
 
-      {currentRequester && authMode === "authenticated" && (
+      {authUser && authMode === "authenticated" && (currentRequester || operationalUser) && (
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
-            <a
+            {currentRequester && <a
               className={`nav-link${activePage === "tickets" || activePage === "detail" ? " active fw-semibold" : ""}`}
               href="#my-tickets"
               aria-current={activePage === "tickets" || activePage === "detail" ? "page" : undefined}
@@ -107,8 +125,8 @@ export default function App() {
               }}
             >
               My Tickets
-            </a>
-            <a
+            </a>}
+            {currentRequester && <a
               className={`nav-link${activePage === "create" ? " active fw-semibold" : ""}`}
               href="#create-ticket"
               aria-current={activePage === "create" ? "page" : undefined}
@@ -118,7 +136,18 @@ export default function App() {
               }}
             >
               Create Ticket
-            </a>
+            </a>}
+            {operationalUser && <a
+              className={`nav-link${activePage === "queue" || activePage === "staff-detail" ? " active fw-semibold" : ""}`}
+              href="#staff-ticket-queue"
+              aria-current={activePage === "queue" || activePage === "staff-detail" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActivePage("queue");
+              }}
+            >
+              Ticket Queue
+            </a>}
           </div>
         </nav>
       )}
@@ -135,7 +164,7 @@ export default function App() {
         <ChangePassword user={authUser} onSuccess={handlePasswordChanged} />
       )}
 
-      {authMode === "authenticated" && authUser && !currentRequester && (
+      {authMode === "authenticated" && authUser && !currentRequester && !operationalUser && (
         <section className="card border-0 shadow-sm" aria-labelledby="role-workspace-title">
           <div className="card-body">
             <h2 id="role-workspace-title" className="h4">Welcome, {authUser.name}</h2>
@@ -163,6 +192,20 @@ export default function App() {
         <TicketDetail
           ticketId={selectedTicketId}
           onBack={() => setActivePage("tickets")}
+        />
+      )}
+
+      {authMode === "authenticated" && operationalUser && (
+        <StaffTicketQueue
+          onOpenTicket={handleOpenOperationalTicket}
+          visible={activePage === "queue"}
+        />
+      )}
+
+      {authMode === "authenticated" && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (
+        <StaffTicketDetail
+          ticketId={selectedTicketId}
+          onBack={() => setActivePage("queue")}
         />
       )}
     </div>

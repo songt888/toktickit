@@ -22,7 +22,10 @@ import { getNextTicketNumber } from "./ticketNumber.js";
 import {
   buildTicketOrderBy,
   buildTicketWhere,
+  buildStaffTicketOrderBy,
+  buildStaffTicketWhere,
   parseTicketListQuery,
+  parseStaffTicketListQuery,
 } from "./ticketQuery.js";
 import {
   attachmentLimits,
@@ -449,12 +452,131 @@ app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: 
   }
 });
 
+// ---------------------------------------------------------------------------
+// Lab 3 Issue 6 — IT Staff Ticket Queue and read-only operational detail
+// ---------------------------------------------------------------------------
 const publicCommentSelect = {
   id: true,
   content: true,
   createdAt: true,
   author: { select: { id: true, name: true, email: true } },
 } as const;
+
+const staffTicketListSelect = {
+  id: true,
+  ticketNumber: true,
+  ticketDate: true,
+  summary: true,
+  requestedPriority: true,
+  itPriority: true,
+  currentStatus: true,
+  updatedAt: true,
+  requester: { select: { id: true, name: true, email: true } },
+  owner: { select: { id: true, name: true, email: true, role: true } },
+  category: { select: { id: true, name: true } },
+  relatedSystem: { select: { id: true, name: true } },
+} as const;
+
+const internalNoteSelect = {
+  id: true,
+  content: true,
+  createdAt: true,
+  author: { select: { id: true, name: true, email: true } },
+} as const;
+
+app.get(
+  "/api/staff/tickets",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  async (req: Request, res: Response) => {
+    const parsedQuery = parseStaffTicketListQuery(req.query as Record<string, unknown>);
+    if (!parsedQuery.value) {
+      res.status(400).json({ error: parsedQuery.error });
+      return;
+    }
+
+    try {
+      const database = getPrisma();
+      const where = buildStaffTicketWhere(parsedQuery.value);
+      const skip = (parsedQuery.value.page - 1) * parsedQuery.value.pageSize;
+      const [totalItems, items] = await database.$transaction([
+        database.ticket.count({ where }),
+        database.ticket.findMany({
+          where,
+          orderBy: buildStaffTicketOrderBy(parsedQuery.value),
+          skip,
+          take: parsedQuery.value.pageSize,
+          select: staffTicketListSelect,
+        }),
+      ]);
+
+      res.status(200).json({
+        items,
+        pagination: {
+          page: parsedQuery.value.page,
+          pageSize: parsedQuery.value.pageSize,
+          totalItems,
+          totalPages: Math.ceil(totalItems / parsedQuery.value.pageSize),
+        },
+      });
+    } catch {
+      res.status(500).json({ error: "Unable to load the staff ticket queue" });
+    }
+  },
+);
+
+app.get(
+  "/api/staff/tickets/:id",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (_req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+
+    try {
+      const ticket = await getPrisma().ticket.findUnique({
+        where: { id: ticketId },
+        select: {
+          ...staffTicketListSelect,
+          requesterId: true,
+          categoryId: true,
+          relatedSystemId: true,
+          description: true,
+          problemAppearsResolved: true,
+          problemAppearsResolvedAt: true,
+          createdAt: true,
+          attachments: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: {
+              id: true,
+              originalName: true,
+              mimeType: true,
+              sizeBytes: true,
+              createdAt: true,
+              removedAt: true,
+              removalReason: true,
+            },
+          },
+          publicComments: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: publicCommentSelect,
+          },
+          internalNotes: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: internalNoteSelect,
+          },
+        },
+      });
+
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+
+      res.status(200).json(ticket);
+    } catch {
+      res.status(500).json({ error: "Unable to load operational ticket detail" });
+    }
+  },
+);
 
 function accessibleTicketWhere(user: { id: number; role: string }, ticketId: number) {
   return user.role === "REQUESTER"

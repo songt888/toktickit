@@ -123,6 +123,65 @@ export interface TicketListResponse {
   };
 }
 
+export interface StaffUser {
+  id: number;
+  name: string;
+  email: string;
+  role: Exclude<UserRole, "REQUESTER">;
+}
+
+export interface StaffTicketListItem {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  summary: string;
+  requestedPriority: TicketPriority;
+  itPriority: TicketPriority;
+  currentStatus: TicketStatus;
+  updatedAt: string;
+  requester: Requester;
+  owner: StaffUser | null;
+  category: Category;
+  relatedSystem: RelatedSystem;
+}
+
+export interface StaffTicketListResponse {
+  items: StaffTicketListItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
+
+export interface StaffTicketListOptions {
+  search?: string;
+  categoryId?: number;
+  relatedSystemId?: number;
+  requestedPriority?: TicketPriority;
+  itPriority?: TicketPriority;
+  currentStatus?: TicketStatus;
+  ownerId?: number | "unassigned";
+  sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority" | "itPriority" | "currentStatus";
+  order?: "asc" | "desc";
+  page?: number;
+  pageSize?: 10 | 25 | 50;
+}
+
+export interface StaffTicketDetailData extends StaffTicketListItem {
+  requesterId: number;
+  categoryId: number;
+  relatedSystemId: number;
+  description: string;
+  problemAppearsResolved: boolean;
+  problemAppearsResolvedAt: string | null;
+  createdAt: string;
+  attachments: AttachmentMetadata[];
+  publicComments: PublicComment[];
+  internalNotes: PublicComment[];
+}
+
 export interface TicketListOptions {
   search?: string;
   categoryId?: number;
@@ -246,6 +305,34 @@ export async function getMyTickets(
   }
 
   return (await response.json()) as TicketListResponse;
+}
+
+export async function getStaffTickets(
+  options: StaffTicketListOptions = {},
+): Promise<StaffTicketListResponse> {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && value !== "") query.set(key, String(value));
+  }
+
+  const queryString = query.toString();
+  const response = await fetch(`${API_URL}/api/staff/tickets${queryString ? `?${queryString}` : ""}`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await authError(response, "Unable to load the staff ticket queue.");
+
+  return (await response.json()) as StaffTicketListResponse;
+}
+
+export async function getStaffTicketDetail(ticketId: number): Promise<StaffTicketDetailData> {
+  const response = await fetch(`${API_URL}/api/staff/tickets/${ticketId}`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw await authError(response, "Unable to load operational ticket detail.");
+  }
+
+  return (await response.json()) as StaffTicketDetailData;
 }
 
 export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {

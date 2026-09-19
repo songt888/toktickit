@@ -1,4 +1,4 @@
-import type { Prisma, TicketPriority } from "@prisma/client";
+import type { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
 
 export const ticketSortFields = [
   "ticketNumber",
@@ -24,6 +24,10 @@ export type TicketListQuery = {
 
 export type QueryParseResult =
   | { value: TicketListQuery; error?: undefined }
+  | { value?: undefined; error: string };
+
+export type StaffQueryParseResult =
+  | { value: StaffTicketListQuery; error?: undefined }
   | { value?: undefined; error: string };
 
 function readString(query: Record<string, unknown>, key: string): string | null | undefined {
@@ -126,6 +130,146 @@ export function buildTicketWhere(
 
 export function buildTicketOrderBy(
   options: TicketListQuery,
+): Prisma.TicketOrderByWithRelationInput[] {
+  return [{ [options.sort]: options.order }, { id: "desc" }];
+}
+
+export const staffTicketSortFields = [
+  "ticketNumber",
+  "ticketDate",
+  "updatedAt",
+  "requestedPriority",
+  "itPriority",
+  "currentStatus",
+] as const;
+export type StaffTicketSortField = (typeof staffTicketSortFields)[number];
+
+export type StaffTicketListQuery = {
+  search?: string;
+  categoryId?: number;
+  relatedSystemId?: number;
+  requestedPriority?: TicketPriority;
+  itPriority?: TicketPriority;
+  currentStatus?: TicketStatus;
+  ownerId?: number | null;
+  sort: StaffTicketSortField;
+  order: "asc" | "desc";
+  page: number;
+  pageSize: TicketPageSize;
+};
+
+const ticketPriorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+const ticketStatuses: TicketStatus[] = [
+  "NEW",
+  "OPEN",
+  "IN_PROGRESS",
+  "WAITING_FOR_REQUESTER",
+  "RESOLVED",
+  "CLOSED",
+  "REOPENED",
+  "CANCELLED",
+];
+
+export function parseStaffTicketListQuery(query: Record<string, unknown>): StaffQueryParseResult {
+  const search = readString(query, "search");
+  const categoryId = readPositiveInteger(query, "categoryId");
+  const relatedSystemId = readPositiveInteger(query, "relatedSystemId");
+  const page = readPositiveInteger(query, "page");
+  const pageSize = readPositiveInteger(query, "pageSize");
+  const sort = readString(query, "sort");
+  const order = readString(query, "order");
+  const requestedPriority = readString(query, "requestedPriority");
+  const itPriority = readString(query, "itPriority");
+  const currentStatus = readString(query, "currentStatus");
+  const ownerId = readString(query, "ownerId");
+
+  if (
+    search === null ||
+    categoryId === null ||
+    relatedSystemId === null ||
+    page === null ||
+    pageSize === null ||
+    sort === null ||
+    order === null ||
+    requestedPriority === null ||
+    itPriority === null ||
+    currentStatus === null ||
+    ownerId === null
+  ) {
+    return { error: "Invalid query parameters" };
+  }
+
+  if (sort !== undefined && !staffTicketSortFields.includes(sort as StaffTicketSortField)) {
+    return { error: "Invalid query parameters" };
+  }
+  if (order !== undefined && order !== "asc" && order !== "desc") {
+    return { error: "Invalid query parameters" };
+  }
+  if (pageSize !== undefined && !ticketPageSizes.includes(pageSize as TicketPageSize)) {
+    return { error: "Invalid query parameters" };
+  }
+  if (
+    (requestedPriority !== undefined && !ticketPriorities.includes(requestedPriority as TicketPriority)) ||
+    (itPriority !== undefined && !ticketPriorities.includes(itPriority as TicketPriority)) ||
+    (currentStatus !== undefined && !ticketStatuses.includes(currentStatus as TicketStatus))
+  ) {
+    return { error: "Invalid query parameters" };
+  }
+
+  let parsedOwnerId: number | null | undefined;
+  if (ownerId === "unassigned") {
+    parsedOwnerId = null;
+  } else if (ownerId !== undefined) {
+    if (!/^\d+$/.test(ownerId)) return { error: "Invalid query parameters" };
+    const value = Number(ownerId);
+    if (!Number.isSafeInteger(value) || value <= 0) return { error: "Invalid query parameters" };
+    parsedOwnerId = value;
+  }
+
+  return {
+    value: {
+      ...(search ? { search: search.trim() } : {}),
+      ...(categoryId !== undefined ? { categoryId } : {}),
+      ...(relatedSystemId !== undefined ? { relatedSystemId } : {}),
+      ...(requestedPriority !== undefined
+        ? { requestedPriority: requestedPriority as TicketPriority }
+        : {}),
+      ...(itPriority !== undefined ? { itPriority: itPriority as TicketPriority } : {}),
+      ...(currentStatus !== undefined ? { currentStatus: currentStatus as TicketStatus } : {}),
+      ...(parsedOwnerId !== undefined ? { ownerId: parsedOwnerId } : {}),
+      sort: (sort ?? "updatedAt") as StaffTicketSortField,
+      order: (order ?? "desc") as "asc" | "desc",
+      page: page ?? 1,
+      pageSize: (pageSize ?? 10) as TicketPageSize,
+    },
+  };
+}
+
+export function buildStaffTicketWhere(
+  options: StaffTicketListQuery,
+): Prisma.TicketWhereInput {
+  return {
+    ...(options.categoryId ? { categoryId: options.categoryId } : {}),
+    ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
+    ...(options.requestedPriority ? { requestedPriority: options.requestedPriority } : {}),
+    ...(options.itPriority ? { itPriority: options.itPriority } : {}),
+    ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
+    ...(options.ownerId !== undefined ? { ownerId: options.ownerId } : {}),
+    ...(options.search
+      ? {
+          OR: [
+            { ticketNumber: { contains: options.search, mode: "insensitive" } },
+            { summary: { contains: options.search, mode: "insensitive" } },
+            { description: { contains: options.search, mode: "insensitive" } },
+            { requester: { name: { contains: options.search, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
+}
+
+export function buildStaffTicketOrderBy(
+  options: StaffTicketListQuery,
 ): Prisma.TicketOrderByWithRelationInput[] {
   return [{ [options.sort]: options.order }, { id: "desc" }];
 }

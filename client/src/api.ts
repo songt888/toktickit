@@ -19,6 +19,15 @@ export interface RelatedSystem {
 }
 
 export type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+export type TicketStatus =
+  | "NEW"
+  | "OPEN"
+  | "IN_PROGRESS"
+  | "WAITING_FOR_REQUESTER"
+  | "RESOLVED"
+  | "CLOSED"
+  | "REOPENED"
+  | "CANCELLED";
 export type UserRole = "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
 
 export interface AuthUser {
@@ -53,7 +62,7 @@ export interface Ticket {
   summary: string;
   description: string;
   requestedPriority: TicketPriority;
-  currentStatus: "NEW";
+  currentStatus: TicketStatus;
 }
 
 export interface AttachmentMetadata {
@@ -67,6 +76,8 @@ export interface AttachmentMetadata {
 }
 
 export interface TicketDetail extends Ticket {
+  problemAppearsResolved: boolean;
+  problemAppearsResolvedAt: string | null;
   requester: Requester;
   category: Category;
   relatedSystem: RelatedSystem;
@@ -81,10 +92,25 @@ export interface TicketListItem {
   ticketDate: string;
   summary: string;
   requestedPriority: TicketPriority;
-  currentStatus: "NEW";
+  currentStatus: TicketStatus;
   updatedAt: string;
   category: Category;
   relatedSystem: RelatedSystem;
+}
+
+export interface PublicComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: Requester;
+}
+
+export interface ProblemResolutionUpdate {
+  id: number;
+  problemAppearsResolved: boolean;
+  problemAppearsResolvedAt: string | null;
+  currentStatus: TicketStatus;
+  updatedAt: string;
 }
 
 export interface TicketListResponse {
@@ -231,6 +257,48 @@ export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {
   }
 
   return (await response.json()) as TicketDetail;
+}
+
+export async function getTicketComments(ticketId: number): Promise<PublicComment[]> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/comments`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Public comments request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as PublicComment[];
+}
+
+export async function addPublicComment(ticketId: number, content: string): Promise<PublicComment> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/comments`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Public comment request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as PublicComment;
+}
+
+export async function setProblemAppearsResolved(
+  ticketId: number,
+  appearsResolved: boolean,
+): Promise<ProblemResolutionUpdate> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/problem-resolution`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ appearsResolved }),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Problem resolution request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as ProblemResolutionUpdate;
 }
 
 export async function uploadAttachment(

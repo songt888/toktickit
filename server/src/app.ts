@@ -26,6 +26,7 @@ import {
 } from "./ticketQuery.js";
 import {
   attachmentLimits,
+  validateCommentContent,
   validateAttachment,
   validateCreateTicketInput,
   validateRemovalReason,
@@ -415,6 +416,8 @@ app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: 
         description: true,
         requestedPriority: true,
         currentStatus: true,
+        problemAppearsResolved: true,
+        problemAppearsResolvedAt: true,
         createdAt: true,
         updatedAt: true,
         requester: { select: { id: true, name: true, email: true } },
@@ -445,6 +448,140 @@ app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: 
     res.status(500).json({ error: "Unable to load ticket" });
   }
 });
+
+const publicCommentSelect = {
+  id: true,
+  content: true,
+  createdAt: true,
+  author: { select: { id: true, name: true, email: true } },
+} as const;
+
+function accessibleTicketWhere(user: { id: number; role: string }, ticketId: number) {
+  return user.role === "REQUESTER"
+    ? { id: ticketId, requesterId: user.id }
+    : { id: ticketId };
+}
+
+// ---------------------------------------------------------------------------
+// Lab 3 Issue 5 — Requester comments and problem-resolution indication
+// ---------------------------------------------------------------------------
+app.get(
+  "/api/tickets/:id/comments",
+  requireRole("REQUESTER", "IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (_req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+    const user = res.locals.authUser;
+
+    try {
+      const database = getPrisma();
+      const ticket = await database.ticket.findFirst({
+        where: accessibleTicketWhere(user, ticketId),
+        select: { id: true },
+      });
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+
+      const comments = await database.publicComment.findMany({
+        where: { ticketId },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: publicCommentSelect,
+      });
+      res.status(200).json(comments);
+    } catch {
+      res.status(500).json({ error: "Unable to load public comments" });
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:id/comments",
+  requireRole("REQUESTER", "IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+    const user = res.locals.authUser;
+    const validationError = validateCommentContent(req.body?.content);
+    if (validationError) {
+      res.status(400).json({ error: "Validation failed", fieldErrors: { content: validationError } });
+      return;
+    }
+
+    try {
+      const database = getPrisma();
+      const ticket = await database.ticket.findFirst({
+        where: accessibleTicketWhere(user, ticketId),
+        select: { id: true },
+      });
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+
+      const comment = await database.publicComment.create({
+        data: {
+          ticketId,
+          authorId: user.id,
+          content: (req.body.content as string).trim(),
+        },
+        select: publicCommentSelect,
+      });
+      res.status(201).json(comment);
+    } catch {
+      res.status(500).json({ error: "Unable to add public comment" });
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:id/problem-resolution",
+  requireRole("REQUESTER"),
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+    const requesterId = res.locals.authUser.id;
+    const appearsResolved = req.body?.appearsResolved;
+    if (typeof appearsResolved !== "boolean") {
+      res.status(400).json({
+        error: "Validation failed",
+        fieldErrors: { appearsResolved: "appearsResolved must be true or false." },
+      });
+      return;
+    }
+
+    try {
+      const database = getPrisma();
+      const ticket = await database.ticket.findFirst({
+        where: { id: ticketId, requesterId },
+        select: { id: true },
+      });
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+
+      const updated = await database.ticket.update({
+        where: { id: ticketId },
+        data: {
+          problemAppearsResolved: appearsResolved,
+          problemAppearsResolvedAt: appearsResolved ? new Date() : null,
+        },
+        select: {
+          id: true,
+          problemAppearsResolved: true,
+          problemAppearsResolvedAt: true,
+          currentStatus: true,
+          updatedAt: true,
+        },
+      });
+      res.status(200).json(updated);
+    } catch {
+      res.status(500).json({ error: "Unable to update problem resolution" });
+    }
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Lab 2 Issue 7 — Attachment lifecycle

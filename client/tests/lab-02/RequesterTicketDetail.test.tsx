@@ -16,6 +16,8 @@ const detail: api.TicketDetail = {
   description: "The requester cannot connect to the company VPN from home.",
   requestedPriority: "HIGH",
   currentStatus: "NEW",
+  problemAppearsResolved: false,
+  problemAppearsResolvedAt: null,
   createdAt: "2026-08-31T01:00:00.000Z",
   updatedAt: "2026-08-31T02:00:00.000Z",
   requester: { id: 1, name: "Ari Suksan", email: "ari.suksan@example.com" },
@@ -59,6 +61,7 @@ describe("Ticket Detail UI", () => {
   it("shows read-only ticket fields and separated attachment metadata", async () => {
     const onBack = vi.fn();
     vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
     const user = userEvent.setup();
 
     render(<TicketDetail ticketId={detail.id} onBack={onBack} />);
@@ -71,7 +74,8 @@ describe("Ticket Detail UI", () => {
     expect(screen.getByText("network-log.png")).toBeInTheDocument();
     expect(screen.getByText("old-log.pdf")).toBeInTheDocument();
     expect(screen.getByText(/No longer needed/)).toBeInTheDocument();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Add Public Comment" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mark problem as resolved" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Back to My Tickets" }));
     expect(onBack).toHaveBeenCalledOnce();
@@ -80,6 +84,7 @@ describe("Ticket Detail UI", () => {
   it("shows a loading state while the detail request is pending", async () => {
     const pendingRequest = deferred<api.TicketDetail>();
     vi.spyOn(api, "getTicketDetail").mockReturnValue(pendingRequest.promise);
+    vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
 
     render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
 
@@ -92,6 +97,7 @@ describe("Ticket Detail UI", () => {
     vi.spyOn(api, "getTicketDetail")
       .mockRejectedValueOnce(new api.ApiRequestError("The API returned a not-found response.", 404))
       .mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
     const user = userEvent.setup();
 
     render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
@@ -99,5 +105,52 @@ describe("Ticket Detail UI", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Ticket not found or you do not have access.");
     await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText(detail.ticketNumber)).toBeInTheDocument();
+  });
+
+  it("adds plain-text comments and keeps resolution separate from ticket status", async () => {
+    const comment: api.PublicComment = {
+      id: 501,
+      content: "<script>alert(1)</script>",
+      createdAt: "2026-08-31T03:00:00.000Z",
+      author: detail.requester,
+    };
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
+    const addComment = vi.spyOn(api, "addPublicComment").mockResolvedValue(comment);
+    const setResolution = vi.spyOn(api, "setProblemAppearsResolved").mockResolvedValue({
+      id: detail.id,
+      problemAppearsResolved: true,
+      problemAppearsResolvedAt: "2026-08-31T03:01:00.000Z",
+      currentStatus: "NEW",
+      updatedAt: "2026-08-31T03:01:00.000Z",
+    });
+    const user = userEvent.setup();
+
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
+    await screen.findByText(detail.ticketNumber);
+
+    await user.type(screen.getByRole("textbox", { name: "Add Public Comment" }), comment.content);
+    await user.click(screen.getByRole("button", { name: "Add Public Comment" }));
+    expect(addComment).toHaveBeenCalledWith(detail.id, comment.content);
+    expect(await screen.findByText(comment.content)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Mark problem as resolved" }));
+    expect(setResolution).toHaveBeenCalledWith(detail.id, true);
+    expect(await screen.findByText("Problem marked as appearing resolved. Ticket status was not changed.")).toBeInTheDocument();
+    expect(screen.getByText("NEW")).toBeInTheDocument();
+  });
+
+  it("shows validation feedback for an empty public comment", async () => {
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
+    const addComment = vi.spyOn(api, "addPublicComment");
+    const user = userEvent.setup();
+
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
+    await screen.findByText(detail.ticketNumber);
+    await user.click(screen.getByRole("button", { name: "Add Public Comment" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Comment content is required.");
+    expect(addComment).not.toHaveBeenCalled();
   });
 });

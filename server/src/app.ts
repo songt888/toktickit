@@ -1,14 +1,12 @@
 import express, { NextFunction, Request, Response } from "express";
-import cors from "cors";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { TicketPriority } from "@prisma/client";
 import multer, { MulterError } from "multer";
-import { hashPassword, verifyPassword } from "./password.js";
+import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from "./password.js";
 import {
   AUTH_USER_SELECT,
-  allowedOrigins,
   clearSessionCookie,
   createSession,
   hasAllowedOrigin,
@@ -50,16 +48,8 @@ app.use((_req: Request, res: Response, next) => {
   next();
 });
 
-app.use(cors({
-  credentials: true,
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins().has(origin)) {
-      callback(null, true);
-      return;
-    }
-    callback(null, false);
-  },
-}));
+// Browser requests use the Vite /api proxy in local development, so the
+// session cookie remains same-origin and the API does not expose credentialed CORS.
 app.use((req: Request, res: Response, next) => {
   if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method) && !hasAllowedOrigin(req)) {
     res.status(403).json({ error: "Request origin is not allowed" });
@@ -152,7 +142,8 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
       where: { email },
       select: { ...AUTH_USER_SELECT, passwordHash: true },
     });
-    if (!user || !user.isActive || !verifyPassword(password, user.passwordHash)) {
+    const passwordMatches = verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !user.isActive || !passwordMatches) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }

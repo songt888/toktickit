@@ -13,6 +13,10 @@ export function hashPassword(password: string): string {
   return `scrypt$${salt.toString("hex")}$${derivedKey.toString("hex")}`;
 }
 
+// Use a real scrypt hash when the email does not match an account so that
+// unknown-account attempts still perform comparable password work.
+export const DUMMY_PASSWORD_HASH = hashPassword("TokTickIT_dummy_login_password_123");
+
 export function verifyPassword(password: string, encodedHash: string): boolean {
   if (encodedHash === MIGRATION_PLACEHOLDER_HASH) return false;
 

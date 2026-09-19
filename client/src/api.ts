@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+// Vite proxies /api to Express in local development so the session cookie
+// remains same-origin. An explicit value is supported for other deployments.
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export interface Category {
   id: number;

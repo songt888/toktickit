@@ -46,18 +46,18 @@ export const administratorSeed = {
 
 type ReferenceSeedClient = Pick<PrismaClient, "category" | "relatedSystem" | "user">;
 type Lab3SeedClient = ReferenceSeedClient &
-  Pick<PrismaClient, "ticket" | "publicComment" | "internalNote" | "$executeRaw">;
+  Pick<PrismaClient, "ticket" | "publicComment" | "internalNote">;
 
-function configuredInitialPasswordHash(): string {
+function configuredInitialPassword(): string | undefined {
   const password = process.env.LAB3_SEED_INITIAL_PASSWORD?.trim();
-  return password ? hashPassword(password) : MIGRATION_PLACEHOLDER_HASH;
+  return password || undefined;
 }
 
 async function upsertUser(
   database: ReferenceSeedClient,
   seed: { name: string; email: string; isActive: boolean },
   role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR",
-  initialPasswordHash: string,
+  initialPassword: string | undefined,
 ) {
   const email = seed.email.trim().toLowerCase();
   const existing = await database.user.findUnique({ where: { email } });
@@ -72,7 +72,9 @@ async function upsertUser(
         isActive: seed.isActive,
         ...(resetInitialPassword
           ? {
-              passwordHash: initialPasswordHash,
+              passwordHash: initialPassword
+                ? hashPassword(initialPassword)
+                : MIGRATION_PLACEHOLDER_HASH,
               mustChangePassword: true,
               passwordChangedAt: null,
             }
@@ -87,7 +89,9 @@ async function upsertUser(
       email,
       role,
       isActive: seed.isActive,
-      passwordHash: initialPasswordHash,
+      passwordHash: initialPassword
+        ? hashPassword(initialPassword)
+        : MIGRATION_PLACEHOLDER_HASH,
       mustChangePassword: true,
     },
   });
@@ -115,9 +119,9 @@ export async function seedLab2Data(database: ReferenceSeedClient) {
     });
   }
 
-  const initialPasswordHash = configuredInitialPasswordHash();
+  const initialPassword = configuredInitialPassword();
   for (const requester of requesterSeeds) {
-    await upsertUser(database, requester, "REQUESTER", initialPasswordHash);
+    await upsertUser(database, requester, "REQUESTER", initialPassword);
   }
 
   console.log(
@@ -126,11 +130,11 @@ export async function seedLab2Data(database: ReferenceSeedClient) {
 }
 
 async function upsertLab3Users(database: ReferenceSeedClient) {
-  const initialPasswordHash = configuredInitialPasswordHash();
+  const initialPassword = configuredInitialPassword();
   for (const staff of staffSeeds) {
-    await upsertUser(database, staff, "IT_STAFF", initialPasswordHash);
+    await upsertUser(database, staff, "IT_STAFF", initialPassword);
   }
-  await upsertUser(database, administratorSeed, "ADMINISTRATOR", initialPasswordHash);
+  await upsertUser(database, administratorSeed, "ADMINISTRATOR", initialPassword);
 }
 
 async function upsertTicket(
@@ -249,10 +253,6 @@ export async function seedLab3Data(database: Lab3SeedClient) {
   await ensureComment(database, secondTicket.id, ben.id, "I can reproduce this after reconnecting the cable.");
   await ensureInternalNote(database, firstTicket.id, staff.id, "Checked device inventory; replacement is available.");
   await ensureInternalNote(database, secondTicket.id, admin.id, "Seeded operational note for staff review.");
-
-  // Keep the sequence ahead of deterministic seed numbers for later API-created
-  // tickets. This is harmless on reruns and does not change existing tickets.
-  await database.$executeRaw`SELECT setval('ticket_number_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM "Ticket"), 1), true)`;
 
   console.log("Seeded Lab 3 users, realistic tickets, comments, and internal notes.");
 }

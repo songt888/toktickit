@@ -1,10 +1,21 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getPrisma } from "../../src/prisma.js";
+import { seedLab3Data } from "../../prisma/seed.js";
 
 const prisma = getPrisma();
+let preservationAttachmentId: number | undefined;
 
 describe("Lab 3 database foundation", () => {
+  beforeAll(async () => {
+    process.env.LAB3_SEED_INITIAL_PASSWORD = "Lab3PreserveTestPassword123";
+    await seedLab3Data(prisma);
+  });
+
   afterAll(async () => {
+    if (preservationAttachmentId) {
+      await prisma.attachment.delete({ where: { id: preservationAttachmentId } });
+    }
+    delete process.env.LAB3_SEED_INITIAL_PASSWORD;
     await prisma.$disconnect();
   });
 
@@ -89,6 +100,38 @@ describe("Lab 3 database foundation", () => {
       "User_email_key",
     ]);
 
+    const legacyIndexes = await prisma.$queryRaw<Array<{ indexname: string }>>`
+      SELECT indexname
+      FROM pg_indexes
+      WHERE schemaname = 'public'
+        AND indexname IN (
+          'Ticket_requesterId_categoryId_idx',
+          'Ticket_requesterId_currentStatus_idx',
+          'Ticket_requesterId_requestedPriority_idx'
+        )
+      ORDER BY indexname
+    `;
+    expect(legacyIndexes).toEqual([]);
+
+    const constraints = await prisma.$queryRaw<
+      Array<{ conname: string; definition: string }>
+    >`
+      SELECT conname, pg_get_constraintdef(oid) AS definition
+      FROM pg_constraint
+      WHERE conname IN ('User_pkey', 'AuthSession_userId_fkey')
+      ORDER BY conname
+    `;
+    expect(constraints).toEqual([
+      {
+        conname: "AuthSession_userId_fkey",
+        definition: 'FOREIGN KEY ("userId") REFERENCES "User"(id) ON UPDATE CASCADE ON DELETE RESTRICT',
+      },
+      {
+        conname: "User_pkey",
+        definition: "PRIMARY KEY (id)",
+      },
+    ]);
+
     const enums = await prisma.$queryRaw<Array<{ typname: string }>>`
       SELECT typname
       FROM pg_type
@@ -107,5 +150,47 @@ describe("Lab 3 database foundation", () => {
       WHERE relkind = 'S' AND relname = 'ticket_number_seq'
     `;
     expect(sequences).toEqual([{ relname: "ticket_number_seq" }]);
+  });
+
+  it("preserves seeded user IDs, ticket ownership, attachments, and real hashes across reseeding", async () => {
+    const ari = await prisma.user.findUnique({
+      where: { email: "ari.suksan@example.com" },
+      select: { id: true, passwordHash: true },
+    });
+    const ticket = await prisma.ticket.findUnique({
+      where: { ticketNumber: "TKT-20260919-900001" },
+      select: { id: true, requesterId: true, ownerId: true },
+    });
+    if (!ari || !ticket) throw new Error("Lab 3 preservation fixtures are missing");
+    expect(ari.passwordHash).toMatch(/^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/);
+
+    const attachment = await prisma.attachment.create({
+      data: {
+        ticketId: ticket.id,
+        originalName: "preservation-fixture.png",
+        storedName: `lab3-preservation-${Date.now()}.png`,
+        mimeType: "image/png",
+        sizeBytes: 128,
+      },
+    });
+    preservationAttachmentId = attachment.id;
+
+    await seedLab3Data(prisma);
+
+    const [preservedUser, preservedTicket, preservedAttachment] = await Promise.all([
+      prisma.user.findUnique({
+        where: { email: "ari.suksan@example.com" },
+        select: { id: true, passwordHash: true },
+      }),
+      prisma.ticket.findUnique({
+        where: { ticketNumber: "TKT-20260919-900001" },
+        select: { id: true, requesterId: true, ownerId: true },
+      }),
+      prisma.attachment.findUnique({ where: { id: attachment.id }, select: { id: true, ticketId: true } }),
+    ]);
+
+    expect(preservedUser).toEqual(ari);
+    expect(preservedTicket).toEqual(ticket);
+    expect(preservedAttachment).toEqual({ id: attachment.id, ticketId: ticket.id });
   });
 });

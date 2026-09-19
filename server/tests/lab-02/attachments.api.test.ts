@@ -5,6 +5,7 @@ import path from "node:path";
 import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
+import { createTestUser, removeTestUsers, sessionCookieFor } from "../lab-03/testSession.js";
 
 const prisma = getPrisma();
 const storageDir = path.resolve(process.env.ATTACHMENT_STORAGE_DIR ?? path.join(process.cwd(), "uploads"));
@@ -18,11 +19,13 @@ describe("Attachment lifecycle API", () => {
   let categoryId: number;
   let relatedSystemId: number;
   let uploadedAttachmentId: number;
+  let ownerCookie: string;
+  let otherRequesterCookie: string;
 
   async function createTicket(summary: string) {
     const response = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .send({
         categoryId,
         relatedSystemId,
@@ -38,7 +41,7 @@ describe("Attachment lifecycle API", () => {
   async function upload(targetTicketId: number, filename = "error.png", contentType = "image/png", contents = Buffer.from("attachment-data")) {
     const response = await request(app)
       .post(`/api/tickets/${targetTicketId}/attachments`)
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .attach("file", contents, { filename, contentType });
     if (response.status === 201) createdAttachmentIds.push(response.body.id);
     return response;
@@ -46,15 +49,18 @@ describe("Attachment lifecycle API", () => {
 
   beforeAll(async () => {
     await seedLab2Data(prisma);
-    const [requesters, category, relatedSystem] = await Promise.all([
-      prisma.user.findMany({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" }, take: 2 }),
+    const [ownerUser, otherUser, category, relatedSystem] = await Promise.all([
+      createTestUser("lab3-issue4-attachment-owner@example.test"),
+      createTestUser("lab3-issue4-attachment-other@example.test"),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (requesters.length < 2 || !category || !relatedSystem) throw new Error("Seed data is missing");
+    if (!category || !relatedSystem) throw new Error("Seed data is missing");
 
-    ownerId = requesters[0].id;
-    otherRequesterId = requesters[1].id;
+    ownerId = ownerUser.id;
+    otherRequesterId = otherUser.id;
+    ownerCookie = await sessionCookieFor(ownerId);
+    otherRequesterCookie = await sessionCookieFor(otherRequesterId);
     categoryId = category.id;
     relatedSystemId = relatedSystem.id;
     ticketId = await createTicket("Attachment lifecycle fixture");
@@ -72,6 +78,7 @@ describe("Attachment lifecycle API", () => {
     if (createdTicketIds.length > 0) {
       await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
     }
+    await removeTestUsers([ownerId, otherRequesterId]);
     await prisma.$disconnect();
   });
 
@@ -100,7 +107,7 @@ describe("Attachment lifecycle API", () => {
 
     const metadata = await request(app)
       .get(`/api/tickets/${ticketId}/attachments`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(metadata.status).toBe(200);
     expect(metadata.body).toEqual([
       expect.objectContaining({ id: uploadedAttachmentId, originalName: "network-log.png" }),
@@ -141,7 +148,7 @@ describe("Attachment lifecycle API", () => {
 
     const concurrentMetadata = await request(app)
       .get(`/api/tickets/${concurrentTicketId}/attachments`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(concurrentMetadata.status).toBe(200);
     expect(concurrentMetadata.body).toHaveLength(5);
   });
@@ -149,7 +156,7 @@ describe("Attachment lifecycle API", () => {
   it("allows owner download but rejects cross-requester and removed-file access", async () => {
     const ownerDownload = await request(app)
       .get(`/api/attachments/${uploadedAttachmentId}/download`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(ownerDownload.status).toBe(200);
     expect(ownerDownload.headers["content-type"]).toContain("image/png");
     expect(ownerDownload.headers["content-disposition"]).toContain("network-log.png");
@@ -157,12 +164,12 @@ describe("Attachment lifecycle API", () => {
 
     const crossRequesterDownload = await request(app)
       .get(`/api/attachments/${uploadedAttachmentId}/download`)
-      .set("X-Requester-Id", String(otherRequesterId));
+      .set("Cookie", otherRequesterCookie);
     expect(crossRequesterDownload.status).toBe(404);
 
     const crossRequesterRemove = await request(app)
       .patch(`/api/attachments/${uploadedAttachmentId}/remove`)
-      .set("X-Requester-Id", String(otherRequesterId))
+      .set("Cookie", otherRequesterCookie)
       .send({ reason: "Cross requester attempt" });
     expect(crossRequesterRemove.status).toBe(404);
   });
@@ -170,13 +177,13 @@ describe("Attachment lifecycle API", () => {
   it("soft-removes an attachment with a reason and keeps metadata", async () => {
     const invalidReason = await request(app)
       .patch(`/api/attachments/${uploadedAttachmentId}/remove`)
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .send({ reason: "no" });
     expect(invalidReason.status).toBe(400);
 
     const removed = await request(app)
       .patch(`/api/attachments/${uploadedAttachmentId}/remove`)
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .send({ reason: "No longer needed" });
     expect(removed.status).toBe(200);
     expect(removed.body).toEqual(expect.objectContaining({
@@ -187,18 +194,18 @@ describe("Attachment lifecycle API", () => {
 
     const repeated = await request(app)
       .patch(`/api/attachments/${uploadedAttachmentId}/remove`)
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .send({ reason: "Try again" });
     expect(repeated.status).toBe(409);
 
     const removedDownload = await request(app)
       .get(`/api/attachments/${uploadedAttachmentId}/download`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(removedDownload.status).toBe(404);
 
     const metadata = await request(app)
       .get(`/api/tickets/${ticketId}/attachments`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(metadata.body).toEqual([
       expect.objectContaining({
         id: uploadedAttachmentId,
@@ -208,18 +215,20 @@ describe("Attachment lifecycle API", () => {
     ]);
   });
 
-  it("validates requester context before attachment access", async () => {
+  it("requires a session and ignores requester headers before attachment access", async () => {
     const missing = await request(app).get(`/api/tickets/${ticketId}/attachments`);
-    expect(missing.status).toBe(400);
+    expect(missing.status).toBe(401);
 
     const malformed = await request(app)
       .get(`/api/tickets/${ticketId}/attachments`)
+      .set("Cookie", ownerCookie)
       .set("X-Requester-Id", "abc");
-    expect(malformed.status).toBe(400);
+    expect(malformed.status).toBe(200);
 
     const unknown = await request(app)
       .get(`/api/tickets/${ticketId}/attachments`)
+      .set("Cookie", ownerCookie)
       .set("X-Requester-Id", "999999999");
-    expect(unknown.status).toBe(404);
+    expect(unknown.status).toBe(200);
   });
 });

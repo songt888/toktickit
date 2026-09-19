@@ -60,9 +60,10 @@ export interface MyTicketsProps {
   requester: Requester;
   onCreateTicket: () => void;
   onOpenTicket: (ticketId: number) => void;
+  visible?: boolean;
 }
 
-export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: MyTicketsProps) {
+export default function MyTickets({ requester, onCreateTicket, onOpenTicket, visible = true }: MyTicketsProps) {
   const [draft, setDraft] = useState<FilterDraft>(defaultDraft);
   const [filters, setFilters] = useState<TicketListOptions>(optionsFromDraft(defaultDraft));
   const [categories, setCategories] = useState<Category[]>([]);
@@ -104,7 +105,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
     setErrorMessage("");
 
     try {
-      const loadedTickets = await getMyTickets(requester.id, filters);
+      const loadedTickets = await getMyTickets(filters);
       if (requestSequence !== ticketRequestSequence.current) return;
       setResult(loadedTickets);
       setState("success");
@@ -202,7 +203,12 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
   );
 
   return (
-    <section id="my-tickets" className="card border-0 shadow-sm mb-4" aria-labelledby="my-tickets-title">
+    <section
+      id="my-tickets"
+      className={`card border-0 shadow-sm mb-4${visible ? "" : " d-none"}`}
+      aria-labelledby="my-tickets-title"
+      aria-hidden={!visible}
+    >
       <div className="card-body">
         <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
           <div>

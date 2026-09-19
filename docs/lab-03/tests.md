@@ -1,6 +1,6 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Planned before implementation
+Status: Issue #45 authentication-migration checks recorded; remaining Lab 3 checks are planned.
 
 All Lab 3 test files will live under `server/tests/lab-03/`,
 `client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
@@ -40,10 +40,10 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Planned |
 | API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Planned |
 | API-04 | API | AC-04 | Current user and logout invalidation | `server/tests/lab-03/auth.api.test.ts` | `/me` works; revoked session fails | Planned |
-| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Planned |
+| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Passed |
 | API-06 | Integration | AC-21, AC-22 | Migration, schema, foreign keys, and repeatable seed | `server/tests/lab-03/data-foundation.test.ts` | Existing data preserved; seed is idempotent | Planned |
-| API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Planned |
-| API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Planned |
+| API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Passed |
+| API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Passed |
 | API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Planned |
 | API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Planned |
 | API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Planned |
@@ -57,13 +57,13 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
-| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity | Planned |
+| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity | Passed |
 | UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Planned |
 | UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Planned |
 | UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
 | STYLE-01 | UI style | AC-05, AC-23, AC-24 | Labels, ARIA, focus, badges, Zen Green, read-only fields | `client/tests/lab-03/ui-style.test.tsx` | Visual/accessibility conventions present | Planned |
-| REG-01 | Regression | AC-07 | All Lab 2 requester/attachment API tests after migration | Existing `server/tests/lab-02/` suite | No Lab 2 regression | Planned |
-| REG-02 | Regression | AC-07 | All Lab 2 client tests after authentication migration | Existing `client/tests/lab-02/` suite | No Lab 2 regression | Planned |
+| REG-01 | Regression | AC-07 | All Lab 2 requester/attachment API tests after migration | Existing `server/tests/lab-02/` suite | No Lab 2 regression | Passed |
+| REG-02 | Regression | AC-07 | All Lab 2 client tests after authentication migration | Existing `client/tests/lab-02/` suite | No Lab 2 regression | Passed |
 | RESP-01 | Responsive | AC-24 | Desktop visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | No clipping or horizontal overflow | Planned |
 | RESP-02 | Responsive | AC-24 | Tablet visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | No clipping or hidden controls | Planned |
 | RESP-03 | Responsive | AC-24 | Mobile visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | Touch/keyboard usable at 390px | Planned |
@@ -73,6 +73,18 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
 | E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
 | RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
+
+## Issue #45 Verification
+
+These results are from `feature/lab3-04-requester-authorization` before the pull request:
+
+- Server: `npm test -- --reporter=dot` — 53 tests passed.
+- Client: `npm test -- --reporter=dot` — 34 tests passed.
+- Server and client TypeScript production builds passed.
+- `git diff --check` passed.
+
+The final Lab 3 release verification remains in `RELEASE-01` and will be recorded after the
+release branch is merged and checked from `main`.
 
 ## 3. Acceptance-Criterion Traceability
 

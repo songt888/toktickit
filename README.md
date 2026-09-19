@@ -97,12 +97,12 @@ Vite normally serves the frontend at `http://localhost:5173`.
 
 The main requester workflow is:
 
-1. Select an active Development Requester. This selector is a Lab 2 test context, not login or
-   authentication.
+1. Sign in with an active TokTickIT account. If the account requires a password change, complete
+   that step before continuing.
 2. Create a ticket with a category, related system, summary, description, priority, and optional
-   attachment.
-3. Open My Tickets to search, filter, sort, paginate, and view only the selected requester's
-   tickets.
+   attachment. The requester is taken from the authenticated session.
+3. Open My Tickets to search, filter, sort, paginate, and view only the signed-in requester's
+   tickets. There is no requester selector or client-side identity storage.
 4. Open Ticket Detail to view read-only ticket data and attachment metadata.
 
 Attachments accept JPG/JPEG, PNG, WEBP, and PDF files up to 5 MB each, with no more than five

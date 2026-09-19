@@ -1,27 +1,30 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
+import { createTestUser, removeTestUsers, sessionCookieFor } from "../lab-03/testSession.js";
+
+let authCookie = "";
+let testUserId: number;
 
 describe("GET /api/requesters", () => {
+  beforeAll(async () => {
+    const user = await createTestUser("lab3-issue4-requesters@example.test");
+    testUserId = user.id;
+    authCookie = await sessionCookieFor(user.id);
+  });
+
   afterAll(async () => {
+    await removeTestUsers([testUserId]);
     await getPrisma().$disconnect();
   });
 
-  it("returns active requesters in id order without inactive users", async () => {
-    const expected = await getPrisma().user.findMany({
-      where: { isActive: true, role: "REQUESTER" },
-      select: { id: true, name: true, email: true },
-      orderBy: { id: "asc" },
-    });
-    const res = await request(app).get("/api/requesters?active=true");
+  it("returns only the authenticated requester for compatibility", async () => {
+    const res = await request(app)
+      .get("/api/requesters?active=true")
+      .set("Cookie", authCookie);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(expected);
-    expect(res.body).toHaveLength(4);
-    expect(res.body.map(({ id }: { id: number }) => id)).toEqual(
-      [...res.body.map(({ id }: { id: number }) => id)].sort((a, b) => a - b),
-    );
-    expect(res.body.some(({ name }: { name: string }) => name === "Ploy Inactive")).toBe(false);
+    expect(res.body).toEqual([{ id: testUserId, name: "Issue 4 REQUESTER fixture", email: "lab3-issue4-requesters@example.test" }]);
   });
 });

@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -10,16 +10,14 @@ import {
   clearSessionCookie,
   createSession,
   hasAllowedOrigin,
-  hasSessionCookie,
-  AuthenticatedRequest,
   requireSession,
   requirePasswordChangeComplete,
+  requireRole,
   revokeCurrentSession,
   toSafeUser,
   validatePassword,
 } from "./auth.js";
 import { getPrisma } from "./prisma.js";
-import { parseRequesterId, REQUESTER_CONTEXT_ERROR } from "./requesterContext.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
 import {
   buildTicketOrderBy,
@@ -66,17 +64,6 @@ const attachmentUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: attachmentLimits.maxBytes, files: 1 },
 }).single("file");
-
-function requireRequesterContext(req: Request, res: Response, next: () => void): void {
-  const requesterId = parseRequesterId(req);
-  if (requesterId === null) {
-    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
-    return;
-  }
-
-  res.locals.requesterId = requesterId;
-  next();
-}
 
 function parsePositiveId(value: string): number | null {
   const id = Number(value);
@@ -228,43 +215,21 @@ app.get("/api/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", service: "TokTickIT API" });
 });
 
-function requireApplicationAccessForSession(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void {
-  if (!hasSessionCookie(req)) {
-    next();
-    return;
-  }
-
-  requireSession(req as AuthenticatedRequest, res, () => {
-    requirePasswordChangeComplete(req as AuthenticatedRequest, res, next);
-  });
-}
-
-// During the incremental Lab 3 migration, header-based Lab 2 calls remain
-// available without a cookie. Once a browser has a session, however, the
-// server enforces the first-login gate before any normal application route.
-app.use(requireApplicationAccessForSession);
+// All application data routes now require the authenticated session. The
+// health check and /api/auth/* routes above remain intentionally public where
+// their contract allows it.
+app.use(requireSession);
+app.use(requirePasswordChangeComplete);
 
 // ---------------------------------------------------------------------------
-// Lab 2 Issue 3 — Development Requester context
-// This is a temporary testing selector, not authentication.
-// The `active=true` query is an explicit contract marker; this endpoint is intentionally active-only.
+// Compatibility endpoint for older Lab 2 clients. It cannot select another
+// identity; it only returns the currently authenticated requester.
 // ---------------------------------------------------------------------------
-app.get("/api/requesters", async (_req: Request, res: Response) => {
-  try {
-    const requesters = await getPrisma().user.findMany({
-      where: { isActive: true, role: "REQUESTER" },
-      select: { id: true, name: true, email: true },
-      orderBy: { id: "asc" },
-    });
-
-    res.status(200).json(requesters);
-  } catch {
-    res.status(500).json({ error: "Unable to load requesters" });
-  }
+app.get("/api/requesters", requireRole("REQUESTER"), (_req: Request, res: Response) => {
+  const user = res.locals.authUser;
+  // Kept as a compatibility endpoint for older clients, but it can only
+  // describe the authenticated requester and cannot select another identity.
+  res.status(200).json([{ id: user.id, name: user.name, email: user.email }]);
 });
 
 // ---------------------------------------------------------------------------
@@ -288,12 +253,8 @@ class ReferenceNotFoundError extends Error {}
 
 class ActiveAttachmentLimitError extends Error {}
 
-app.post("/api/tickets", async (req: Request, res: Response) => {
-  const requesterId = parseRequesterId(req);
-  if (requesterId === null) {
-    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
-    return;
-  }
+app.post("/api/tickets", requireRole("REQUESTER"), async (req: Request, res: Response) => {
+  const requesterId = res.locals.authUser.id;
 
   const { value, errors } = validateCreateTicketInput(req.body);
   if (!value) {
@@ -364,12 +325,8 @@ app.post("/api/tickets", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/tickets", async (req: Request, res: Response) => {
-  const requesterId = parseRequesterId(req);
-  if (requesterId === null) {
-    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
-    return;
-  }
+app.get("/api/tickets", requireRole("REQUESTER"), async (req: Request, res: Response) => {
+  const requesterId = res.locals.authUser.id;
 
   const parsedQuery = parseTicketListQuery(req.query as Record<string, unknown>);
   if (!parsedQuery.value) {
@@ -425,12 +382,8 @@ app.get("/api/tickets", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/tickets/:id", async (req: Request, res: Response) => {
-  const requesterId = parseRequesterId(req);
-  if (requesterId === null) {
-    res.status(400).json({ error: REQUESTER_CONTEXT_ERROR });
-    return;
-  }
+app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: Response) => {
+  const requesterId = res.locals.authUser.id;
 
   const ticketId = Number(req.params.id);
   if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(ticketId) || ticketId <= 0) {
@@ -528,11 +481,11 @@ async function hasActiveRequester(requesterId: number): Promise<boolean> {
 
 app.post(
   "/api/tickets/:id/attachments",
-  requireRequesterContext,
+  requireRole("REQUESTER"),
   requireTicketId,
   handleAttachmentUpload,
   async (req: Request, res: Response) => {
-    const requesterId = res.locals.requesterId as number;
+    const requesterId = res.locals.authUser.id;
     const ticketId = res.locals.ticketId as number;
     const file = req.file;
 
@@ -618,10 +571,10 @@ app.post(
 
 app.get(
   "/api/tickets/:id/attachments",
-  requireRequesterContext,
+  requireRole("REQUESTER"),
   requireTicketId,
   async (_req: Request, res: Response) => {
-    const requesterId = res.locals.requesterId as number;
+    const requesterId = res.locals.authUser.id;
     const ticketId = res.locals.ticketId as number;
 
     try {
@@ -658,9 +611,9 @@ app.get(
 
 app.get(
   "/api/attachments/:id/download",
-  requireRequesterContext,
+  requireRole("REQUESTER"),
   async (req: Request, res: Response) => {
-    const requesterId = res.locals.requesterId as number;
+    const requesterId = res.locals.authUser.id;
     const attachmentId = parsePositiveId(req.params.id);
     if (attachmentId === null) {
       res.status(404).json({ error: "Resource not found" });
@@ -710,9 +663,9 @@ app.get(
 
 app.patch(
   "/api/attachments/:id/remove",
-  requireRequesterContext,
+  requireRole("REQUESTER"),
   async (req: Request, res: Response) => {
-    const requesterId = res.locals.requesterId as number;
+    const requesterId = res.locals.authUser.id;
     const attachmentId = parsePositiveId(req.params.id);
     if (attachmentId === null) {
       res.status(404).json({ error: "Resource not found" });

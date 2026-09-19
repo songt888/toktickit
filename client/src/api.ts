@@ -109,8 +109,6 @@ export interface TicketListOptions {
   pageSize?: 10 | 25 | 50;
 }
 
-export const REQUESTER_STORAGE_KEY = "toktickit.developmentRequesterId";
-
 export interface SystemStatus {
   online: boolean;
   categories: Category[];
@@ -172,15 +170,6 @@ export async function changePassword(
   return (await response.json()) as AuthResponse;
 }
 
-export async function getRequesters(): Promise<Requester[]> {
-  const response = await fetch(`${API_URL}/api/requesters?active=true`, { credentials: "include" });
-  if (!response.ok) {
-    throw new Error(`Requester request failed (${response.status})`);
-  }
-
-  return (await response.json()) as Requester[];
-}
-
 export async function getCategories(): Promise<Category[]> {
   const response = await fetch(`${API_URL}/api/categories`, { credentials: "include" });
   if (!response.ok) {
@@ -199,17 +188,11 @@ export async function getRelatedSystems(): Promise<RelatedSystem[]> {
   return (await response.json()) as RelatedSystem[];
 }
 
-export async function createTicket(
-  requesterId: number,
-  input: CreateTicketInput,
-): Promise<Ticket> {
+export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
   const response = await fetch(`${API_URL}/api/tickets`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Requester-Id": String(requesterId),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
 
@@ -221,7 +204,6 @@ export async function createTicket(
 }
 
 export async function getMyTickets(
-  requesterId: number,
   options: TicketListOptions = {},
 ): Promise<TicketListResponse> {
   const query = new URLSearchParams();
@@ -232,7 +214,6 @@ export async function getMyTickets(
   const queryString = query.toString();
   const response = await fetch(`${API_URL}/api/tickets${queryString ? `?${queryString}` : ""}`, {
     credentials: "include",
-    headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
     throw new Error(`Ticket list request failed (${response.status})`);
@@ -241,10 +222,9 @@ export async function getMyTickets(
   return (await response.json()) as TicketListResponse;
 }
 
-export async function getTicketDetail(requesterId: number, ticketId: number): Promise<TicketDetail> {
+export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
     credentials: "include",
-    headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
     throw new ApiRequestError(`Ticket detail request failed (${response.status})`, response.status);
@@ -254,7 +234,6 @@ export async function getTicketDetail(requesterId: number, ticketId: number): Pr
 }
 
 export async function uploadAttachment(
-  requesterId: number,
   ticketId: number,
   file: File,
 ): Promise<AttachmentMetadata> {
@@ -263,7 +242,6 @@ export async function uploadAttachment(
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
     method: "POST",
     credentials: "include",
-    headers: { "X-Requester-Id": String(requesterId) },
     body: formData,
   });
   if (!response.ok) {
@@ -274,12 +252,10 @@ export async function uploadAttachment(
 }
 
 export async function getTicketAttachments(
-  requesterId: number,
   ticketId: number,
 ): Promise<AttachmentMetadata[]> {
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
     credentials: "include",
-    headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
     throw new ApiRequestError(`Attachment list request failed (${response.status})`, response.status);
@@ -288,10 +264,9 @@ export async function getTicketAttachments(
   return (await response.json()) as AttachmentMetadata[];
 }
 
-export async function downloadAttachment(requesterId: number, attachmentId: number): Promise<Blob> {
+export async function downloadAttachment(attachmentId: number): Promise<Blob> {
   const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/download`, {
     credentials: "include",
-    headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
     throw new ApiRequestError(`Attachment download failed (${response.status})`, response.status);
@@ -301,17 +276,13 @@ export async function downloadAttachment(requesterId: number, attachmentId: numb
 }
 
 export async function removeAttachment(
-  requesterId: number,
   attachmentId: number,
   reason: string,
 ): Promise<AttachmentMetadata> {
   const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/remove`, {
     method: "PATCH",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Requester-Id": String(requesterId),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ reason }),
   });
   if (!response.ok) {
@@ -319,22 +290,6 @@ export async function removeAttachment(
   }
 
   return (await response.json()) as AttachmentMetadata;
-}
-
-export function readRequesterId(): number | null {
-  const value = window.localStorage.getItem(REQUESTER_STORAGE_KEY);
-  if (!value || !/^\d+$/.test(value)) return null;
-
-  const id = Number(value);
-  return Number.isSafeInteger(id) && id > 0 ? id : null;
-}
-
-export function saveRequesterId(id: number): void {
-  window.localStorage.setItem(REQUESTER_STORAGE_KEY, String(id));
-}
-
-export function clearRequesterId(): void {
-  window.localStorage.removeItem(REQUESTER_STORAGE_KEY);
 }
 
 // Issue 2 + Issue 4 — call the backend.

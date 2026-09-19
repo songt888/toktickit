@@ -3,6 +3,7 @@ import request from "supertest";
 import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
+import { createTestUser, removeTestUsers, sessionCookieFor } from "../lab-03/testSession.js";
 
 const prisma = getPrisma();
 const createdTicketIds: number[] = [];
@@ -12,18 +13,23 @@ describe("GET /api/tickets", () => {
   let requesterB: number;
   let categoryId: number;
   let relatedSystemId: number;
+  let requesterACookie: string;
+  let requesterBCookie: string;
 
   beforeAll(async () => {
     await seedLab2Data(prisma);
-    const [requesters, category, relatedSystem] = await Promise.all([
-      prisma.user.findMany({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" }, take: 2 }),
+    const [requesterAUser, requesterBUser, category, relatedSystem] = await Promise.all([
+      createTestUser("lab3-issue4-list-a@example.test"),
+      createTestUser("lab3-issue4-list-b@example.test"),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (requesters.length < 2 || !category || !relatedSystem) throw new Error("Seed data is missing");
+    if (!category || !relatedSystem) throw new Error("Seed data is missing");
 
-    requesterA = requesters[0].id;
-    requesterB = requesters[1].id;
+    requesterA = requesterAUser.id;
+    requesterB = requesterBUser.id;
+    requesterACookie = await sessionCookieFor(requesterA);
+    requesterBCookie = await sessionCookieFor(requesterB);
     categoryId = category.id;
     relatedSystemId = relatedSystem.id;
   });
@@ -32,13 +38,14 @@ describe("GET /api/tickets", () => {
     if (createdTicketIds.length > 0) {
       await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
     }
+    await removeTestUsers([requesterA, requesterB]);
     await prisma.$disconnect();
   });
 
   async function createFixture(requesterId: number, summary: string, priority = "MEDIUM") {
     const response = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(requesterId))
+      .set("Cookie", requesterId === requesterA ? requesterACookie : requesterBCookie)
       .send({
         categoryId,
         relatedSystemId,
@@ -58,7 +65,7 @@ describe("GET /api/tickets", () => {
 
     const response = await request(app)
       .get("/api/tickets")
-      .set("X-Requester-Id", String(requesterA));
+      .set("Cookie", requesterACookie);
 
     expect(response.status).toBe(200);
     expect(response.body.pagination).toEqual({
@@ -85,7 +92,7 @@ describe("GET /api/tickets", () => {
 
     const response = await request(app)
       .get("/api/tickets?search=unique%20list&requestedPriority=HIGH&sort=ticketNumber&order=asc&pageSize=25")
-      .set("X-Requester-Id", String(requesterA));
+      .set("Cookie", requesterACookie);
 
     expect(response.status).toBe(200);
     expect(response.body.pagination).toMatchObject({ page: 1, pageSize: 25 });
@@ -96,23 +103,28 @@ describe("GET /api/tickets", () => {
   it("rejects invalid query parameters safely", async () => {
     const response = await request(app)
       .get("/api/tickets?pageSize=5")
-      .set("X-Requester-Id", String(requesterA));
+      .set("Cookie", requesterACookie);
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: "Invalid query parameters" });
   });
 
-  it("validates requester context before listing tickets", async () => {
+  it("requires a session and ignores a spoofed requester header", async () => {
     const missingHeader = await request(app).get("/api/tickets");
-    expect(missingHeader.status).toBe(400);
-    expect(missingHeader.body).toEqual({ error: "Requester context is required" });
+    expect(missingHeader.status).toBe(401);
+    expect(missingHeader.body).toEqual({ error: "Authentication required" });
 
-    const inactiveRequester = await prisma.user.findFirst({ where: { isActive: false, role: "REQUESTER" } });
-    if (!inactiveRequester) throw new Error("Inactive requester fixture is missing");
-    const inactiveResponse = await request(app)
+    const spoofedResponse = await request(app)
       .get("/api/tickets")
-      .set("X-Requester-Id", String(inactiveRequester.id));
-    expect(inactiveResponse.status).toBe(404);
-    expect(inactiveResponse.body).toEqual({ error: "Requester not found" });
+      .set("Cookie", requesterACookie)
+      .set("X-Requester-Id", String(requesterB));
+    const requesterBTicketIds = await prisma.ticket.findMany({
+      where: { id: { in: createdTicketIds }, requesterId: requesterB },
+      select: { id: true },
+    });
+    expect(spoofedResponse.status).toBe(200);
+    expect(spoofedResponse.body.items.map(({ id }: { id: number }) => id)).not.toEqual(
+      expect.arrayContaining(requesterBTicketIds.map(({ id }) => id)),
+    );
   });
 });

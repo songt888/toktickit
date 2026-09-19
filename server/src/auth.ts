@@ -80,13 +80,6 @@ function readSessionToken(request: Request): string | null {
   return null;
 }
 
-export function hasSessionCookie(request: Request): boolean {
-  const cookieHeader = request.header("Cookie");
-  return Boolean(
-    cookieHeader?.split(";").some((part) => part.trim().startsWith(`${SESSION_COOKIE_NAME}=`)),
-  );
-}
-
 function sessionCookie(token: string, maxAgeSeconds: number): string {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   return `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${maxAgeSeconds}; Path=/; HttpOnly; SameSite=Lax${secure}`;
@@ -187,6 +180,21 @@ export function requirePasswordChangeComplete(
     return;
   }
   next();
+}
+
+export function requireRole(...allowedRoles: UserRole[]) {
+  return (request: AuthenticatedRequest, response: Response, next: NextFunction): void => {
+    const user = request.authUser;
+    if (!user) {
+      response.status(401).json({ error: "Authentication required" });
+      return;
+    }
+    if (!allowedRoles.includes(user.role)) {
+      response.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    next();
+  };
 }
 
 export function allowedOrigins(): Set<string> {

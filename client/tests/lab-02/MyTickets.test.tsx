@@ -6,7 +6,12 @@ import App from "../../src/App.js";
 import * as api from "../../src/api.js";
 
 const requesterA = { id: 1, name: "Ari Suksan", email: "ari.suksan@example.com" };
-const requesterB = { id: 2, name: "Ben Chaiyo", email: "ben.chaiyo@example.com" };
+const authenticatedRequester: api.AuthUser = {
+  ...requesterA,
+  role: "REQUESTER",
+  isActive: true,
+  mustChangePassword: false,
+};
 const categories = [{ id: 1, name: "Hardware" }];
 const relatedSystems = [{ id: 1, name: "Campus Wi-Fi" }];
 
@@ -60,11 +65,13 @@ function deferred<T>() {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  window.localStorage.clear();
 });
 
 function mockReferences() {
-  vi.spyOn(api, "getRequesters").mockResolvedValue([requesterA, requesterB]);
+  vi.spyOn(api, "getCurrentUser").mockResolvedValue({
+    user: authenticatedRequester,
+    requiresPasswordChange: false,
+  });
   vi.spyOn(api, "getCategories").mockResolvedValue(categories);
   vi.spyOn(api, "getRelatedSystems").mockResolvedValue(relatedSystems);
 }
@@ -74,10 +81,6 @@ async function openMyTickets() {
   mockReferences();
 
   render(<App />);
-  const requesterSelect = await screen.findByLabelText(/Choose a Development Requester/);
-  await user.selectOptions(requesterSelect, String(requesterA.id));
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-  await user.click(screen.getByRole("link", { name: "My Tickets" }));
   await screen.findByRole("heading", { name: "My Tickets" });
 
   return user;
@@ -107,7 +110,7 @@ describe("My Tickets UI", () => {
   });
 
   it("preserves list query state and active navigation after returning from detail", async () => {
-    const getTickets = vi.spyOn(api, "getMyTickets").mockImplementation(async (_requesterId, options = {}) => ({
+    const getTickets = vi.spyOn(api, "getMyTickets").mockImplementation(async (options = {}) => ({
       items: [ariTicket],
       pagination: {
         page: options.page ?? 1,
@@ -151,21 +154,18 @@ describe("My Tickets UI", () => {
     await user.click(screen.getByRole("button", { name: "Apply filters" }));
 
     await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(2));
-    expect(getTickets.mock.calls[1]).toEqual([
-      requesterA.id,
-      {
+    expect(getTickets.mock.calls[1]).toEqual([{
         search: "battery",
         requestedPriority: "HIGH",
         sort: "ticketNumber",
         order: "asc",
         page: 1,
         pageSize: 25,
-      },
-    ]);
+      }]);
 
     await user.click(screen.getByRole("button", { name: "Next" }));
     await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(3));
-    expect(getTickets.mock.calls[2][1]).toEqual(
+    expect(getTickets.mock.calls[2][0]).toEqual(
       expect.objectContaining({ search: "battery", page: 2, pageSize: 25 }),
     );
   });
@@ -191,23 +191,14 @@ describe("My Tickets UI", () => {
     expect((await screen.findAllByText("TKT-20260829-000101")).length).toBeGreaterThan(0);
   });
 
-  it("shows only the newly selected requester's tickets after switching context", async () => {
-    vi.spyOn(api, "getMyTickets").mockImplementation(async (requesterId) =>
-      requesterId === requesterA.id ? listResponse([ariTicket]) : listResponse([benTicket]),
-    );
+  it("uses the authenticated requester and does not expose identity switching", async () => {
+    const getTickets = vi.spyOn(api, "getMyTickets").mockResolvedValue(listResponse([ariTicket]));
     const user = await openMyTickets();
 
     expect((await screen.findAllByText("Laptop battery drains quickly")).length).toBeGreaterThan(0);
-    await user.click(screen.getByRole("button", { name: "Change Requester" }));
-    await user.selectOptions(
-      await screen.findByLabelText(/Choose a Development Requester/),
-      String(requesterB.id),
-    );
-    await user.click(screen.getByRole("button", { name: "Continue" }));
-    await user.click(screen.getByRole("link", { name: "My Tickets" }));
-
-    expect((await screen.findAllByText("VPN access request")).length).toBeGreaterThan(0);
-    expect(screen.queryAllByText("Laptop battery drains quickly")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Change Requester" })).not.toBeInTheDocument();
+    expect(getTickets.mock.calls[0]).toHaveLength(1);
+    expect(getTickets.mock.calls[0][0]).toEqual(expect.objectContaining({ page: 1 }));
   });
 
   it("ignores an older ticket response when a newer request finishes first", async () => {

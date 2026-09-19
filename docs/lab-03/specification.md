@@ -127,44 +127,47 @@ authorization.
   cross-owner resource lookup returns the safe not-found response.
 - BR-12: Every protected operation is authorized in the backend even when the
   corresponding frontend control is hidden or disabled.
-- BR-13: The approved matrix gives IT Staff and Administrators the operational
+- BR-13: IT Staff and Administrators may view attachment metadata and download
+  active files for Tickets they can access operationally. Upload and removal
+  remain Requester-owner operations.
+- BR-14: The approved matrix gives IT Staff and Administrators the operational
   Ticket permissions listed below. Their responsibilities remain conceptually
   separate: IT Staff work the queue, while Administrators primarily manage
   accounts and use operational access for support oversight.
 
 ### Ticket workflow
 
-- BR-14: A Ticket may have zero or one primary owner. An owner must be active and
+- BR-15: A Ticket may have zero or one primary owner. An owner must be active and
   have role `IT_STAFF` or `ADMINISTRATOR`.
-- BR-15: Requested Priority is submitted by the Requester and cannot be
+- BR-16: Requested Priority is submitted by the Requester and cannot be
   changed by staff operations. IT Priority initially copies Requested Priority
   and can be changed only by IT Staff or Administrator.
-- BR-16: The supported statuses are `NEW`, `OPEN`, `IN_PROGRESS`,
+- BR-17: The supported statuses are `NEW`, `OPEN`, `IN_PROGRESS`,
   `WAITING_FOR_REQUESTER`, `RESOLVED`, `CLOSED`, `REOPENED`, and `CANCELLED`.
-- BR-17: Status changes must follow the transition matrix in `api-spec.md`.
+- BR-18: Status changes must follow the transition matrix in `api-spec.md`.
   Transitions to `CLOSED` or `CANCELLED` require an explicit confirmation
   value from the UI and API request.
-- BR-18: A Requester may set the Problem Appears Resolved indication but may not
+- BR-19: A Requester may set the Problem Appears Resolved indication but may not
   formally set a Ticket to `RESOLVED` or `CLOSED`.
 
 ### Comments and notes
 
-- BR-19: Public Comments are visible to the Requester who owns the Ticket, IT
+- BR-20: Public Comments are visible to the Requester who owns the Ticket, IT
   Staff, and Administrators.
-- BR-20: Internal Notes are visible only to IT Staff and Administrators and are
+- BR-21: Internal Notes are visible only to IT Staff and Administrators and are
   never included in a Requester's response.
-- BR-21: Comments and notes are append-only. Empty or whitespace-only content is
-  rejected, content is limited to 4000 characters, and rendered content is
-  treated as text rather than trusted HTML.
-- BR-22: Comment and note author and creation time are assigned by the backend.
+- BR-22: Comments and notes are append-only. Empty or whitespace-only content is
+  rejected and content is limited to 4000 characters. Markup-like content is
+  accepted as text and rendered as text rather than trusted HTML.
+- BR-23: Comment and note author and creation time are assigned by the backend.
 
 ### Administrator safety
 
-- BR-23: Email addresses are unique case-insensitively after trimming.
-- BR-24: An Administrator cannot deactivate their own account.
-- BR-25: The system cannot deactivate or remove the last active Administrator.
-  Users are deactivated rather than deleted.
-- BR-26: A reset initial password marks `mustChangePassword=true` and never
+- BR-24: Email addresses are unique case-insensitively after trimming.
+- BR-25: An Administrator cannot deactivate their own account.
+- BR-26: The system cannot deactivate or change the role of the last active
+  Administrator. Users are deactivated rather than deleted.
+- BR-27: A reset initial password marks `mustChangePassword=true` and never
   returns the password in an API response.
 
 ## 6. Authorization Matrix
@@ -174,7 +177,8 @@ authorization.
 | Login, logout, current user | Own account | Own account | Own account |
 | Change own required password | Yes | Yes | Yes |
 | Create and list own Tickets | Yes | No | No |
-| View/manage own Attachments | Yes | No | No |
+| Upload/remove own Attachments | Yes | No | No |
+| View/download operational Attachments | No | Yes | Yes |
 | View operational Ticket Queue | No | Yes | Yes |
 | View operational Ticket Detail | No | Yes | Yes |
 | Claim/reassign, IT Priority, status | No | Yes | Yes |
@@ -379,7 +383,12 @@ Migration decisions:
 4. Add `PublicComment`, `InternalNote`, and `AuthSession` tables with foreign
    keys and indexes. Existing Categories, Related Systems, Tickets, and
    Attachments remain valid.
-5. Use a repeatable seed with at least four active and one inactive Requester,
+5. Because `passwordHash` is required, the migration fills existing Users with
+   a deterministic unusable placeholder hash and sets `mustChangePassword=true`.
+   The seed may replace that hash only when the stored value is still the exact
+   placeholder. For any User with a real hash, seed updates never overwrite
+   `passwordHash`, `mustChangePassword`, or `passwordChangedAt`.
+6. Use a repeatable seed with at least four active and one inactive Requester,
    three active and one inactive IT Staff, one active Administrator, realistic
    tickets, and safe example comments/notes. Seed upserts are keyed by stable
    emails or names and never store real credentials.
@@ -432,8 +441,8 @@ leaking protected data.
   Administrator with safe rendering and backend author/time.
 - AC-14: Internal Notes are visible only to IT Staff and Administrator, including
   through direct API requests.
-- AC-15: Empty, whitespace-only, oversized, and unsafe comment/note content is
-  rejected.
+- AC-15: Empty, whitespace-only, and oversized comment/note content is rejected;
+  markup-like content is stored and rendered as plain text without executing.
 - AC-16: Administrator can list/search/filter users and view Name, Email, Role,
   Status, and Edit actions.
 - AC-17: Administrator can create a user with one role and an initial password;
@@ -441,7 +450,7 @@ leaking protected data.
 - AC-18: Administrator can edit name, email, role, and activation state.
 - AC-19: Administrator can set a new initial password and the target user must
   change it on the next login.
-- AC-20: Self-deactivation and removal/deactivation of the last active
+- AC-20: Self-deactivation and deactivation or role demotion of the last active
   Administrator are rejected.
 - AC-21: Data migration preserves existing Ticket and Attachment ownership and
   deploys without data loss.

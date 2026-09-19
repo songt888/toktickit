@@ -35,7 +35,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UNIT-02 | Unit | AC-01, AC-02 | Hash/verify behavior and no plaintext storage | `server/tests/lab-03/password-hash.test.ts` | Hash verifies; plaintext is not persisted | Planned |
 | UNIT-03 | Unit | AC-09, AC-10 | Staff queue query parsing and stable pagination | `server/tests/lab-03/queue-options.test.ts` | Valid options normalized; invalid values rejected | Planned |
 | UNIT-04 | Unit | AC-12 | Status transition matrix and confirmation rules | `server/tests/lab-03/status-transition.test.ts` | Only approved transitions pass | Planned |
-| UNIT-05 | Unit | AC-13, AC-14 | Comment/note length and safe text handling | `server/tests/lab-03/comment-validation.test.ts` | Empty/oversized content rejected | Planned |
+| UNIT-05 | Unit | AC-15 | Comment/note length and safe text handling | `server/tests/lab-03/comment-validation.test.ts` | Empty/oversized content rejected; markup remains plain text | Planned |
 | API-01 | API | AC-01 | Valid active-user login and safe response | `server/tests/lab-03/auth.api.test.ts` | `200`, session cookie, safe user data | Planned |
 | API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Planned |
 | API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Planned |
@@ -46,14 +46,14 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Planned |
 | API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Planned |
 | API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Planned |
-| API-11 | API | AC-11, AC-12 | Staff detail, ownership, priority, and status changes | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted changes persist; invalid ones fail safely | Planned |
-| API-12 | API | AC-12 | Inactive owner and stale/conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Planned |
+| API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Planned |
+| API-12 | API | AC-12 | Inactive owner, stale `updatedAt`, and conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Planned |
 | API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Planned |
 | API-14 | API | AC-14 | Internal Note visibility and direct requester rejection | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403` | Planned |
-| API-15 | API | AC-15 | Comment/note validation and append-only behavior | `server/tests/lab-03/comments-notes.api.test.ts` | Invalid content rejected; history retained | Planned |
+| API-15 | API | AC-15 | Comment/note validation, append-only behavior, and safe plain-text rendering | `server/tests/lab-03/comments-notes.api.test.ts` | Empty/oversized rejected; markup is not executed | Planned |
 | API-16 | API | AC-16 | Admin user listing, search, and role filter | `server/tests/lab-03/users-admin.api.test.ts` | Safe user list and query behavior | Planned |
 | API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Planned |
-| API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, and last-admin safety | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Planned |
+| API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, last-admin deactivation, and last-admin role demotion | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Planned |
 | UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
@@ -68,10 +68,10 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | RESP-02 | Responsive | AC-24 | Tablet visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | No clipping or hidden controls | Planned |
 | RESP-03 | Responsive | AC-24 | Mobile visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | Touch/keyboard usable at 390px | Planned |
 | A11Y-01 | Accessibility | AC-23, AC-24 | Keyboard order, focus, labels, roles, and announcements | `e2e/lab-03/accessibility.spec.ts` | No critical accessibility issues | Planned |
-| E2E-01 | E2E | AC-01 to AC-05 | Login, first password change, shell, and logout | `e2e/lab-03/authentication.spec.ts` | Full auth flow passes | Planned |
-| E2E-02 | E2E | AC-06 to AC-15 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester flow passes | Planned |
-| E2E-03 | E2E | AC-09 to AC-15 | Staff queue, detail, assignment, workflow, comments, notes | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
-| E2E-04 | E2E | AC-16 to AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
+| E2E-01 | E2E | AC-01, AC-02, AC-03, AC-04, AC-05 | Login, first password change, shell, and logout | `e2e/lab-03/authentication.spec.ts` | Full auth flow passes | Planned |
+| E2E-02 | E2E | AC-06, AC-07, AC-08 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester flow passes | Planned |
+| E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
+| E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
 | RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
 
 ## 3. Acceptance-Criterion Traceability
@@ -87,20 +87,20 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | AC-07 | API-07, API-08, REG-01, REG-02, E2E-02 |
 | AC-08 | API-09, UI-04, E2E-02 |
 | AC-09 | API-10, UI-05, E2E-03 |
-| AC-10 | API-05, API-10, UI-05, STYLE-01 |
+| AC-10 | API-05, API-10, UI-05, E2E-03 |
 | AC-11 | API-11, UI-06, E2E-03 |
 | AC-12 | UNIT-04, API-12, UI-06, E2E-03 |
 | AC-13 | API-13, UI-06, E2E-02, E2E-03 |
 | AC-14 | API-14, UI-06, E2E-03 |
 | AC-15 | UNIT-05, API-15, UI-06 |
-| AC-16 | API-16, API-17, UI-07, E2E-04 |
+| AC-16 | API-16, UI-07, E2E-04 |
 | AC-17 | API-17, UI-07, E2E-04 |
 | AC-18 | API-17, UI-07, E2E-04 |
 | AC-19 | API-18, UI-07, E2E-04 |
 | AC-20 | API-18, UI-07, E2E-04 |
 | AC-21 | API-06, REG-01, REG-02 |
 | AC-22 | API-06 |
-| AC-23 | UI-01, UI-02, UI-05, UI-06, UI-07, STYLE-01 |
+| AC-23 | UI-01, UI-02, UI-04, UI-05, UI-06, UI-07, STYLE-01 |
 | AC-24 | STYLE-01, RESP-01, RESP-02, RESP-03, A11Y-01 |
 | AC-25 | RELEASE-01 |
 

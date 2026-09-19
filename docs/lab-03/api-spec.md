@@ -108,9 +108,10 @@ never returns `passwordHash`.
 
 ### POST `/api/auth/logout`
 
-Requires a valid session. Revokes the current `AuthSession`, clears the cookie,
-and returns `204`. Repeating logout is safe and returns `204`. A missing session
-also returns `204` so logout does not leak session state.
+This endpoint is idempotent and does not require a valid session. If a valid
+session exists, it revokes the current `AuthSession` and clears the cookie. It
+always returns `204`, including when the cookie is missing, expired, or already
+revoked.
 
 ### POST `/api/auth/change-password`
 
@@ -130,7 +131,8 @@ Request:
 The server validates the current password, password rules, confirmation, and
 new-password difference. A successful response is `200` with the safe current
 user and `requiresPasswordChange: false`. Invalid input is `400`; a wrong
-current password is `401`; unexpected failure is `500`.
+current password is `400`; unexpected failure is `500`. A wrong current
+password does not invalidate the authenticated session.
 
 ## 4. Authenticated Reference Data
 
@@ -225,14 +227,18 @@ more active files is `409`, oversized files are `413`, unsupported types are
 
 ### GET `/api/tickets/:id/attachments`
 
-Requester-only and owner-only. Returns active and removed attachment metadata,
-without `storedName`. Cross-owner access returns `404`.
+The owning Requester, IT Staff, and Administrators with operational access may
+retrieve attachment metadata. Requesters must own the Ticket; Staff and
+Administrators must be allowed to view the operational Ticket. The response
+does not include `storedName`. Cross-owner or inaccessible Ticket access returns
+`404`.
 
 ### GET `/api/attachments/:id/download`
 
-Requester-only and owner-authorized. Returns the file only when the attachment
-belongs to an owned Ticket and `removedAt` is null. Removed, missing, and
-cross-owner attachments return `404`.
+The owning Requester, IT Staff, and Administrators with operational access may
+download an active attachment. The file must belong to an owned or operationally
+accessible Ticket and have `removedAt` null. Removed, missing, and cross-owner
+attachments return `404`.
 
 ### PATCH `/api/attachments/:id/remove`
 
@@ -283,7 +289,9 @@ forbidden role is `403`.
 ### GET `/api/tickets/:id/internal-notes`
 
 Available only to IT Staff and Administrators. Returns `200` with note content,
-author, and timestamp. Requesters receive `403` without note content.
+author, and timestamp. A Requester viewing their own Ticket receives `403`
+without note content. A Requester attempting a note lookup through another
+user's Ticket receives the safe `404` response.
 
 ### POST `/api/tickets/:id/internal-notes`
 
@@ -323,32 +331,42 @@ updated timestamp. Invalid values return `400`; other roles receive `403`.
 ### GET `/api/staff/tickets/:id`
 
 Returns operational Ticket Detail, safe requester data, owner, both priorities,
-status, comments, notes, and attachment metadata. IT Staff and Administrators
-may access it. Requester access to this route returns `403`.
+status, `problemAppearsResolved`, comments, notes, and attachment metadata. IT
+Staff and Administrators may access it. Requester access to this route returns
+`403`. Attachment metadata is safe to display and active files can be
+downloaded through the operational attachment permission.
 
 ### PATCH `/api/staff/tickets/:id/owner`
 
 Request:
 
 ```json
-{ "ownerId": 7 }
+{
+  "ownerId": 7,
+  "updatedAt": "2026-09-19T10:00:00.000Z"
+}
 ```
 
 `ownerId: null` unassigns the Ticket. The target must be an active IT Staff or
-Administrator. Returns `200`; invalid/inactive owner is `400`; missing Ticket
-is `404`; stale or conflicting update is `409`.
+Administrator. The client must send the last-seen `updatedAt`; a value that no
+longer matches the database row is stale. Returns `200`; invalid/inactive owner
+or timestamp is `400`; missing Ticket is `404`; stale or conflicting update is
+`409`.
 
 ### PATCH `/api/staff/tickets/:id/it-priority`
 
 Request:
 
 ```json
-{ "itPriority": "HIGH" }
+{
+  "itPriority": "HIGH",
+  "updatedAt": "2026-09-19T10:00:00.000Z"
+}
 ```
 
 Only IT Staff/Administrator can update it. Requested Priority is unchanged.
-Returns `200`, `400` for invalid priority, `404` for missing Ticket, and `409`
-for a stale update.
+Returns `200`, `400` for invalid priority or timestamp, `404` for missing
+Ticket, and `409` for a stale update.
 
 ### PATCH `/api/staff/tickets/:id/status`
 
@@ -357,12 +375,15 @@ Request:
 ```json
 {
   "status": "CLOSED",
-  "confirm": true
+  "confirm": true,
+  "updatedAt": "2026-09-19T10:00:00.000Z"
 }
 ```
 
 `confirm: true` is required for `CLOSED` and `CANCELLED`. Invalid transitions
-return `409`; invalid input is `400`; missing Ticket is `404`.
+or stale timestamps return `409`; invalid input is `400`; missing Ticket is
+`404`. The `updatedAt` value is required for all staff mutations so the server
+can perform optimistic concurrency checking.
 
 ## 8. Status Transition Matrix
 
@@ -445,7 +466,7 @@ Request may include `name`, `email`, `role`, and `isActive`:
 
 Success returns `200`. Duplicate email is `409`; invalid input is `400`; a
 missing user is `404`. The backend rejects deactivating the current Admin and
-deactivating the last active Administrator with `409`.
+deactivating or demoting the last active Administrator with `409`.
 
 ### POST `/api/admin/users/:id/initial-password`
 
@@ -465,8 +486,10 @@ safe user data with `200`. The password is never returned. Invalid input is
 - Authenticated users without the required role return `403`.
 - Users with a required password change receive `403` on normal application
   endpoints until the change succeeds.
-- Cross-requester Ticket, Attachment, and Internal Note access never reveals
-  whether a protected record exists; use the documented safe `404` behavior.
+- Cross-owner Ticket, Attachment, and Internal Note lookups never reveal
+  whether another user's protected record exists; use the documented safe `404`
+  behavior. A Requester requesting Internal Notes on their own Ticket receives
+  `403` with no note content because the role is forbidden.
 - All identifiers and query values are validated before database access.
 - All output is selected explicitly so hashes, tokens, stored filenames, and
   internal paths never reach clients.

@@ -27,6 +27,21 @@ status.
 |---|---|---|---|---|---|
 | To be added | Issue 1 | To be added | Contract review pending | To be added after review | Pending |
 
+### PR #38 contract feedback addressed
+
+The reviewer identified ten contract consistency issues before Issue 2 and
+Issue 3 implementation. I updated the documents to make staff attachment
+metadata/download access explicit while keeping upload/removal requester-only,
+added `problemAppearsResolved` to staff detail, chose `403` for Internal Notes
+on an owned Ticket and safe `404` for cross-owner access, made logout idempotent
+with `204`, and changed a wrong current password to `400`.
+
+I also added `updatedAt` to staff mutation requests for optimistic concurrency,
+blocked last-Administrator role demotion as well as deactivation, aligned the
+comment policy around safe plain-text rendering, documented the required
+placeholder password hash and seed overwrite rule, and regenerated the test
+matrix/traceability mappings. Approval is still pending after these changes.
+
 ## Review Checklist
 
 - [ ] Reviewer identity is recorded.

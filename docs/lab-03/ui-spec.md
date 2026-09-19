@@ -142,7 +142,10 @@ and attachments.
 ### Read-only Ticket information
 
 Show Ticket Number, date, requester, category, related system, summary,
-description, Requested Priority, current status, and timestamps.
+description, Requested Priority, IT Priority, current status,
+Problem Appears Resolved, and timestamps. The Problem Appears Resolved value is
+read-only for IT Staff; it is an indication from the Requester, not a formal
+status transition.
 
 ### Editable operational fields
 
@@ -158,8 +161,10 @@ validation, conflict, forbidden, not-found, and safe failure messages.
 
 Public Comments and Internal Notes are separate tabs or panels with distinct
 headings, colors, explanatory text, and submit buttons. Existing attachment
-metadata and permitted actions remain available. Internal Notes must never be
-shown in a Requester view.
+metadata remains available, and IT Staff/Administrators may download active
+files when they have operational access. Staff do not upload or remove files;
+those actions remain available only to the owning Requester. Internal Notes
+must never be shown in a Requester view.
 
 ## 8. Administrator User Management
 

@@ -17,6 +17,21 @@ export interface RelatedSystem {
 }
 
 export type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+export type UserRole = "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  mustChangePassword: boolean;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  requiresPasswordChange: boolean;
+}
 
 export interface CreateTicketInput {
   categoryId: number;
@@ -106,8 +121,57 @@ export class ApiRequestError extends Error {
   }
 }
 
+async function authError(response: Response, fallback: string): Promise<ApiRequestError> {
+  try {
+    const body = (await response.json()) as { error?: string };
+    return new ApiRequestError(body.error || fallback, response.status);
+  } catch {
+    return new ApiRequestError(fallback, response.status);
+  }
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) throw await authError(response, "Unable to sign in.");
+  return (await response.json()) as AuthResponse;
+}
+
+export async function getCurrentUser(): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to validate your session.");
+  return (await response.json()) as AuthResponse;
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch(`${API_URL}/api/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) throw await authError(response, "Unable to sign out.");
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string,
+): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/api/auth/change-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  });
+  if (!response.ok) throw await authError(response, "Unable to change password.");
+  return (await response.json()) as AuthResponse;
+}
+
 export async function getRequesters(): Promise<Requester[]> {
-  const response = await fetch(`${API_URL}/api/requesters?active=true`);
+  const response = await fetch(`${API_URL}/api/requesters?active=true`, { credentials: "include" });
   if (!response.ok) {
     throw new Error(`Requester request failed (${response.status})`);
   }
@@ -116,7 +180,7 @@ export async function getRequesters(): Promise<Requester[]> {
 }
 
 export async function getCategories(): Promise<Category[]> {
-  const response = await fetch(`${API_URL}/api/categories`);
+  const response = await fetch(`${API_URL}/api/categories`, { credentials: "include" });
   if (!response.ok) {
     throw new Error(`Category request failed (${response.status})`);
   }
@@ -125,7 +189,7 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function getRelatedSystems(): Promise<RelatedSystem[]> {
-  const response = await fetch(`${API_URL}/api/related-systems`);
+  const response = await fetch(`${API_URL}/api/related-systems`, { credentials: "include" });
   if (!response.ok) {
     throw new Error(`Related System request failed (${response.status})`);
   }
@@ -139,6 +203,7 @@ export async function createTicket(
 ): Promise<Ticket> {
   const response = await fetch(`${API_URL}/api/tickets`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       "X-Requester-Id": String(requesterId),
@@ -164,6 +229,7 @@ export async function getMyTickets(
 
   const queryString = query.toString();
   const response = await fetch(`${API_URL}/api/tickets${queryString ? `?${queryString}` : ""}`, {
+    credentials: "include",
     headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
@@ -175,6 +241,7 @@ export async function getMyTickets(
 
 export async function getTicketDetail(requesterId: number, ticketId: number): Promise<TicketDetail> {
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
+    credentials: "include",
     headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
@@ -193,6 +260,7 @@ export async function uploadAttachment(
   formData.append("file", file);
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
     method: "POST",
+    credentials: "include",
     headers: { "X-Requester-Id": String(requesterId) },
     body: formData,
   });
@@ -208,6 +276,7 @@ export async function getTicketAttachments(
   ticketId: number,
 ): Promise<AttachmentMetadata[]> {
   const response = await fetch(`${API_URL}/api/tickets/${ticketId}/attachments`, {
+    credentials: "include",
     headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
@@ -219,6 +288,7 @@ export async function getTicketAttachments(
 
 export async function downloadAttachment(requesterId: number, attachmentId: number): Promise<Blob> {
   const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/download`, {
+    credentials: "include",
     headers: { "X-Requester-Id": String(requesterId) },
   });
   if (!response.ok) {
@@ -235,6 +305,7 @@ export async function removeAttachment(
 ): Promise<AttachmentMetadata> {
   const response = await fetch(`${API_URL}/api/attachments/${attachmentId}/remove`, {
     method: "PATCH",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       "X-Requester-Id": String(requesterId),

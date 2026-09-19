@@ -43,7 +43,8 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [comments, setComments] = useState<PublicComment[]>([]);
   const [commentState, setCommentState] = useState<CommentState>("loading");
-  const [commentError, setCommentError] = useState("");
+  const [commentLoadError, setCommentLoadError] = useState("");
+  const [commentFormError, setCommentFormError] = useState("");
   const [commentContent, setCommentContent] = useState("");
   const [commentSuccess, setCommentSuccess] = useState("");
   const [savingComment, setSavingComment] = useState(false);
@@ -56,7 +57,7 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
   async function loadComments() {
     const sequence = ++commentRequestSequence.current;
     setCommentState("loading");
-    setCommentError("");
+    setCommentLoadError("");
 
     try {
       const loadedComments = await getTicketComments(ticketId);
@@ -66,7 +67,7 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
     } catch (error) {
       if (sequence !== commentRequestSequence.current) return;
       setCommentState("error");
-      setCommentError(error instanceof Error ? error.message : "Unable to load public comments.");
+      setCommentLoadError(error instanceof Error ? error.message : "Unable to load public comments.");
     }
   }
 
@@ -104,27 +105,28 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
 
   async function handleAddComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (commentState !== "success") return;
+
     const content = commentContent.trim();
     if (!content) {
-      setCommentError("Comment content is required.");
+      setCommentFormError("Comment content is required.");
       return;
     }
     if (content.length > 4000) {
-      setCommentError("Comment content must be 4000 characters or fewer.");
+      setCommentFormError("Comment content must be 4000 characters or fewer.");
       return;
     }
 
     setSavingComment(true);
-    setCommentError("");
+    setCommentFormError("");
     setCommentSuccess("");
     try {
       const addedComment = await addPublicComment(ticketId, content);
       setComments((current) => [...current, addedComment]);
       setCommentContent("");
       setCommentSuccess("Public comment added.");
-      setCommentState("success");
     } catch (error) {
-      setCommentError(error instanceof Error ? error.message : "Unable to add public comment.");
+      setCommentFormError(error instanceof Error ? error.message : "Unable to add public comment.");
     } finally {
       setSavingComment(false);
     }
@@ -249,7 +251,7 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
               {commentState === "loading" && <p role="status">Loading Public Comments…</p>}
               {commentState === "error" && (
                 <div className="alert alert-danger" role="alert">
-                  <p className="mb-2">{commentError}</p>
+                  <p className="mb-2">{commentLoadError}</p>
                   <button className="btn btn-outline-danger btn-sm" type="button" onClick={() => void loadComments()}>
                     Try again
                   </button>
@@ -280,20 +282,25 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
                 </label>
                 <textarea
                   id={`public-comment-${ticket.id}`}
-                  className={`form-control${commentError ? " is-invalid" : ""}`}
+                  className={`form-control${commentFormError ? " is-invalid" : ""}`}
                   rows={4}
                   value={commentContent}
                   onChange={(event) => setCommentContent(event.target.value)}
                   maxLength={4000}
-                  aria-invalid={Boolean(commentError)}
+                  aria-invalid={Boolean(commentFormError)}
                   aria-describedby={`public-comment-help-${ticket.id}`}
+                  disabled={commentState !== "success" || savingComment}
                 />
                 <div id={`public-comment-help-${ticket.id}`} className="form-text">
                   1–4000 characters. Markup is displayed as text.
                 </div>
-                {commentError && <div className="text-danger small mt-1" role="alert">{commentError}</div>}
+                {commentFormError && <div className="text-danger small mt-1" role="alert">{commentFormError}</div>}
                 {commentSuccess && <div className="text-success small mt-1" role="status">{commentSuccess}</div>}
-                <button className="btn btn-success mt-2" type="submit" disabled={savingComment}>
+                <button
+                  className="btn btn-success mt-2"
+                  type="submit"
+                  disabled={commentState !== "success" || savingComment}
+                >
                   {savingComment ? "Saving…" : "Add Public Comment"}
                 </button>
               </form>

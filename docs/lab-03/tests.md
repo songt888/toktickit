@@ -91,7 +91,7 @@ release branch is merged and checked from `main`.
 These results are from `feature/lab3-05-requester-comments`:
 
 - Server: `npm test -- --reporter=dot` — 57 tests passed.
-- Client: `npm test -- --reporter=dot` — 38 tests passed.
+- Client: `npm test -- --reporter=dot` — 40 tests passed.
 - Server and client TypeScript production builds passed.
 - API coverage includes requester ownership, comment validation, append-only comments,
   safe plain-text content, and `problemAppearsResolved` without changing ticket status.

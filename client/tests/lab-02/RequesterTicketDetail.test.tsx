@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import TicketDetail from "../../src/TicketDetail.js";
 import * as api from "../../src/api.js";
@@ -91,6 +91,47 @@ describe("Ticket Detail UI", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Loading Ticket Detail");
     pendingRequest.resolve(detail);
     expect(await screen.findByText(detail.ticketNumber)).toBeInTheDocument();
+  });
+
+  it("keeps the public comment form disabled until comments finish loading", async () => {
+    const pendingComments = deferred<api.PublicComment[]>();
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments").mockReturnValue(pendingComments.promise);
+
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
+    await screen.findByText(detail.ticketNumber);
+
+    const textbox = screen.getByRole("textbox", { name: "Add Public Comment" });
+    const submit = screen.getByRole("button", { name: "Add Public Comment" });
+    expect(textbox).toBeDisabled();
+    expect(submit).toBeDisabled();
+
+    pendingComments.resolve([]);
+    await waitFor(() => {
+      expect(textbox).toBeEnabled();
+      expect(submit).toBeEnabled();
+    });
+  });
+
+  it("keeps comment loading errors separate from form validation errors", async () => {
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    vi.spyOn(api, "getTicketComments")
+      .mockRejectedValueOnce(new Error("Comments unavailable"))
+      .mockResolvedValue([]);
+    const user = userEvent.setup();
+
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
+    await screen.findByText("Comments unavailable");
+    expect(screen.getByRole("textbox", { name: "Add Public Comment" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Comments unavailable");
+
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    const submit = screen.getByRole("button", { name: "Add Public Comment" });
+    await waitFor(() => expect(submit).toBeEnabled());
+    await user.click(submit);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Comment content is required.");
+    expect(screen.queryByText("Comments unavailable")).not.toBeInTheDocument();
   });
 
   it("shows a not-found failure and can retry", async () => {

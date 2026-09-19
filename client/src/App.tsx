@@ -1,19 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ApiRequestError,
+  AuthUser,
   clearRequesterId,
+  getCurrentUser,
   getRequesters,
+  logout,
   readRequesterId,
   Requester,
   saveRequesterId,
 } from "./api.js";
 import CreateTicket from "./CreateTicket.js";
+import ChangePassword from "./ChangePassword.js";
+import Login from "./Login.js";
 import MyTickets from "./MyTickets.js";
 import TicketDetail from "./TicketDetail.js";
 
 type RequesterState = "loading" | "success" | "error";
 type ActivePage = "tickets" | "create" | "detail";
+type AuthMode = "checking" | "login" | "change-password" | "authenticated" | "legacy";
+
+function requesterFromUser(user: AuthUser): Requester {
+  return { id: user.id, name: user.name, email: user.email };
+}
 
 export default function App() {
+  const [authMode, setAuthMode] = useState<AuthMode>("checking");
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [requesterState, setRequesterState] = useState<RequesterState>("loading");
   const [requesters, setRequesters] = useState<Requester[]>([]);
   const [selectedRequesterId, setSelectedRequesterId] = useState<number | null>(null);
@@ -51,7 +64,35 @@ export default function App() {
   }
 
   useEffect(() => {
-    void loadRequesters();
+    let cancelled = false;
+    void getCurrentUser()
+      .then(({ user }) => {
+        if (cancelled) return;
+        setAuthUser(user);
+        if (user.mustChangePassword) {
+          setAuthMode("change-password");
+          return;
+        }
+        setAuthMode("authenticated");
+        if (user.role === "REQUESTER") {
+          setCurrentRequester(requesterFromUser(user));
+        }
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        if (error instanceof ApiRequestError && error.status === 401) {
+          setAuthMode("login");
+          return;
+        }
+        // Keep the Lab 2 selector available when the authentication endpoint
+        // is not running, so the earlier lab remains testable in isolation.
+        setAuthMode("legacy");
+        void loadRequesters();
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const selectedRequester = useMemo(
@@ -65,6 +106,38 @@ export default function App() {
     saveRequesterId(selectedRequester.id);
     setCurrentRequester(selectedRequester);
     setActivePage("create");
+  }
+
+  function handleLogin(user: AuthUser) {
+    setAuthUser(user);
+    setActivePage("tickets");
+    setSelectedTicketId(null);
+    if (user.mustChangePassword) {
+      setCurrentRequester(null);
+      setAuthMode("change-password");
+      return;
+    }
+    setAuthMode("authenticated");
+    if (user.role === "REQUESTER") setCurrentRequester(requesterFromUser(user));
+  }
+
+  function handlePasswordChanged(user: AuthUser) {
+    setAuthUser(user);
+    setAuthMode("authenticated");
+    if (user.role === "REQUESTER") setCurrentRequester(requesterFromUser(user));
+  }
+
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch {
+      // The local authenticated state is cleared even when the network is unavailable.
+    }
+    setAuthUser(null);
+    setCurrentRequester(null);
+    setSelectedTicketId(null);
+    setActivePage("tickets");
+    setAuthMode("login");
   }
 
   function handleChangeRequester() {
@@ -87,7 +160,16 @@ export default function App() {
           TokTickIT <span className="text-success">IT Service Desk</span>
         </h1>
 
-        {currentRequester && (
+        {authUser && authMode !== "legacy" && authMode !== "login" ? (
+          <div className="d-flex align-items-center gap-2" aria-label="Current user">
+            <span className="small text-secondary">
+              {authUser.name} <span className="badge text-bg-success">{authUser.role}</span>
+            </span>
+            <button className="btn btn-outline-success btn-sm" onClick={() => void handleLogout()}>
+              Logout
+            </button>
+          </div>
+        ) : currentRequester && (
           <div className="d-flex align-items-center gap-2" aria-label="Current Development Requester">
             <span className="small text-secondary">Requester: {currentRequester.name}</span>
             <button className="btn btn-outline-success btn-sm" onClick={handleChangeRequester}>
@@ -126,7 +208,28 @@ export default function App() {
         </nav>
       )}
 
-      <section className="card border-0 shadow-sm mb-4" aria-label="Development Requester selection">
+      {authMode === "checking" && (
+        <p className="card card-body border-0 shadow-sm" role="status">
+          Checking your session… Loading Development Requesters…
+        </p>
+      )}
+
+      {authMode === "login" && <Login onSuccess={handleLogin} />}
+
+      {authMode === "change-password" && authUser && (
+        <ChangePassword user={authUser} onSuccess={handlePasswordChanged} />
+      )}
+
+      {authMode === "authenticated" && authUser && authUser.role !== "REQUESTER" && (
+        <section className="card border-0 shadow-sm" aria-labelledby="role-workspace-title">
+          <div className="card-body">
+            <h2 id="role-workspace-title" className="h4">Welcome, {authUser.name}</h2>
+            <p className="mb-0">Your {authUser.role.replace("_", " ")} workspace will be available in the next Lab 3 issue.</p>
+          </div>
+        </section>
+      )}
+
+      {authMode === "legacy" && <section className="card border-0 shadow-sm mb-4" aria-label="Development Requester selection">
         <div className="card-body">
           <h2 className="h5">Development Requester</h2>
 
@@ -189,7 +292,7 @@ export default function App() {
             </>
           )}
         </div>
-      </section>
+      </section>}
 
       {currentRequester && (activePage === "tickets" || activePage === "detail") && (
         <div

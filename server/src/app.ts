@@ -1,10 +1,23 @@
-import express, { Request, Response } from "express";
-import cors from "cors";
+import express, { NextFunction, Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { TicketPriority } from "@prisma/client";
 import multer, { MulterError } from "multer";
+import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from "./password.js";
+import {
+  AUTH_USER_SELECT,
+  clearSessionCookie,
+  createSession,
+  hasAllowedOrigin,
+  hasSessionCookie,
+  AuthenticatedRequest,
+  requireSession,
+  requirePasswordChangeComplete,
+  revokeCurrentSession,
+  toSafeUser,
+  validatePassword,
+} from "./auth.js";
 import { getPrisma } from "./prisma.js";
 import { parseRequesterId, REQUESTER_CONTEXT_ERROR } from "./requesterContext.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
@@ -35,7 +48,15 @@ app.use((_req: Request, res: Response, next) => {
   next();
 });
 
-app.use(cors());          // already wired: lets the Vite dev server call this API
+// Browser requests use the Vite /api proxy in local development, so the
+// session cookie remains same-origin and the API does not expose credentialed CORS.
+app.use((req: Request, res: Response, next) => {
+  if (["POST", "PATCH", "PUT", "DELETE"].includes(req.method) && !hasAllowedOrigin(req)) {
+    res.status(403).json({ error: "Request origin is not allowed" });
+    return;
+  }
+  next();
+});
 app.use(express.json());
 
 const attachmentStorageDir = path.resolve(
@@ -94,6 +115,110 @@ function handleAttachmentUpload(req: Request, res: Response, next: () => void): 
   });
 }
 
+function safeAuthResponse(user: Parameters<typeof toSafeUser>[0]) {
+  return {
+    user: toSafeUser(user),
+    requiresPasswordChange: user.mustChangePassword,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Lab 3 Issue 3 — Authentication and sessions
+// ---------------------------------------------------------------------------
+app.post("/api/auth/login", async (req: Request, res: Response) => {
+  const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  const fieldErrors: Record<string, string> = {};
+  if (!email) fieldErrors.email = "Email is required.";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) fieldErrors.email = "Enter a valid email address.";
+  if (!password) fieldErrors.password = "Password is required.";
+  if (Object.keys(fieldErrors).length > 0) {
+    res.status(400).json({ error: "Validation failed", fieldErrors });
+    return;
+  }
+
+  try {
+    const user = await getPrisma().user.findUnique({
+      where: { email },
+      select: { ...AUTH_USER_SELECT, passwordHash: true },
+    });
+    const passwordMatches = verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !user.isActive || !passwordMatches) {
+      res.status(401).json({ error: "Invalid email or password" });
+      return;
+    }
+
+    await createSession(getPrisma(), user.id, res);
+    res.status(200).json(safeAuthResponse(user));
+  } catch {
+    res.status(500).json({ error: "Unable to sign in" });
+  }
+});
+
+app.get("/api/auth/me", requireSession, (req: Request, res: Response) => {
+  const user = res.locals.authUser;
+  res.status(200).json(safeAuthResponse(user));
+});
+
+app.post("/api/auth/logout", async (req: Request, res: Response) => {
+  try {
+    await revokeCurrentSession(getPrisma(), req);
+  } catch {
+    // Logout is intentionally idempotent. Always clear the browser cookie.
+  }
+  clearSessionCookie(res);
+  res.status(204).send();
+});
+
+app.post(
+  "/api/auth/change-password",
+  requireSession,
+  async (req: Request, res: Response) => {
+    const currentPassword = typeof req.body?.currentPassword === "string" ? req.body.currentPassword : "";
+    const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+    const confirmPassword = typeof req.body?.confirmPassword === "string" ? req.body.confirmPassword : "";
+    const fieldErrors: Record<string, string> = {};
+    if (!currentPassword) fieldErrors.currentPassword = "Current password is required.";
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) fieldErrors.newPassword = passwordError;
+    if (!confirmPassword) fieldErrors.confirmPassword = "Please confirm your new password.";
+    else if (newPassword !== confirmPassword) fieldErrors.confirmPassword = "Passwords do not match.";
+    if (Object.keys(fieldErrors).length > 0) {
+      res.status(400).json({ error: "Validation failed", fieldErrors });
+      return;
+    }
+
+    try {
+      const database = getPrisma();
+      const user = await database.user.findUnique({
+        where: { id: res.locals.authUser.id },
+        select: { ...AUTH_USER_SELECT, passwordHash: true },
+      });
+      if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
+        res.status(400).json({ error: "Current password is incorrect" });
+        return;
+      }
+      if (verifyPassword(newPassword, user.passwordHash)) {
+        res.status(400).json({ error: "New password must be different from the current password" });
+        return;
+      }
+
+      const updatedUser = await database.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: hashPassword(newPassword),
+          mustChangePassword: false,
+          passwordChangedAt: new Date(),
+        },
+        select: AUTH_USER_SELECT,
+      });
+      res.status(200).json(safeAuthResponse(updatedUser));
+    } catch {
+      res.status(500).json({ error: "Unable to change password" });
+    }
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Issue 2 — API health check
 // Make the test in tests/lab-01/health.test.ts pass.
@@ -102,6 +227,26 @@ function handleAttachmentUpload(req: Request, res: Response, next: () => void): 
 app.get("/api/health", (_req: Request, res: Response) => {
   res.status(200).json({ status: "ok", service: "TokTickIT API" });
 });
+
+function requireApplicationAccessForSession(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  if (!hasSessionCookie(req)) {
+    next();
+    return;
+  }
+
+  requireSession(req as AuthenticatedRequest, res, () => {
+    requirePasswordChangeComplete(req as AuthenticatedRequest, res, next);
+  });
+}
+
+// During the incremental Lab 3 migration, header-based Lab 2 calls remain
+// available without a cookie. Once a browser has a session, however, the
+// server enforces the first-login gate before any normal application route.
+app.use(requireApplicationAccessForSession);
 
 // ---------------------------------------------------------------------------
 // Lab 2 Issue 3 — Development Requester context

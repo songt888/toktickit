@@ -107,7 +107,7 @@ checks remain planned for their corresponding issues.
 
 These results are from `feature/lab3-06-staff-ticket-queue`:
 
-- Server: `npm test -- --reporter=dot` — 61 tests passed across 22 files.
+- Server: `npm test -- --reporter=dot` — 63 tests passed across 22 files.
 - Client: `npm test -- --reporter=dot` — 44 tests passed across 11 files.
 - Server and client TypeScript production builds passed.
 - Playwright: `npm run test:e2e` — 5 tests passed, including the authenticated
@@ -140,8 +140,8 @@ they remain regression coverage and are included in the full Playwright result a
 | AC-06 | API-07, API-08, UI-04, E2E-02 |
 | AC-07 | API-07, API-08, UI-04, REG-01, REG-02, E2E-02 |
 | AC-08 | API-09, UI-04, E2E-02 |
-| AC-09 | UNIT-03, API-10, UI-05, E2E-03 |
-| AC-10 | UNIT-03, API-05, API-10, UI-05, E2E-03 |
+| AC-09 | UNIT-03, API-10, UI-05, E2E-03, E2E-05 |
+| AC-10 | UNIT-03, API-05, API-10, UI-05, E2E-03, E2E-05 |
 | AC-11 | API-11, UI-06, E2E-03 |
 | AC-12 | UNIT-04, API-11, API-12, UI-06, E2E-03 |
 | AC-13 | API-13, UI-06, E2E-03 |

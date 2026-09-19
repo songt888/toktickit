@@ -10,6 +10,8 @@ export type TicketSortField = (typeof ticketSortFields)[number];
 export const ticketPageSizes = [10, 25, 50] as const;
 export type TicketPageSize = (typeof ticketPageSizes)[number];
 
+const MAX_SIGNED_INT32 = 2_147_483_647;
+
 export type TicketListQuery = {
   search?: string;
   categoryId?: number;
@@ -42,7 +44,11 @@ function readPositiveInteger(query: Record<string, unknown>, key: string): numbe
   if (raw === null || !/^\d+$/.test(raw)) return null;
 
   const value = Number(raw);
-  return Number.isSafeInteger(value) && value > 0 ? value : null;
+  return Number.isSafeInteger(value) && value > 0 && value <= MAX_SIGNED_INT32 ? value : null;
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
 }
 
 export function parseTicketListQuery(query: Record<string, unknown>): QueryParseResult {
@@ -110,18 +116,20 @@ export function buildTicketWhere(
   requesterId: number,
   options: TicketListQuery,
 ): Prisma.TicketWhereInput {
+  const search = options.search ? escapeLikePattern(options.search) : undefined;
+
   return {
     requesterId,
     ...(options.categoryId ? { categoryId: options.categoryId } : {}),
     ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
     ...(options.requestedPriority ? { requestedPriority: options.requestedPriority } : {}),
     ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
-    ...(options.search
+    ...(search
       ? {
           OR: [
-            { ticketNumber: { contains: options.search, mode: "insensitive" } },
-            { summary: { contains: options.search, mode: "insensitive" } },
-            { description: { contains: options.search, mode: "insensitive" } },
+            { ticketNumber: { contains: search, mode: "insensitive" } },
+            { summary: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
           ],
         }
       : {}),
@@ -222,7 +230,13 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
   } else if (ownerId !== undefined) {
     if (!/^\d+$/.test(ownerId)) return { error: "Invalid query parameters" };
     const value = Number(ownerId);
-    if (!Number.isSafeInteger(value) || value <= 0) return { error: "Invalid query parameters" };
+    if (
+      !Number.isSafeInteger(value) ||
+      value <= 0 ||
+      value > MAX_SIGNED_INT32
+    ) {
+      return { error: "Invalid query parameters" };
+    }
     parsedOwnerId = value;
   }
 
@@ -248,6 +262,8 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
 export function buildStaffTicketWhere(
   options: StaffTicketListQuery,
 ): Prisma.TicketWhereInput {
+  const search = options.search ? escapeLikePattern(options.search) : undefined;
+
   return {
     ...(options.categoryId ? { categoryId: options.categoryId } : {}),
     ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
@@ -255,13 +271,13 @@ export function buildStaffTicketWhere(
     ...(options.itPriority ? { itPriority: options.itPriority } : {}),
     ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
     ...(options.ownerId !== undefined ? { ownerId: options.ownerId } : {}),
-    ...(options.search
+    ...(search
       ? {
           OR: [
-            { ticketNumber: { contains: options.search, mode: "insensitive" } },
-            { summary: { contains: options.search, mode: "insensitive" } },
-            { description: { contains: options.search, mode: "insensitive" } },
-            { requester: { name: { contains: options.search, mode: "insensitive" } } },
+            { ticketNumber: { contains: search, mode: "insensitive" } },
+            { summary: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+            { requester: { name: { contains: search, mode: "insensitive" } } },
           ],
         }
       : {}),

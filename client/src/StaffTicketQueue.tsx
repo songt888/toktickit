@@ -323,7 +323,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
                 {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-3">
               <label className="form-label fw-semibold" htmlFor="staff-owner">Owner</label>
               <select
                 id="staff-owner"
@@ -335,7 +335,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
                 <option value="unassigned">Unassigned only</option>
               </select>
             </div>
-            <div className="col-md-4">
+            <div className="col-md-3">
               <label className="form-label fw-semibold" htmlFor="staff-sort">Sort by</label>
               <select
                 id="staff-sort"
@@ -351,7 +351,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
                 <option value="currentStatus">Status</option>
               </select>
             </div>
-            <div className="col-md-2">
+            <div className="col-md-3">
               <label className="form-label fw-semibold" htmlFor="staff-order">Order</label>
               <select
                 id="staff-order"
@@ -363,7 +363,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
                 <option value="asc">Ascending</option>
               </select>
             </div>
-            <div className="col-md-2">
+            <div className="col-md-3">
               <label className="form-label fw-semibold" htmlFor="staff-page-size">Page size</label>
               <select
                 id="staff-page-size"

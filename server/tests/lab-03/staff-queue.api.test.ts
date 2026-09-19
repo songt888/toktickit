@@ -62,6 +62,12 @@ describe("GET /api/staff/tickets", () => {
       createdTicketIds.push(created.id);
       if (firstTicketId === 0) firstTicketId = created.id;
     }
+
+    // Keep the fixture timestamps identical so the API's id tiebreaker is observable.
+    await prisma.ticket.updateMany({
+      where: { id: { in: createdTicketIds } },
+      data: { updatedAt: new Date("2026-09-19T00:00:00.000Z") },
+    });
   });
 
   afterAll(async () => {
@@ -122,11 +128,53 @@ describe("GET /api/staff/tickets", () => {
     expect(pageTwo.body.items[0].summary).toContain("ticket 10");
   });
 
+  it("uses the default sort and id tiebreaker for equal updatedAt values", async () => {
+    const response = await request(app)
+      .get(`/api/staff/tickets?search=${encodeURIComponent(runToken)}&pageSize=25`)
+      .set("Cookie", staffCookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.items).toHaveLength(11);
+    expect(response.body.items.map((item: { id: number }) => item.id)).toEqual(
+      [...createdTicketIds].sort((left, right) => right - left),
+    );
+    expect(new Set(response.body.items.map((item: { updatedAt: string }) => item.updatedAt)).size).toBe(1);
+  });
+
+  it("searches ticket fields and requester names while treating wildcards literally", async () => {
+    const searches = [
+      "TKT-ISSUE6-",
+      `${runToken} ticket`,
+      `${runToken} description`,
+      "Issue 4 REQUESTER fixture",
+    ];
+
+    for (const search of searches) {
+      const response = await request(app)
+        .get("/api/staff/tickets")
+        .query({ search })
+        .set("Cookie", staffCookie);
+      expect(response.status).toBe(200);
+      expect(response.body.pagination.totalItems).toBeGreaterThan(0);
+    }
+
+    for (const wildcardSearch of ["%", "_"]) {
+      const wildcard = await request(app)
+        .get("/api/staff/tickets")
+        .query({ search: wildcardSearch })
+        .set("Cookie", staffCookie);
+      expect(wildcard.status).toBe(200);
+      expect(wildcard.body.pagination.totalItems).toBe(0);
+    }
+  });
+
   it("rejects unsupported query values with a safe 400 response", async () => {
     for (const query of [
       "itPriority=INVALID",
       "currentStatus=INVALID",
       "ownerId=abc",
+      "ownerId=2147483648",
+      "categoryId=2147483648",
       "sort=summary",
       "pageSize=5",
     ]) {
@@ -158,6 +206,7 @@ describe("GET /api/staff/tickets", () => {
       .get(`/api/staff/tickets/${firstTicketId}`)
       .set("Cookie", requesterCookie);
     expect(requesterDetail.status).toBe(403);
+    expect(requesterDetail.body).toEqual({ error: "Forbidden" });
 
     const missing = await request(app)
       .get("/api/staff/tickets/999999999")

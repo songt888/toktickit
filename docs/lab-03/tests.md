@@ -1,6 +1,6 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issue #45 authentication-migration checks recorded; remaining Lab 3 checks are planned.
+Status: Issue #47 requester-comments checks recorded; remaining Lab 3 checks are planned.
 
 All Lab 3 test files will live under `server/tests/lab-03/`,
 `client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
@@ -44,7 +44,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-06 | Integration | AC-21, AC-22 | Migration, schema, foreign keys, and repeatable seed | `server/tests/lab-03/data-foundation.test.ts` | Existing data preserved; seed is idempotent | Planned |
 | API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Passed |
 | API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Passed |
-| API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Planned |
+| API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Passed |
 | API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Planned |
 | API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Planned |
 | API-12 | API | AC-12 | Inactive owner, stale `updatedAt`, and conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Planned |
@@ -57,7 +57,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
-| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity | Planned |
+| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
 | UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Planned |
 | UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Planned |
 | UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
@@ -85,6 +85,21 @@ These results are from `feature/lab3-04-requester-authorization` before the pull
 
 The final Lab 3 release verification remains in `RELEASE-01` and will be recorded after the
 release branch is merged and checked from `main`.
+
+## Issue #47 Verification
+
+These results are from `feature/lab3-05-requester-comments`:
+
+- Server: `npm test -- --reporter=dot` — 57 tests passed.
+- Client: `npm test -- --reporter=dot` — 40 tests passed.
+- Server and client TypeScript production builds passed.
+- API coverage includes requester ownership, comment validation, append-only comments,
+  safe plain-text content, and `problemAppearsResolved` without changing ticket status.
+- UI coverage includes public-comment submission, empty-comment validation, and the
+  resolution-indication action while keeping the authenticated requester flow.
+
+The remaining staff, administrator, E2E, responsive, accessibility, and final release
+checks remain planned for their corresponding issues.
 
 ## 3. Acceptance-Criterion Traceability
 

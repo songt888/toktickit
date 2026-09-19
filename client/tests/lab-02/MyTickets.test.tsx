@@ -46,6 +46,8 @@ const ariTicketDetail: api.TicketDetail = {
   category: categories[0],
   relatedSystem: relatedSystems[0],
   attachments: [],
+  problemAppearsResolved: false,
+  problemAppearsResolvedAt: null,
 };
 
 function listResponse(items: api.TicketListItem[], totalItems = items.length, totalPages = 1): api.TicketListResponse {
@@ -74,6 +76,7 @@ function mockReferences() {
   });
   vi.spyOn(api, "getCategories").mockResolvedValue(categories);
   vi.spyOn(api, "getRelatedSystems").mockResolvedValue(relatedSystems);
+  vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
 }
 
 async function openMyTickets() {

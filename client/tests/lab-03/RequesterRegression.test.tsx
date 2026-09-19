@@ -37,6 +37,8 @@ const detail: api.TicketDetail = {
   category,
   relatedSystem,
   attachments: [],
+  problemAppearsResolved: false,
+  problemAppearsResolvedAt: null,
 };
 
 afterEach(() => vi.restoreAllMocks());
@@ -48,6 +50,7 @@ function mockSessionWorkflow() {
   });
   vi.spyOn(api, "getCategories").mockResolvedValue([category]);
   vi.spyOn(api, "getRelatedSystems").mockResolvedValue([relatedSystem]);
+  vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
 }
 
 describe("Requester authenticated-session regression", () => {
@@ -81,5 +84,43 @@ describe("Requester authenticated-session regression", () => {
 
     expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
     expect(getDetail).toHaveBeenCalledWith(ticket.id);
+  });
+
+  it("lets the authenticated requester add a public comment and mark the problem resolved", async () => {
+    mockSessionWorkflow();
+    vi.spyOn(api, "getMyTickets").mockResolvedValue({
+      items: [ticket],
+      pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 },
+    });
+    vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
+    const addComment = vi.spyOn(api, "addPublicComment").mockResolvedValue({
+      id: 502,
+      content: "The issue is still happening.",
+      createdAt: "2026-09-19T01:00:00.000Z",
+      author: requester,
+    });
+    const setResolution = vi.spyOn(api, "setProblemAppearsResolved").mockResolvedValue({
+      id: ticket.id,
+      problemAppearsResolved: true,
+      problemAppearsResolvedAt: "2026-09-19T01:01:00.000Z",
+      currentStatus: "NEW",
+      updatedAt: "2026-09-19T01:01:00.000Z",
+    });
+    const user = userEvent.setup();
+
+    render(<App />);
+    await user.click((await screen.findAllByRole("button", { name: "View details" }))[0]);
+    await screen.findByRole("heading", { name: "Public Comments" });
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Add Public Comment" }),
+      "The issue is still happening.",
+    );
+    await user.click(screen.getByRole("button", { name: "Add Public Comment" }));
+    expect(addComment).toHaveBeenCalledWith(ticket.id, "The issue is still happening.");
+
+    await user.click(screen.getByRole("button", { name: "Mark problem as resolved" }));
+    expect(setResolution).toHaveBeenCalledWith(ticket.id, true);
+    expect(await screen.findByText(/Ticket status was not changed/)).toBeInTheDocument();
   });
 });

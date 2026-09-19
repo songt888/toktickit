@@ -93,3 +93,15 @@ export function validateRemovalReason(reason: unknown): string | null {
 
   return null;
 }
+
+export function validateCommentContent(content: unknown): string | null {
+  if (typeof content !== "string" || content.trim().length === 0) {
+    return "Comment content is required.";
+  }
+
+  if (content.trim().length > 4000) {
+    return "Comment content must be 4000 characters or fewer.";
+  }
+
+  return null;
+}

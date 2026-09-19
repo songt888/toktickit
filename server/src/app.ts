@@ -110,8 +110,8 @@ app.get("/api/health", (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 app.get("/api/requesters", async (_req: Request, res: Response) => {
   try {
-    const requesters = await getPrisma().requesterUser.findMany({
-      where: { isActive: true },
+    const requesters = await getPrisma().user.findMany({
+      where: { isActive: true, role: "REQUESTER" },
       select: { id: true, name: true, email: true },
       orderBy: { id: "asc" },
     });
@@ -158,8 +158,8 @@ app.post("/api/tickets", async (req: Request, res: Response) => {
 
   try {
     const ticket = await getPrisma().$transaction(async (transaction) => {
-      const requester = await transaction.requesterUser.findFirst({
-        where: { id: requesterId, isActive: true },
+      const requester = await transaction.user.findFirst({
+        where: { id: requesterId, isActive: true, role: "REQUESTER" },
         select: { id: true },
       });
       if (!requester) throw new ReferenceNotFoundError();
@@ -189,6 +189,7 @@ app.post("/api/tickets", async (req: Request, res: Response) => {
           summary: value.summary,
           description: value.description,
           requestedPriority: value.requestedPriority as TicketPriority,
+          itPriority: value.requestedPriority as TicketPriority,
           currentStatus: "NEW",
         },
         select: {
@@ -201,6 +202,7 @@ app.post("/api/tickets", async (req: Request, res: Response) => {
           summary: true,
           description: true,
           requestedPriority: true,
+          itPriority: true,
           currentStatus: true,
         },
       });
@@ -232,8 +234,8 @@ app.get("/api/tickets", async (req: Request, res: Response) => {
 
   try {
     const database = getPrisma();
-    const requester = await database.requesterUser.findFirst({
-      where: { id: requesterId, isActive: true },
+    const requester = await database.user.findFirst({
+      where: { id: requesterId, isActive: true, role: "REQUESTER" },
       select: { id: true },
     });
     if (!requester) {
@@ -293,8 +295,8 @@ app.get("/api/tickets/:id", async (req: Request, res: Response) => {
 
   try {
     const database = getPrisma();
-    const requester = await database.requesterUser.findFirst({
-      where: { id: requesterId, isActive: true },
+    const requester = await database.user.findFirst({
+      where: { id: requesterId, isActive: true, role: "REQUESTER" },
       select: { id: true },
     });
     if (!requester) {
@@ -372,8 +374,8 @@ async function getOwnedTicket(requesterId: number, ticketId: number) {
 }
 
 async function hasActiveRequester(requesterId: number): Promise<boolean> {
-  const requester = await getPrisma().requesterUser.findFirst({
-    where: { id: requesterId, isActive: true },
+  const requester = await getPrisma().user.findFirst({
+    where: { id: requesterId, isActive: true, role: "REQUESTER" },
     select: { id: true },
   });
   return Boolean(requester);

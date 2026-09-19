@@ -16,7 +16,7 @@ describe("GET /api/tickets", () => {
   beforeAll(async () => {
     await seedLab2Data(prisma);
     const [requesters, category, relatedSystem] = await Promise.all([
-      prisma.requesterUser.findMany({ where: { isActive: true }, orderBy: { id: "asc" }, take: 2 }),
+      prisma.user.findMany({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" }, take: 2 }),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
@@ -107,7 +107,7 @@ describe("GET /api/tickets", () => {
     expect(missingHeader.status).toBe(400);
     expect(missingHeader.body).toEqual({ error: "Requester context is required" });
 
-    const inactiveRequester = await prisma.requesterUser.findFirst({ where: { isActive: false } });
+    const inactiveRequester = await prisma.user.findFirst({ where: { isActive: false, role: "REQUESTER" } });
     if (!inactiveRequester) throw new Error("Inactive requester fixture is missing");
     const inactiveResponse = await request(app)
       .get("/api/tickets")

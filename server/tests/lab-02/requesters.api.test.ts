@@ -9,8 +9,8 @@ describe("GET /api/requesters", () => {
   });
 
   it("returns active requesters in id order without inactive users", async () => {
-    const expected = await getPrisma().requesterUser.findMany({
-      where: { isActive: true },
+    const expected = await getPrisma().user.findMany({
+      where: { isActive: true, role: "REQUESTER" },
       select: { id: true, name: true, email: true },
       orderBy: { id: "asc" },
     });

@@ -40,7 +40,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Planned |
 | API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Planned |
 | API-04 | API | AC-04 | Current user and logout invalidation | `server/tests/lab-03/auth.api.test.ts` | `/me` works; revoked session fails | Planned |
-| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Passed |
+| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Planned |
 | API-06 | Integration | AC-21, AC-22 | Migration, schema, foreign keys, and repeatable seed | `server/tests/lab-03/data-foundation.test.ts` | Existing data preserved; seed is idempotent | Planned |
 | API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Passed |
 | API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Passed |
@@ -57,7 +57,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
-| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity | Passed |
+| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity | Planned |
 | UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Planned |
 | UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Planned |
 | UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
@@ -79,7 +79,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 These results are from `feature/lab3-04-requester-authorization` before the pull request:
 
 - Server: `npm test -- --reporter=dot` — 53 tests passed.
-- Client: `npm test -- --reporter=dot` — 34 tests passed.
+- Client: `npm test -- --reporter=dot` — 35 tests passed.
 - Server and client TypeScript production builds passed.
 - `git diff --check` passed.
 

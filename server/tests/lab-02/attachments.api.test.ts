@@ -55,7 +55,7 @@ describe("Attachment lifecycle API", () => {
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (!category || !relatedSystem) throw new Error("Seed data is missing");
+    if (!ownerUser || !otherUser || !category || !relatedSystem) throw new Error("Seed data is missing");
 
     ownerId = ownerUser.id;
     otherRequesterId = otherUser.id;

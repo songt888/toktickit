@@ -140,6 +140,20 @@ describe("My Tickets UI", () => {
     expect(screen.getByText("Showing page 2 of 3 (21 tickets)")).toBeInTheDocument();
   });
 
+  it("refreshes the list when returning from Create Ticket", async () => {
+    const getTickets = vi.spyOn(api, "getMyTickets")
+      .mockResolvedValueOnce(listResponse([ariTicket]))
+      .mockResolvedValue(listResponse([benTicket]));
+    const user = await openMyTickets();
+
+    await user.click(screen.getByRole("button", { name: "Create Ticket" }));
+    expect(await screen.findByRole("heading", { name: "Create Ticket" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "My Tickets" }));
+    expect((await screen.findAllByText("VPN access request")).length).toBeGreaterThan(0);
+    await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(2));
+  });
+
   it("applies search, filter, sorting, page size, and pagination controls", async () => {
     const getTickets = vi.spyOn(api, "getMyTickets").mockResolvedValue(
       listResponse([ariTicket], 11, 2),

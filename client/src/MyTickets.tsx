@@ -125,12 +125,17 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
   }, []);
 
   useEffect(() => {
+    if (!visible) {
+      ticketRequestSequence.current += 1;
+      return;
+    }
+
     void loadPage();
 
     return () => {
       ticketRequestSequence.current += 1;
     };
-  }, [requester.id, filters]);
+  }, [requester.id, filters, visible]);
 
   function updateDraft(field: keyof FilterDraft, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));

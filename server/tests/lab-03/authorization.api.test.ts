@@ -88,6 +88,9 @@ describe("Lab 3 requester authorization", () => {
     const staffList = await request(app)
       .get("/api/tickets")
       .set("Cookie", staffCookie);
+    const staffAttachments = await request(app)
+      .get(`/api/tickets/${ticketId}/attachments`)
+      .set("Cookie", staffCookie);
     const administratorCreate = await request(app)
       .post("/api/tickets")
       .set("Cookie", administratorCookie)
@@ -97,9 +100,26 @@ describe("Lab 3 requester authorization", () => {
       .set("Cookie", staffCookie);
 
     expect(staffList.status).toBe(403);
+    expect(staffAttachments.status).toBe(403);
     expect(administratorCreate.status).toBe(403);
     expect(staffCompatibility.status).toBe(403);
     expect(staffList.body).toEqual({ error: "Forbidden" });
+
+    const spoofedCreate = await request(app)
+      .post("/api/tickets")
+      .set("Cookie", requesterCookie)
+      .set("X-Requester-Id", String(otherRequesterId))
+      .send({
+        categoryId,
+        relatedSystemId,
+        summary: "Session identity wins over spoofed header",
+        description: "The ticket must belong to the authenticated requester.",
+        requestedPriority: "LOW",
+      });
+
+    expect(spoofedCreate.status).toBe(201);
+    expect(spoofedCreate.body.requesterId).toBe(requesterId);
+    createdTicketIds.push(spoofedCreate.body.id);
   });
 
   it("derives ownership from the session and hides another requester's ticket", async () => {

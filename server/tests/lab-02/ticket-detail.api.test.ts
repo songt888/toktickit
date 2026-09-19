@@ -3,6 +3,7 @@ import request from "supertest";
 import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
+import { createTestUser, removeTestUsers, sessionCookieFor } from "../lab-03/testSession.js";
 
 const prisma = getPrisma();
 const createdTicketIds: number[] = [];
@@ -14,24 +15,29 @@ describe("GET /api/tickets/:id", () => {
   let otherRequesterId: number;
   let categoryId: number;
   let relatedSystemId: number;
+  let ownerCookie: string;
+  let otherRequesterCookie: string;
 
   beforeAll(async () => {
     await seedLab2Data(prisma);
-    const [requesters, category, relatedSystem] = await Promise.all([
-      prisma.user.findMany({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" }, take: 2 }),
+    const [ownerUser, otherUser, category, relatedSystem] = await Promise.all([
+      createTestUser("lab3-issue4-detail-owner@example.test"),
+      createTestUser("lab3-issue4-detail-other@example.test"),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (requesters.length < 2 || !category || !relatedSystem) throw new Error("Seed data is missing");
+    if (!category || !relatedSystem) throw new Error("Seed data is missing");
 
-    ownerId = requesters[0].id;
-    otherRequesterId = requesters[1].id;
+    ownerId = ownerUser.id;
+    otherRequesterId = otherUser.id;
+    ownerCookie = await sessionCookieFor(ownerId);
+    otherRequesterCookie = await sessionCookieFor(otherRequesterId);
     categoryId = category.id;
     relatedSystemId = relatedSystem.id;
 
     const ticketResponse = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(ownerId))
+      .set("Cookie", ownerCookie)
       .send({
         categoryId,
         relatedSystemId,
@@ -77,13 +83,14 @@ describe("GET /api/tickets/:id", () => {
     if (createdTicketIds.length > 0) {
       await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
     }
+    await removeTestUsers([ownerId, otherRequesterId]);
     await prisma.$disconnect();
   });
 
   it("returns read-only ticket fields and attachment metadata for the owner", async () => {
     const response = await request(app)
       .get(`/api/tickets/${ownedTicketId}`)
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(expect.objectContaining({
@@ -118,40 +125,27 @@ describe("GET /api/tickets/:id", () => {
   it("does not reveal a ticket to another requester or an unknown ticket id", async () => {
     const crossRequesterResponse = await request(app)
       .get(`/api/tickets/${ownedTicketId}`)
-      .set("X-Requester-Id", String(otherRequesterId));
+      .set("Cookie", otherRequesterCookie);
     expect(crossRequesterResponse.status).toBe(404);
     expect(crossRequesterResponse.body).toEqual({ error: "Resource not found" });
 
     const unknownResponse = await request(app)
       .get("/api/tickets/999999999")
-      .set("X-Requester-Id", String(ownerId));
+      .set("Cookie", ownerCookie);
     expect(unknownResponse.status).toBe(404);
     expect(unknownResponse.body).toEqual({ error: "Resource not found" });
   });
 
-  it("validates requester context before looking up the ticket", async () => {
+  it("requires a session and ignores requester headers before looking up the ticket", async () => {
     const missingHeader = await request(app).get(`/api/tickets/${ownedTicketId}`);
-    expect(missingHeader.status).toBe(400);
-    expect(missingHeader.body).toEqual({ error: "Requester context is required" });
+    expect(missingHeader.status).toBe(401);
+    expect(missingHeader.body).toEqual({ error: "Authentication required" });
 
     const malformedHeader = await request(app)
       .get(`/api/tickets/${ownedTicketId}`)
+      .set("Cookie", ownerCookie)
       .set("X-Requester-Id", "not-a-number");
-    expect(malformedHeader.status).toBe(400);
-    expect(malformedHeader.body).toEqual({ error: "Requester context is required" });
-
-    const unknownRequester = await request(app)
-      .get(`/api/tickets/${ownedTicketId}`)
-      .set("X-Requester-Id", "999999999");
-    expect(unknownRequester.status).toBe(404);
-    expect(unknownRequester.body).toEqual({ error: "Requester not found" });
-
-    const inactiveRequester = await prisma.user.findFirst({ where: { isActive: false, role: "REQUESTER" } });
-    if (!inactiveRequester) throw new Error("Inactive requester fixture is missing");
-    const inactiveResponse = await request(app)
-      .get(`/api/tickets/${ownedTicketId}`)
-      .set("X-Requester-Id", String(inactiveRequester.id));
-    expect(inactiveResponse.status).toBe(404);
-    expect(inactiveResponse.body).toEqual({ error: "Requester not found" });
+    expect(malformedHeader.status).toBe(200);
+    expect(malformedHeader.body.id).toBe(ownedTicketId);
   });
 });

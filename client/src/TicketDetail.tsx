@@ -6,7 +6,6 @@ import AttachmentSection from "./AttachmentSection.js";
 type DetailState = "loading" | "success" | "error";
 
 export interface TicketDetailProps {
-  requesterId: number;
   ticketId: number;
   onBack: () => void;
 }
@@ -24,7 +23,7 @@ function priorityBadgeClass(priority: TicketPriority): string {
   }
 }
 
-export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDetailProps) {
+export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
   const [ticket, setTicket] = useState<TicketDetailData | null>(null);
   const [state, setState] = useState<DetailState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -38,7 +37,7 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
     setErrorStatus(null);
 
     try {
-      const loadedTicket = await getTicketDetail(requesterId, ticketId);
+      const loadedTicket = await getTicketDetail(ticketId);
       if (sequence !== requestSequence.current) return;
       setTicket(loadedTicket);
       setState("success");
@@ -56,7 +55,7 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
     return () => {
       requestSequence.current += 1;
     };
-  }, [requesterId, ticketId]);
+  }, [ticketId]);
 
   const notFound = errorStatus === 404;
 
@@ -118,7 +117,6 @@ export default function TicketDetail({ requesterId, ticketId, onBack }: TicketDe
             </section>
 
             <AttachmentSection
-              requesterId={requesterId}
               ticketId={ticket.id}
               initialAttachments={ticket.attachments}
             />

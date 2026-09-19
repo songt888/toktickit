@@ -1,85 +1,62 @@
 import "@testing-library/jest-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import App from "../../src/App.js";
 import * as api from "../../src/api.js";
 
-const requesters = [
-  { id: 1, name: "Ari Suksan", email: "ari.suksan@example.com" },
-  { id: 2, name: "Ben Chaiyo", email: "ben.chaiyo@example.com" },
-];
+const requester = {
+  id: 7,
+  name: "Ari Suksan",
+  email: "ari.suksan@example.com",
+  role: "REQUESTER" as const,
+  isActive: true,
+  mustChangePassword: false,
+};
 
-afterEach(() => {
-  vi.restoreAllMocks();
-  window.localStorage.clear();
-});
+afterEach(() => vi.restoreAllMocks());
 
-describe("Development Requester selection", () => {
-  it("shows a loading state while requesters are loading", () => {
-    vi.spyOn(api, "getRequesters").mockReturnValue(new Promise(() => {}));
+function mockWorkspace() {
+  vi.spyOn(api, "getCurrentUser").mockResolvedValue({
+    user: requester,
+    requiresPasswordChange: false,
+  });
+  vi.spyOn(api, "getCategories").mockResolvedValue([]);
+  vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
+  vi.spyOn(api, "getMyTickets").mockResolvedValue({
+    items: [],
+    pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1 },
+  });
+}
+
+describe("Authenticated requester context", () => {
+  it("shows the requester from the authenticated session without a selector", async () => {
+    mockWorkspace();
 
     render(<App />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Loading Development Requesters");
+    expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
+    expect(screen.getByText("Tickets created by Ari Suksan.")).toBeInTheDocument();
+    expect(screen.getByText("Ari Suksan")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Choose a Development Requester/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Continue" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Change Requester" })).not.toBeInTheDocument();
   });
 
-  it("shows active requesters and persists the selected requester", async () => {
-    vi.spyOn(api, "getRequesters").mockResolvedValue(requesters);
+  it("does not read or write a requester identity in local storage", async () => {
+    mockWorkspace();
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "My Tickets" });
+
+    expect(window.localStorage.length).toBe(0);
+    expect(screen.queryByText(/Development Requester/)).not.toBeInTheDocument();
+  });
+
+  it("shows sign in when the authenticated session is unavailable", async () => {
+    vi.spyOn(api, "getCurrentUser").mockRejectedValue(new api.ApiRequestError("Authentication required", 401));
 
     render(<App />);
 
-    const select = await screen.findByLabelText(/Choose a Development Requester/);
-    expect(screen.getByRole("option", { name: /Ari Suksan/ })).toBeInTheDocument();
-    expect(screen.queryByText(/Inactive/)).not.toBeInTheDocument();
-
-    const continueButton = screen.getByRole("button", { name: "Continue" });
-    expect(continueButton).toBeDisabled();
-    await userEvent.selectOptions(select, "2");
-    expect(continueButton).toBeEnabled();
-    await userEvent.click(continueButton);
-
-    expect(window.localStorage.getItem(api.REQUESTER_STORAGE_KEY)).toBe("2");
-    expect(screen.getByText("Requester: Ben Chaiyo")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Change Requester" })).toBeInTheDocument();
-  });
-
-  it("shows the empty state when there are no active requesters", async () => {
-    vi.spyOn(api, "getRequesters").mockResolvedValue([]);
-
-    render(<App />);
-
-    expect(
-      await screen.findByText("No active Development Requesters are available."),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Continue" })).not.toBeInTheDocument();
-  });
-
-  it("returns to selection when Change Requester is clicked", async () => {
-    vi.spyOn(api, "getRequesters").mockResolvedValue(requesters);
-
-    render(<App />);
-
-    const select = await screen.findByLabelText(/Choose a Development Requester/);
-    await userEvent.selectOptions(select, "1");
-    await userEvent.click(screen.getByRole("button", { name: "Continue" }));
-    await userEvent.click(screen.getByRole("button", { name: "Change Requester" }));
-
-    expect(screen.getByLabelText(/Choose a Development Requester/)).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-    expect(window.localStorage.getItem(api.REQUESTER_STORAGE_KEY)).toBeNull();
-  });
-
-  it("shows a useful error and retry action when the API fails", async () => {
-    vi.spyOn(api, "getRequesters").mockRejectedValue(new Error("Requester API unavailable"));
-
-    render(<App />);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Unable to load Development Requesters",
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent("Requester API unavailable");
-    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 });

@@ -3,19 +3,26 @@ import request from "supertest";
 import { app } from "../../src/app.js";
 import { seedLab2Data } from "../../prisma/seed.js";
 import { getPrisma } from "../../src/prisma.js";
+import { createTestUser, removeTestUsers, sessionCookieFor } from "../lab-03/testSession.js";
 
 const prisma = getPrisma();
 const createdTicketIds: number[] = [];
+let requesterId: number;
+let authCookie = "";
 
 describe("Create Ticket API", () => {
   beforeAll(async () => {
     await seedLab2Data(prisma);
+    const requester = await createTestUser("lab3-issue4-create@example.test");
+    requesterId = requester.id;
+    authCookie = await sessionCookieFor(requesterId);
   });
 
   afterAll(async () => {
     if (createdTicketIds.length > 0) {
       await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
     }
+    await removeTestUsers([requesterId]);
     await prisma.$disconnect();
   });
 
@@ -26,7 +33,9 @@ describe("Create Ticket API", () => {
       orderBy: { id: "asc" },
     });
 
-    const response = await request(app).get("/api/related-systems");
+    const response = await request(app)
+      .get("/api/related-systems")
+      .set("Cookie", authCookie);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(expected);
@@ -34,16 +43,15 @@ describe("Create Ticket API", () => {
   });
 
   it("creates one owned ticket with an official number and NEW status", async () => {
-    const [requester, category, relatedSystem] = await Promise.all([
-      prisma.user.findFirst({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" } }),
+    const [category, relatedSystem] = await Promise.all([
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (!requester || !category || !relatedSystem) throw new Error("Seed data is missing");
+    if (!category || !relatedSystem) throw new Error("Seed data is missing");
 
     const response = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(requester.id))
+      .set("Cookie", authCookie)
       .send({
         categoryId: category.id,
         relatedSystemId: relatedSystem.id,
@@ -54,7 +62,7 @@ describe("Create Ticket API", () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
-      requesterId: requester.id,
+      requesterId,
       categoryId: category.id,
       relatedSystemId: relatedSystem.id,
       summary: "Laptop battery drains quickly",
@@ -68,7 +76,7 @@ describe("Create Ticket API", () => {
     createdTicketIds.push(response.body.id);
     const saved = await prisma.ticket.findUnique({ where: { id: response.body.id } });
     expect(saved).toMatchObject({
-      requesterId: requester.id,
+      requesterId,
       categoryId: category.id,
       relatedSystemId: relatedSystem.id,
       currentStatus: "NEW",
@@ -77,15 +85,9 @@ describe("Create Ticket API", () => {
   });
 
   it("rejects invalid payloads without creating a ticket", async () => {
-    const requester = await prisma.user.findFirst({
-      where: { isActive: true, role: "REQUESTER" },
-      orderBy: { id: "asc" },
-    });
-    if (!requester) throw new Error("Seed requester is missing");
-
     const response = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(requester.id))
+      .set("Cookie", authCookie)
       .send({ summary: "bad" });
 
     expect(response.status).toBe(400);
@@ -102,19 +104,18 @@ describe("Create Ticket API", () => {
 
   it("rejects missing requester context and inactive reference records safely", async () => {
     const missingHeader = await request(app).post("/api/tickets").send({});
-    expect(missingHeader.status).toBe(400);
-    expect(missingHeader.body).toEqual({ error: "Requester context is required" });
+    expect(missingHeader.status).toBe(401);
+    expect(missingHeader.body).toEqual({ error: "Authentication required" });
 
-    const [requester, inactiveCategory, activeSystem] = await Promise.all([
-      prisma.user.findFirst({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" } }),
+    const [inactiveCategory, activeSystem] = await Promise.all([
       prisma.category.findFirst({ where: { isActive: false } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
-    if (!requester || !inactiveCategory || !activeSystem) throw new Error("Seed data is missing");
+    if (!inactiveCategory || !activeSystem) throw new Error("Seed data is missing");
 
     const response = await request(app)
       .post("/api/tickets")
-      .set("X-Requester-Id", String(requester.id))
+      .set("Cookie", authCookie)
       .send({
         categoryId: inactiveCategory.id,
         relatedSystemId: activeSystem.id,

@@ -6,6 +6,12 @@ import App from "../../src/App.js";
 import * as api from "../../src/api.js";
 
 const requester = { id: 7, name: "Ari Suksan", email: "ari.suksan@example.com" };
+const authUser: api.AuthUser = {
+  ...requester,
+  role: "REQUESTER",
+  isActive: true,
+  mustChangePassword: false,
+};
 const categories = [
   { id: 1, name: "Account and Access" },
   { id: 2, name: "Hardware" },
@@ -29,35 +35,39 @@ const createdTicket: api.Ticket = {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  window.localStorage.clear();
 });
 
 async function openCreateTicket() {
   const user = userEvent.setup();
-  vi.spyOn(api, "getRequesters").mockResolvedValue([requester]);
+  vi.spyOn(api, "getCurrentUser").mockResolvedValue({
+    user: authUser,
+    requiresPasswordChange: false,
+  });
   vi.spyOn(api, "getCategories").mockResolvedValue(categories);
   vi.spyOn(api, "getRelatedSystems").mockResolvedValue(relatedSystems);
+  vi.spyOn(api, "getMyTickets").mockResolvedValue({
+    items: [],
+    pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1 },
+  });
 
   render(<App />);
-  const requesterSelect = await screen.findByLabelText(/Choose a Development Requester/);
-  await user.selectOptions(requesterSelect, String(requester.id));
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+  await screen.findByRole("heading", { name: "My Tickets" });
   await user.click(screen.getByRole("link", { name: "Create Ticket" }));
   await screen.findByRole("heading", { name: "Create Ticket" });
-  await screen.findByLabelText(/Category/);
+  await screen.findByLabelText(/Category/, { selector: "#ticket-category" });
 
   return user;
 }
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.selectOptions(screen.getByLabelText(/Category/), "1");
-  await user.selectOptions(screen.getByLabelText(/Related System/), "2");
-  await user.type(screen.getByLabelText(/Summary/), "Laptop battery drains quickly");
+  await user.selectOptions(screen.getByLabelText(/Category/, { selector: "#ticket-category" }), "1");
+  await user.selectOptions(screen.getByLabelText(/Related System/, { selector: "#ticket-related-system" }), "2");
+  await user.type(screen.getByLabelText(/Summary/, { selector: "#ticket-summary" }), "Laptop battery drains quickly");
   await user.type(
-    screen.getByLabelText(/Description/),
+    screen.getByLabelText(/Description/, { selector: "#ticket-description" }),
     "The battery falls below 20 percent after a short session.",
   );
-  await user.selectOptions(screen.getByLabelText(/Requested Priority/), "MEDIUM");
+  await user.selectOptions(screen.getByLabelText(/Requested Priority/, { selector: "#ticket-priority" }), "MEDIUM");
 }
 
 describe("Create Ticket UI", () => {
@@ -104,7 +114,7 @@ describe("Create Ticket UI", () => {
     resolveTicket(createdTicket);
     expect(await screen.findByText("TKT-20260829-000101")).toBeInTheDocument();
     expect(screen.getByText("Status: NEW")).toBeInTheDocument();
-    expect(createSpy).toHaveBeenCalledWith(requester.id, {
+    expect(createSpy).toHaveBeenCalledWith({
       categoryId: 1,
       relatedSystemId: 2,
       summary: "Laptop battery drains quickly",
@@ -128,10 +138,10 @@ describe("Create Ticket UI", () => {
 
     await fillValidForm(user);
     const file = new File(["evidence"], "evidence.pdf", { type: "application/pdf" });
-    fireEvent.change(screen.getByLabelText(/Attachments/), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText(/Attachments/, { selector: "#ticket-attachments" }), { target: { files: [file] } });
     await user.click(screen.getByRole("button", { name: "Create Ticket" }));
 
-    expect(upload).toHaveBeenCalledWith(createdTicket.requesterId, createdTicket.id, file);
+    expect(upload).toHaveBeenCalledWith(createdTicket.id, file);
     expect(await screen.findByText("Attachments uploaded: 1/1.")).toBeInTheDocument();
   });
 
@@ -149,7 +159,7 @@ describe("Create Ticket UI", () => {
 
   it("reports unsupported, oversized, and excessive attachments clearly", async () => {
     const user = await openCreateTicket();
-    const input = screen.getByLabelText(/Attachments/);
+    const input = screen.getByLabelText(/Attachments/, { selector: "#ticket-attachments" });
 
     fireEvent.change(input, {
       target: { files: [new File(["virus"], "virus.exe", { type: "application/octet-stream" })] },

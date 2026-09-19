@@ -61,7 +61,7 @@ describe("Ticket Detail UI", () => {
     vi.spyOn(api, "getTicketDetail").mockResolvedValue(detail);
     const user = userEvent.setup();
 
-    render(<TicketDetail requesterId={1} ticketId={detail.id} onBack={onBack} />);
+    render(<TicketDetail ticketId={detail.id} onBack={onBack} />);
 
     expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
     expect(screen.getByText(detail.ticketNumber)).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe("Ticket Detail UI", () => {
     const pendingRequest = deferred<api.TicketDetail>();
     vi.spyOn(api, "getTicketDetail").mockReturnValue(pendingRequest.promise);
 
-    render(<TicketDetail requesterId={1} ticketId={detail.id} onBack={vi.fn()} />);
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
 
     expect(screen.getByRole("status")).toHaveTextContent("Loading Ticket Detail");
     pendingRequest.resolve(detail);
@@ -94,7 +94,7 @@ describe("Ticket Detail UI", () => {
       .mockResolvedValue(detail);
     const user = userEvent.setup();
 
-    render(<TicketDetail requesterId={1} ticketId={detail.id} onBack={vi.fn()} />);
+    render(<TicketDetail ticketId={detail.id} onBack={vi.fn()} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Ticket not found or you do not have access.");
     await user.click(screen.getByRole("button", { name: "Try again" }));

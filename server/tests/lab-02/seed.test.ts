@@ -23,7 +23,10 @@ describe("Lab 2 seed", () => {
     const [categories, systems, requesters] = await Promise.all([
       prisma.category.findMany({ orderBy: { id: "asc" } }),
       prisma.relatedSystem.findMany({ orderBy: { id: "asc" } }),
-      prisma.user.findMany({ where: { role: "REQUESTER" }, orderBy: { id: "asc" } }),
+      prisma.user.findMany({
+        where: { email: { in: requesterSeeds.map(({ email }) => email) } },
+        orderBy: { id: "asc" },
+      }),
     ]);
 
     expect(categories.filter(({ isActive }) => isActive).map(({ name }) => name)).toEqual(
@@ -55,6 +58,8 @@ describe("Lab 2 seed", () => {
     expect(await prisma.relatedSystem.count()).toBe(
       relatedSystemNames.length + inactiveRelatedSystemNames.length,
     );
-    expect(await prisma.user.count({ where: { role: "REQUESTER" } })).toBe(requesterSeeds.length);
+    expect(await prisma.user.count({
+      where: { email: { in: requesterSeeds.map(({ email }) => email) } },
+    })).toBe(requesterSeeds.length);
   });
 });

@@ -157,7 +157,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
 
     for (const file of files) {
       try {
-        await uploadAttachment(requester.id, ticketId, file);
+        await uploadAttachment(ticketId, file);
         remaining = remaining.slice(1);
         setPendingUploads([...remaining]);
         setUploadedAttachmentCount((count) => count + 1);
@@ -193,7 +193,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
 
     setSubmitting(true);
     try {
-      const ticket = await createTicket(requester.id, input);
+      const ticket = await createTicket(input);
       setSuccessTicket(ticket);
       setPendingUploads([...attachments]);
       setUploadedAttachmentCount(0);
@@ -298,7 +298,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 readOnly
                 aria-describedby="ticket-requester-help"
               />
-              <div id="ticket-requester-help" className="form-text">Selected Development Requester</div>
+              <div id="ticket-requester-help" className="form-text">Authenticated requester</div>
             </div>
 
             <div className="row g-3">

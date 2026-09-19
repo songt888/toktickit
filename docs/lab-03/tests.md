@@ -49,7 +49,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Planned |
 | API-12 | API | AC-12 | Inactive owner, stale `updatedAt`, and conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Planned |
 | API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Planned |
-| API-14 | API | AC-14 | Internal Note visibility and direct requester rejection | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403` | Planned |
+| API-14 | API | AC-14 | Internal Note visibility, requester `403` on own Tickets, and safe cross-owner `404` | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403`; cross-owner access is safe `404` | Planned |
 | API-15 | API | AC-15 | Comment/note validation, append-only behavior, and safe plain-text rendering | `server/tests/lab-03/comments-notes.api.test.ts` | Empty/oversized rejected; markup is not executed | Planned |
 | API-16 | API | AC-16 | Admin user listing, search, and role filter | `server/tests/lab-03/users-admin.api.test.ts` | Safe user list and query behavior | Planned |
 | API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Planned |
@@ -78,29 +78,29 @@ No required test should be skipped, disabled, or reconstructed after coding.
 
 | Acceptance Criteria | Planned tests |
 |---|---|
-| AC-01 | API-01, UI-01, E2E-01 |
-| AC-02 | API-02, UI-01, E2E-01 |
-| AC-03 | API-03, UI-02, E2E-01 |
+| AC-01 | UNIT-02, API-01, UI-01, E2E-01 |
+| AC-02 | UNIT-01, UNIT-02, API-02, UI-01, E2E-01 |
+| AC-03 | UNIT-01, API-03, UI-02, E2E-01 |
 | AC-04 | API-04, UI-03, E2E-01 |
 | AC-05 | API-05, UI-03, STYLE-01, E2E-01 |
 | AC-06 | API-07, API-08, UI-04, E2E-02 |
-| AC-07 | API-07, API-08, REG-01, REG-02, E2E-02 |
+| AC-07 | API-07, API-08, UI-04, REG-01, REG-02, E2E-02 |
 | AC-08 | API-09, UI-04, E2E-02 |
-| AC-09 | API-10, UI-05, E2E-03 |
-| AC-10 | API-05, API-10, UI-05, E2E-03 |
+| AC-09 | UNIT-03, API-10, UI-05, E2E-03 |
+| AC-10 | UNIT-03, API-05, API-10, UI-05, E2E-03 |
 | AC-11 | API-11, UI-06, E2E-03 |
-| AC-12 | UNIT-04, API-12, UI-06, E2E-03 |
-| AC-13 | API-13, UI-06, E2E-02, E2E-03 |
+| AC-12 | UNIT-04, API-11, API-12, UI-06, E2E-03 |
+| AC-13 | API-13, UI-06, E2E-03 |
 | AC-14 | API-14, UI-06, E2E-03 |
-| AC-15 | UNIT-05, API-15, UI-06 |
+| AC-15 | UNIT-05, API-15, E2E-03 |
 | AC-16 | API-16, UI-07, E2E-04 |
 | AC-17 | API-17, UI-07, E2E-04 |
 | AC-18 | API-17, UI-07, E2E-04 |
-| AC-19 | API-18, UI-07, E2E-04 |
+| AC-19 | UNIT-01, API-18, UI-07, E2E-04 |
 | AC-20 | API-18, UI-07, E2E-04 |
-| AC-21 | API-06, REG-01, REG-02 |
+| AC-21 | API-06 |
 | AC-22 | API-06 |
-| AC-23 | UI-01, UI-02, UI-04, UI-05, UI-06, UI-07, STYLE-01 |
+| AC-23 | STYLE-01, A11Y-01 |
 | AC-24 | STYLE-01, RESP-01, RESP-02, RESP-03, A11Y-01 |
 | AC-25 | RELEASE-01 |
 

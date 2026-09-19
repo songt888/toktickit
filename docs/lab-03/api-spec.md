@@ -301,8 +301,10 @@ Available only to IT Staff and Administrators.
 { "content": "Checked device inventory; replacement is available." }
 ```
 
-Success returns `201`. Invalid content is `400`; forbidden role is `403`;
-inaccessible Ticket is `404`.
+Success returns `201`. Invalid content is `400`; a Requester adding a note to
+their own Ticket receives `403` and no note is created; a Requester attempting
+the same action on another user's Ticket receives the safe `404` response;
+other inaccessible Tickets also return `404`.
 
 ## 7. IT Staff Ticket Queue
 
@@ -331,10 +333,10 @@ updated timestamp. Invalid values return `400`; other roles receive `403`.
 ### GET `/api/staff/tickets/:id`
 
 Returns operational Ticket Detail, safe requester data, owner, both priorities,
-status, `problemAppearsResolved`, comments, notes, and attachment metadata. IT
-Staff and Administrators may access it. Requester access to this route returns
-`403`. Attachment metadata is safe to display and active files can be
-downloaded through the operational attachment permission.
+status, `problemAppearsResolved`, `updatedAt`, comments, notes, and attachment
+metadata. IT Staff and Administrators may access it. Requester access to this
+route returns `403`. Attachment metadata is safe to display and active files
+can be downloaded through the operational attachment permission.
 
 ### PATCH `/api/staff/tickets/:id/owner`
 
@@ -384,6 +386,11 @@ Request:
 or stale timestamps return `409`; invalid input is `400`; missing Ticket is
 `404`. The `updatedAt` value is required for all staff mutations so the server
 can perform optimistic concurrency checking.
+
+Every successful staff `PATCH` returns `200` with the updated Ticket fields,
+including `id`, `ownerId`, `itPriority`, `currentStatus`,
+`problemAppearsResolved`, and the new `updatedAt`. Clients must use that
+returned `updatedAt` as the last-seen value for the next mutation.
 
 ## 8. Status Transition Matrix
 
@@ -482,7 +489,8 @@ safe user data with `200`. The password is never returned. Invalid input is
 
 ## 10. Security and Failure Rules
 
-- Missing/expired/revoked sessions return `401`.
+- Missing/expired/revoked sessions on protected endpoints return `401`; the
+  idempotent logout endpoint is the exception and always returns `204`.
 - Authenticated users without the required role return `403`.
 - Users with a required password change receive `403` on normal application
   endpoints until the change succeeds.

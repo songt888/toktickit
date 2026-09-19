@@ -47,7 +47,7 @@ describe("Attachment lifecycle API", () => {
   beforeAll(async () => {
     await seedLab2Data(prisma);
     const [requesters, category, relatedSystem] = await Promise.all([
-      prisma.requesterUser.findMany({ where: { isActive: true }, orderBy: { id: "asc" }, take: 2 }),
+      prisma.user.findMany({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" }, take: 2 }),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);

@@ -13,7 +13,7 @@ describe("Lab 2 database foundation", () => {
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
-        AND table_name IN ('Category', 'RequesterUser', 'RelatedSystem', 'Ticket', 'Attachment')
+        AND table_name IN ('Category', 'User', 'RelatedSystem', 'Ticket', 'Attachment')
       ORDER BY table_name
     `;
 
@@ -21,8 +21,8 @@ describe("Lab 2 database foundation", () => {
       "Attachment",
       "Category",
       "RelatedSystem",
-      "RequesterUser",
       "Ticket",
+      "User",
     ]);
 
     const columns = await prisma.$queryRaw<
@@ -33,7 +33,7 @@ describe("Lab 2 database foundation", () => {
       WHERE table_schema = 'public'
         AND (
           (table_name = 'Category' AND column_name IN ('isActive', 'updatedAt'))
-          OR (table_name = 'RequesterUser' AND column_name IN ('email', 'isActive'))
+          OR (table_name = 'User' AND column_name IN ('email', 'isActive'))
           OR (table_name = 'RelatedSystem' AND column_name IN ('isActive'))
           OR (table_name = 'Ticket' AND column_name IN ('ticketNumber', 'currentStatus', 'requesterId', 'categoryId', 'relatedSystemId'))
           OR (table_name = 'Attachment' AND column_name IN ('storedName', 'removedAt', 'removalReason'))
@@ -49,27 +49,27 @@ describe("Lab 2 database foundation", () => {
       "Category.isActive",
       "Category.updatedAt",
       "RelatedSystem.isActive",
-      "RequesterUser.email",
-      "RequesterUser.isActive",
       "Ticket.categoryId",
       "Ticket.currentStatus",
       "Ticket.relatedSystemId",
       "Ticket.requesterId",
       "Ticket.ticketNumber",
+      "User.email",
+      "User.isActive",
     ]);
 
     const uniqueIndexes = await prisma.$queryRaw<Array<{ indexname: string }>>`
       SELECT indexname
       FROM pg_indexes
       WHERE schemaname = 'public'
-        AND indexname IN ('RequesterUser_email_key', 'Ticket_ticketNumber_key', 'Attachment_storedName_key')
+        AND indexname IN ('User_email_key', 'Ticket_ticketNumber_key', 'Attachment_storedName_key')
       ORDER BY indexname
     `;
 
     expect(uniqueIndexes.map(({ indexname }) => indexname)).toEqual([
       "Attachment_storedName_key",
-      "RequesterUser_email_key",
       "Ticket_ticketNumber_key",
+      "User_email_key",
     ]);
 
     const sequences = await prisma.$queryRaw<Array<{ relname: string }>>`

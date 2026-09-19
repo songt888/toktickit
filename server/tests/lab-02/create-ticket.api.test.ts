@@ -35,7 +35,7 @@ describe("Create Ticket API", () => {
 
   it("creates one owned ticket with an official number and NEW status", async () => {
     const [requester, category, relatedSystem] = await Promise.all([
-      prisma.requesterUser.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
+      prisma.user.findFirst({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" } }),
       prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);
@@ -77,8 +77,8 @@ describe("Create Ticket API", () => {
   });
 
   it("rejects invalid payloads without creating a ticket", async () => {
-    const requester = await prisma.requesterUser.findFirst({
-      where: { isActive: true },
+    const requester = await prisma.user.findFirst({
+      where: { isActive: true, role: "REQUESTER" },
       orderBy: { id: "asc" },
     });
     if (!requester) throw new Error("Seed requester is missing");
@@ -106,7 +106,7 @@ describe("Create Ticket API", () => {
     expect(missingHeader.body).toEqual({ error: "Requester context is required" });
 
     const [requester, inactiveCategory, activeSystem] = await Promise.all([
-      prisma.requesterUser.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
+      prisma.user.findFirst({ where: { isActive: true, role: "REQUESTER" }, orderBy: { id: "asc" } }),
       prisma.category.findFirst({ where: { isActive: false } }),
       prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
     ]);

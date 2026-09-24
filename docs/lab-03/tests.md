@@ -178,6 +178,9 @@ Results from `feature/lab3-08-comments-notes`:
   text by React; it is not inserted as HTML.
 - E2E-03 and release verification remain planned; this Issue's API and UI
   suites/builds passed.
+- PR [#55](https://github.com/songt888/toktickit/pull/55) targets
+  `lab3-staging` and is open awaiting teammate review; Issue #41 is in
+  `PR Review` on the GitHub Project.
 - `git diff --check` passed.
 
 ## 3. Acceptance-Criterion Traceability

@@ -77,7 +77,9 @@ const attachmentUpload = multer({
 
 function parsePositiveId(value: string): number | null {
   const id = Number(value);
-  return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null;
+  return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 && id <= 2_147_483_647
+    ? id
+    : null;
 }
 
 function requireTicketId(req: Request, res: Response, next: () => void): void {

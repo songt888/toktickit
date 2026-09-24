@@ -76,7 +76,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | E2E-02 | E2E | AC-06, AC-07, AC-08 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester flow passes | Planned |
 | E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
 | E2E-05 | E2E | AC-09, AC-10 | Issue #43 Staff queue/detail smoke flow and responsive checks | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff queue flow passes at desktop, tablet, and mobile widths | Passed |
-| E2E-06 | E2E | AC-11, AC-12 | Issue #44 claim/reassign, priority, status, and invalid-state workflow | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff mutations pass through the authenticated UI | Passed |
+| E2E-06 | E2E | AC-11, AC-12 | Issue #44 claim/reassign/unassign, priority, and permitted status workflow | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff mutations pass through the authenticated UI | Passed |
 | E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
 | RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
 

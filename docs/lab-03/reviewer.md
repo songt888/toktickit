@@ -26,7 +26,7 @@ status.
 | PR | Issue | URL | Reviewer comment | My response | Approval/Merge |
 |---|---|---|---|---|---|
 | To be added | Issue 1 | To be added | Contract review pending | To be added after review | Pending |
-| #54 | Issue #44 | [Implement Staff ticket ownership and workflow](https://github.com/songt888/toktickit/pull/54) | Awaiting teammate review | Submitted API/UI behavior, active-assignee rules, stale-update protection, test results, and responsive evidence for review. | Open; approval and merge pending |
+| #54 | Issue #44 | [Implement Staff ticket ownership and workflow](https://github.com/songt888/toktickit/pull/54) | Requested an int32 ticket-ID limit and regression case, an independently specified status-transition test, and E2E-06 wording that matches the implemented workflow. | Capped parsed database IDs, added oversized-ID 404 assertions for owner/status/priority mutations, hard-coded the expected transition matrix from `api-spec.md`, and corrected E2E-06. The full 73-test server suite, build, and diff check pass. | Fixes pushed; awaiting formal approval and merge |
 
 ### PR #38 contract feedback addressed
 

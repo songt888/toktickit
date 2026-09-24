@@ -320,5 +320,25 @@ describe("IT Staff Ticket workflow API", () => {
       .send({ ownerId: null, updatedAt: old.updatedAt.toISOString() });
     expect(missing.status).toBe(404);
     expect(missing.body).toEqual({ error: "Resource not found" });
+
+    const oversizedId = 2_147_483_648;
+    const oversizedResponses = await Promise.all([
+      request(app)
+        .patch(`/api/staff/tickets/${oversizedId}/owner`)
+        .set("Cookie", staffCookie)
+        .send({ ownerId: null, updatedAt: old.updatedAt.toISOString() }),
+      request(app)
+        .patch(`/api/staff/tickets/${oversizedId}/status`)
+        .set("Cookie", staffCookie)
+        .send({ currentStatus: "OPEN", updatedAt: old.updatedAt.toISOString() }),
+      request(app)
+        .patch(`/api/staff/tickets/${oversizedId}/it-priority`)
+        .set("Cookie", staffCookie)
+        .send({ itPriority: "HIGH", updatedAt: old.updatedAt.toISOString() }),
+    ]);
+    for (const response of oversizedResponses) {
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: "Resource not found" });
+    }
   });
 });

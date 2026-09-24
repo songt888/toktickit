@@ -1,6 +1,7 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issue #47 requester-comments checks recorded; remaining Lab 3 checks are planned.
+Status: Issue #43 staff-queue checks recorded on the feature branch; remaining
+Lab 3 checks are planned for later issues and the final release verification.
 
 All Lab 3 test files will live under `server/tests/lab-03/`,
 `client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
@@ -45,7 +46,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Passed |
 | API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Passed |
 | API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Passed |
-| API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Planned |
+| API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Passed |
 | API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Planned |
 | API-12 | API | AC-12 | Inactive owner, stale `updatedAt`, and conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Planned |
 | API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Planned |
@@ -58,7 +59,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
 | UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
-| UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Planned |
+| UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Passed |
 | UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Planned |
 | UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
 | STYLE-01 | UI style | AC-05, AC-23, AC-24 | Labels, ARIA, focus, badges, Zen Green, read-only fields | `client/tests/lab-03/ui-style.test.tsx` | Visual/accessibility conventions present | Planned |
@@ -71,6 +72,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | E2E-01 | E2E | AC-01, AC-02, AC-03, AC-04, AC-05 | Login, first password change, shell, and logout | `e2e/lab-03/authentication.spec.ts` | Full auth flow passes | Planned |
 | E2E-02 | E2E | AC-06, AC-07, AC-08 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester flow passes | Planned |
 | E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
+| E2E-05 | E2E | AC-09, AC-10 | Issue #43 Staff queue/detail smoke flow and responsive checks | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff queue flow passes at desktop, tablet, and mobile widths | Passed |
 | E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
 | RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
 
@@ -98,8 +100,33 @@ These results are from `feature/lab3-05-requester-comments`:
 - UI coverage includes public-comment submission, empty-comment validation, and the
   resolution-indication action while keeping the authenticated requester flow.
 
-The remaining staff, administrator, E2E, responsive, accessibility, and final release
+The remaining administrator, full E2E, responsive, accessibility, and final release
 checks remain planned for their corresponding issues.
+
+## Issue #43 Verification
+
+These results are from `feature/lab3-06-staff-ticket-queue`:
+
+- Server: `npm test -- --reporter=dot` — 63 tests passed across 22 files.
+- Client: `npm test -- --reporter=dot` — 44 tests passed across 11 files.
+- Server and client TypeScript production builds passed.
+- Playwright: `npm run test:e2e` — 5 tests passed, including the authenticated
+  Lab 2 requester regression and the Staff queue flow.
+- Staff-focused Playwright flow: `npm run test:e2e -- --project=staff-desktop` — 1 test passed.
+- The Staff Playwright flow covers login, queue data, search/sort, operational detail,
+  back navigation, and overflow checks at 1280px, 820px, and 390px.
+- `git diff --check` passed.
+- Visual evidence is stored under `artifacts/lab-03/screenshots/`.
+
+Screenshot evidence:
+
+- [`staff-desktop-queue-desktop.png`](../../artifacts/lab-03/screenshots/staff-desktop-queue-desktop.png) — desktop queue with ticket fields, priorities, status, and owner.
+- [`tablet-staff-queue.png`](../../artifacts/lab-03/screenshots/tablet-staff-queue.png) — tablet queue layout without horizontal overflow.
+- [`mobile-staff-queue.png`](../../artifacts/lab-03/screenshots/mobile-staff-queue.png) — mobile queue cards and controls.
+- [`mobile-staff-ticket-detail.png`](../../artifacts/lab-03/screenshots/mobile-staff-ticket-detail.png) — operational detail at mobile width.
+
+The Lab 2 Playwright files were updated to use the current authenticated session flow;
+they remain regression coverage and are included in the full Playwright result above.
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -113,8 +140,8 @@ checks remain planned for their corresponding issues.
 | AC-06 | API-07, API-08, UI-04, E2E-02 |
 | AC-07 | API-07, API-08, UI-04, REG-01, REG-02, E2E-02 |
 | AC-08 | API-09, UI-04, E2E-02 |
-| AC-09 | UNIT-03, API-10, UI-05, E2E-03 |
-| AC-10 | UNIT-03, API-05, API-10, UI-05, E2E-03 |
+| AC-09 | UNIT-03, API-10, UI-05, E2E-03, E2E-05 |
+| AC-10 | UNIT-03, API-05, API-10, UI-05, E2E-03, E2E-05 |
 | AC-11 | API-11, UI-06, E2E-03 |
 | AC-12 | UNIT-04, API-11, API-12, UI-06, E2E-03 |
 | AC-13 | API-13, UI-06, E2E-03 |

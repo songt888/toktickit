@@ -13,11 +13,28 @@ const requester = {
   isActive: true,
   mustChangePassword: false,
 };
+const staff = {
+  id: 2,
+  name: "Nattakit Support",
+  email: "nattakit.support@example.com",
+  role: "IT_STAFF" as const,
+  isActive: true,
+  mustChangePassword: false,
+};
 
 afterEach(() => vi.restoreAllMocks());
 
 function mockRequesterWorkspace() {
   vi.spyOn(api, "getMyTickets").mockResolvedValue({
+    items: [],
+    pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 },
+  });
+  vi.spyOn(api, "getCategories").mockResolvedValue([]);
+  vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
+}
+
+function mockStaffWorkspace() {
+  vi.spyOn(api, "getStaffTickets").mockResolvedValue({
     items: [],
     pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 },
   });
@@ -51,6 +68,22 @@ describe("Authenticated application shell", () => {
 
     expect(await screen.findByRole("heading", { name: "Change your password" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "My Tickets" })).not.toBeInTheDocument();
+  });
+
+  it("shows the staff queue navigation and workspace for an IT Staff session", async () => {
+    vi.spyOn(api, "getCurrentUser").mockResolvedValue({
+      user: staff,
+      requiresPasswordChange: false,
+    });
+    mockStaffWorkspace();
+
+    render(<App />);
+
+    expect(await screen.findByText("Nattakit Support")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "My Tickets" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Create Ticket" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Ticket Queue" })).toBeInTheDocument();
   });
 
   it("clears the authenticated shell after logout", async () => {

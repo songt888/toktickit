@@ -172,4 +172,84 @@ describe("Staff Ticket Detail operational controls", () => {
     await retryUser.click(screen.getByRole("button", { name: "Refresh Ticket" }));
     await waitFor(() => expect(api.getStaffTicketDetail).toHaveBeenCalledTimes(2));
   });
+
+  it("posts Public Comments and private Internal Notes as plain text", async () => {
+    setup({
+      ...ticket,
+      attachments: [{
+        id: 77,
+        originalName: "vpn-log.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 1024,
+        createdAt: "2026-09-24T00:30:00.000Z",
+        removedAt: null,
+        removalReason: null,
+      }],
+    });
+    const unsafeText = "<script>alert('not executed')</script>";
+    const addComment = vi.spyOn(api, "addPublicComment").mockResolvedValue({
+      id: 801,
+      content: unsafeText,
+      createdAt: "2026-09-24T03:00:00.000Z",
+      author: { id: staff.id, name: staff.name, email: staff.email },
+    });
+    const addNote = vi.spyOn(api, "addInternalNote").mockResolvedValue({
+      id: 901,
+      content: "Checked the device inventory.",
+      createdAt: "2026-09-24T03:01:00.000Z",
+      author: { id: staff.id, name: staff.name, email: staff.email },
+    });
+    const user = userEvent.setup();
+    const { container } = render(
+      <StaffTicketDetail ticketId={ticket.id} currentUserId={staff.id} onBack={vi.fn()} />,
+    );
+
+    await screen.findByRole("heading", { name: "Operational Ticket Detail" });
+    expect(screen.getByText("vpn-log.pdf")).toBeInTheDocument();
+    expect(screen.getByText("Active · 1024 bytes")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Add a public comment" }), unsafeText);
+    await user.click(screen.getByRole("button", { name: "Post Public Comment" }));
+    expect(addComment).toHaveBeenCalledWith(ticket.id, unsafeText);
+    expect(await screen.findByText("Public comment posted.")).toBeInTheDocument();
+    expect(screen.getByText(unsafeText)).toBeInTheDocument();
+    expect(container.querySelector("script")).toBeNull();
+
+    await user.type(screen.getByRole("textbox", { name: "Add an internal note" }), "Checked the device inventory.");
+    await user.click(screen.getByRole("button", { name: "Post Internal Note" }));
+    expect(addNote).toHaveBeenCalledWith(ticket.id, "Checked the device inventory.");
+    expect(await screen.findByText("Internal note posted.")).toBeInTheDocument();
+    expect(screen.getByText("Checked the device inventory.")).toBeInTheDocument();
+    expect(screen.getByText(/Private to IT Staff and Administrators/)).toBeInTheDocument();
+  });
+
+  it("validates blank collaboration forms and preserves drafts after request failures", async () => {
+    setup();
+    const addComment = vi.spyOn(api, "addPublicComment").mockRejectedValue(
+      new api.ApiRequestError("Public comment request failed (500)", 500),
+    );
+    const addNote = vi.spyOn(api, "addInternalNote").mockRejectedValue(
+      new api.ApiRequestError("Internal note request failed (500)", 500),
+    );
+    const user = userEvent.setup();
+    render(<StaffTicketDetail ticketId={ticket.id} currentUserId={staff.id} onBack={vi.fn()} />);
+
+    await screen.findByRole("heading", { name: "Operational Ticket Detail" });
+    await user.click(screen.getByRole("button", { name: "Post Public Comment" }));
+    expect(await screen.findByText("Write a public comment before posting.")).toBeInTheDocument();
+    expect(addComment).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole("textbox", { name: "Add a public comment" }), "Please check this again.");
+    await user.click(screen.getByRole("button", { name: "Post Public Comment" }));
+    expect(await screen.findByText("Public comment request failed (500)")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Add a public comment" })).toHaveValue("Please check this again.");
+
+    await user.click(screen.getByRole("button", { name: "Post Internal Note" }));
+    expect(await screen.findByText("Write an internal note before posting.")).toBeInTheDocument();
+    expect(addNote).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole("textbox", { name: "Add an internal note" }), "Check inventory once more.");
+    await user.click(screen.getByRole("button", { name: "Post Internal Note" }));
+    expect(await screen.findByText("Internal note request failed (500)")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Add an internal note" })).toHaveValue("Check inventory once more.");
+  });
 });

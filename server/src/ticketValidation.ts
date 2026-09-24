@@ -18,7 +18,7 @@ export type CreateTicketInput = {
 export type TicketValidationErrors = Partial<Record<keyof CreateTicketInput, string>>;
 
 function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
 }
 
 export function validateCreateTicketInput(body: unknown): {

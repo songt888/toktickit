@@ -136,7 +136,7 @@ they remain regression coverage and are included in the full Playwright result a
 
 Results from `feature/lab3-07-staff-ticket-workflow`:
 
-- Server: `npm test -- --reporter=dot` — 73 tests passed across 24 files.
+- Server: `npm test -- --reporter=dot` — 74 tests passed across 24 files.
 - Client: `npm test -- --reporter=dot` — 48 tests passed across 12 files.
 - Server and client production builds passed.
 - Playwright: `npm run test:e2e` — all 6 tests passed, including Staff claim,

@@ -8,6 +8,8 @@ const e2eStaffPassword = "E2EStaffPassword123";
 const e2eRequesterAEmail = "e2e.requester.a@example.com";
 const e2eRequesterBEmail = "e2e.requester.b@example.com";
 const e2eRequesterPassword = "E2ERequesterPassword123";
+const staffWorkflowTicketNumber = "TKT-E2E-ISSUE44-WORKFLOW";
+const staffWorkflowSummary = "E2E Issue 44 staff workflow";
 
 type E2ERole = "REQUESTER" | "IT_STAFF";
 
@@ -63,6 +65,43 @@ export default async function globalSetup(): Promise<void> {
       name: "E2E Requester B",
       role: "REQUESTER",
       password: e2eRequesterPassword,
+    });
+
+    const [requester, category, relatedSystem] = await Promise.all([
+      prisma.user.findUnique({ where: { email: e2eRequesterAEmail }, select: { id: true } }),
+      prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" }, select: { id: true } }),
+      prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" }, select: { id: true } }),
+    ]);
+    if (!requester || !category || !relatedSystem) {
+      throw new Error("Unable to create the Staff workflow E2E fixture: seeded references are missing");
+    }
+
+    await prisma.ticket.upsert({
+      where: { ticketNumber: staffWorkflowTicketNumber },
+      update: {
+        requesterId: requester.id,
+        ownerId: null,
+        categoryId: category.id,
+        relatedSystemId: relatedSystem.id,
+        summary: staffWorkflowSummary,
+        description: "Repeatable ticket fixture for Staff claim, assignment, priority, and status checks.",
+        requestedPriority: "HIGH",
+        itPriority: "MEDIUM",
+        currentStatus: "NEW",
+        problemAppearsResolved: false,
+        problemAppearsResolvedAt: null,
+      },
+      create: {
+        ticketNumber: staffWorkflowTicketNumber,
+        requesterId: requester.id,
+        categoryId: category.id,
+        relatedSystemId: relatedSystem.id,
+        summary: staffWorkflowSummary,
+        description: "Repeatable ticket fixture for Staff claim, assignment, priority, and status checks.",
+        requestedPriority: "HIGH",
+        itPriority: "MEDIUM",
+        currentStatus: "NEW",
+      },
     });
   } finally {
     await prisma.$disconnect();

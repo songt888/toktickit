@@ -28,6 +28,11 @@ will be added as implementation proceeds.
    API, UI, regression, responsive, accessibility, or E2E test."
 8. "Challenge this specification for race conditions, privilege escalation,
    data leakage, migration loss, and unclear UI behavior."
+9. "Implement staff Ticket mutations with optimistic concurrency and test stale
+   and concurrent updates against the actual PostgreSQL row version."
+10. "Review the staff workflow UI and E2E checks for claim, reassignment,
+    unassignment, read-only Requested Priority, status confirmation, and mobile
+    overflow; identify any assumptions the tests do not prove."
 
 ## How I Used AI Critically
 
@@ -39,17 +44,21 @@ ownership, migration, safe errors, and testing. I also checked that excluded
 features such as email delivery, multiple roles, user deletion, and advanced
 identity management were not accidentally included.
 
-Before implementation, a teammate will review the contract. During coding I
-will verify AI suggestions against the actual Prisma schema, API behavior,
-tests, browser behavior, and final `main` branch rather than relying on
-autofill or unverified generated code.
+Before implementation, a teammate reviewed the contract and identified
+inconsistencies that were corrected before coding. During coding I verify AI
+suggestions against the actual Prisma schema, API behavior, tests, browser
+behavior, and final `main` branch rather than relying on autofill or unverified
+generated code.
 
 ## My Reflection
 
 The specification-agent helped expose decisions that would otherwise remain
 implicit, especially the migration path, authorization boundaries, and status
-transitions. The coding-agent will be useful for repetitive implementation and
-test scaffolding, but human review is still needed for security, ownership,
-data migration, and whether the evidence actually proves each acceptance
-criterion. I will update this reflection with concrete implementation prompts,
-review feedback, and lessons learned after each Lab 3 Issue.
+transitions. For Issue 7, I used AI suggestions to scaffold mutation endpoints,
+UI controls, and tests, then checked the critical behavior against the actual
+transaction predicates, role filters, and returned `updatedAt` values. Running
+the browser flow exposed a test synchronization problem around the native
+confirmation dialog; I fixed the test to accept the dialog while its click was
+in progress rather than weakening the status assertion. Human review remains
+important for security, ownership, concurrency, and whether evidence proves
+each acceptance criterion; generated code is a draft, not verification.

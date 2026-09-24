@@ -229,8 +229,8 @@ more active files is `409`, oversized files are `413`, unsupported types are
 
 The owning Requester, IT Staff, and Administrators with operational access may
 retrieve attachment metadata. Requesters must own the Ticket; Staff and
-Administrators must be allowed to view the operational Ticket. The response
-does not include `storedName`. Cross-owner or inaccessible Ticket access returns
+Administrators must have access to the operational Ticket. The response does
+not include `storedName`. Cross-owner or inaccessible Requester access returns
 `404`.
 
 ### GET `/api/attachments/:id/download`
@@ -238,7 +238,7 @@ does not include `storedName`. Cross-owner or inaccessible Ticket access returns
 The owning Requester, IT Staff, and Administrators with operational access may
 download an active attachment. The file must belong to an owned or operationally
 accessible Ticket and have `removedAt` null. Removed, missing, and cross-owner
-attachments return `404`.
+Requester attachments return `404`.
 
 ### PATCH `/api/attachments/:id/remove`
 
@@ -308,6 +308,13 @@ other inaccessible Tickets also return `404`.
 
 ## 7. IT Staff Ticket Queue
 
+### GET `/api/staff/assignees`
+
+Available to IT Staff and Administrators. Returns only active IT Staff and
+Administrators, ordered by `name ASC, id ASC`, as safe `{ id, name, email,
+role }` objects. Requesters receive `403`; a missing or invalid session receives
+`401`. Password and session fields are never returned.
+
 ### GET `/api/staff/tickets`
 
 Available to IT Staff and Administrators. Supported query parameters:
@@ -333,12 +340,15 @@ updated timestamp. Invalid values return `400`; other roles receive `403`.
 ### GET `/api/staff/tickets/:id`
 
 Returns operational Ticket Detail, safe requester data, owner, both priorities,
-status, `problemAppearsResolved`, `updatedAt`, comments, notes, and attachment
-metadata. IT Staff and Administrators may access it. Requester access to this
-route returns `403`. Attachment metadata is safe to display and active files
-can be downloaded through the operational attachment permission.
+`ownerId`, status, `problemAppearsResolved`, `updatedAt`, comments, notes, and
+attachment metadata. IT Staff and Administrators may access it. Requester
+access to this route returns `403`. Attachment metadata is safe to display and
+active files can be downloaded through the operational attachment permission.
 
 ### PATCH `/api/staff/tickets/:id/owner`
+
+IT Staff and Administrators only. The owner must be an active IT Staff or
+Administrator returned by `GET /api/staff/assignees`.
 
 Request:
 
@@ -349,13 +359,14 @@ Request:
 }
 ```
 
-`ownerId: null` unassigns the Ticket. The target must be an active IT Staff or
-Administrator. The client must send the last-seen `updatedAt`; a value that no
-longer matches the database row is stale. Returns `200`; invalid/inactive owner
-or timestamp is `400`; missing Ticket is `404`; stale or conflicting update is
-`409`.
+`ownerId: null` unassigns the Ticket. The client must send the last-seen
+`updatedAt`; a value that no longer matches the database row is stale. Returns
+`200`; invalid/inactive owner or timestamp is `400`; missing Ticket is `404`;
+stale or conflicting update is `409`.
 
 ### PATCH `/api/staff/tickets/:id/it-priority`
+
+IT Staff and Administrators only.
 
 Request:
 
@@ -366,11 +377,12 @@ Request:
 }
 ```
 
-Only IT Staff/Administrator can update it. Requested Priority is unchanged.
-Returns `200`, `400` for invalid priority or timestamp, `404` for missing
-Ticket, and `409` for a stale update.
+Requested Priority is unchanged. Returns `200`, `400` for invalid priority or
+timestamp, `404` for missing Ticket, and `409` for a stale update.
 
 ### PATCH `/api/staff/tickets/:id/status`
+
+IT Staff and Administrators only.
 
 Request:
 
@@ -388,9 +400,10 @@ or stale timestamps return `409`; invalid input is `400`; missing Ticket is
 can perform optimistic concurrency checking.
 
 Every successful staff `PATCH` returns `200` with the updated Ticket fields,
-including `id`, `ownerId`, `itPriority`, `currentStatus`,
+including `id`, `ownerId`, safe `owner`, `itPriority`, `currentStatus`,
 `problemAppearsResolved`, and the new `updatedAt`. Clients must use that
-returned `updatedAt` as the last-seen value for the next mutation.
+returned `updatedAt` as the last-seen value for the next mutation. A missing or
+invalid session returns `401`; a Requester role returns `403`.
 
 ## 8. Status Transition Matrix
 

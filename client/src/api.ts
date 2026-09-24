@@ -171,6 +171,7 @@ export interface StaffTicketListOptions {
 
 export interface StaffTicketDetailData extends StaffTicketListItem {
   requesterId: number;
+  ownerId: number | null;
   categoryId: number;
   relatedSystemId: number;
   description: string;
@@ -180,6 +181,16 @@ export interface StaffTicketDetailData extends StaffTicketListItem {
   attachments: AttachmentMetadata[];
   publicComments: PublicComment[];
   internalNotes: PublicComment[];
+}
+
+export interface StaffTicketMutationResponse {
+  id: number;
+  ownerId: number | null;
+  owner: StaffUser | null;
+  itPriority: TicketPriority;
+  currentStatus: TicketStatus;
+  problemAppearsResolved: boolean;
+  updatedAt: string;
 }
 
 export interface TicketListOptions {
@@ -333,6 +344,52 @@ export async function getStaffTicketDetail(ticketId: number): Promise<StaffTicke
   }
 
   return (await response.json()) as StaffTicketDetailData;
+}
+
+export async function getStaffAssignees(): Promise<StaffUser[]> {
+  const response = await fetch(`${API_URL}/api/staff/assignees`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load eligible assignees.");
+  return (await response.json()) as StaffUser[];
+}
+
+async function patchStaffTicket(
+  ticketId: number,
+  operation: "owner" | "it-priority" | "status",
+  body: Record<string, unknown>,
+): Promise<StaffTicketMutationResponse> {
+  const response = await fetch(`${API_URL}/api/staff/tickets/${ticketId}/${operation}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw await authError(response, "Unable to update this Ticket.");
+  return (await response.json()) as StaffTicketMutationResponse;
+}
+
+export function updateStaffTicketOwner(
+  ticketId: number,
+  ownerId: number | null,
+  updatedAt: string,
+): Promise<StaffTicketMutationResponse> {
+  return patchStaffTicket(ticketId, "owner", { ownerId, updatedAt });
+}
+
+export function updateStaffTicketPriority(
+  ticketId: number,
+  itPriority: TicketPriority,
+  updatedAt: string,
+): Promise<StaffTicketMutationResponse> {
+  return patchStaffTicket(ticketId, "it-priority", { itPriority, updatedAt });
+}
+
+export function updateStaffTicketStatus(
+  ticketId: number,
+  status: TicketStatus,
+  confirm: boolean,
+  updatedAt: string,
+): Promise<StaffTicketMutationResponse> {
+  return patchStaffTicket(ticketId, "status", { status, confirm, updatedAt });
 }
 
 export async function getTicketDetail(ticketId: number): Promise<TicketDetail> {

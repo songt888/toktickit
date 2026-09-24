@@ -202,9 +202,10 @@ export default function App() {
         />
       )}
 
-      {authMode === "authenticated" && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (
+      {authMode === "authenticated" && authUser && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (
         <StaffTicketDetail
           ticketId={selectedTicketId}
+          currentUserId={authUser.id}
           onBack={() => setActivePage("queue")}
         />
       )}

@@ -134,6 +134,12 @@ describe("GET /api/tickets/:id", () => {
       .set("Cookie", ownerCookie);
     expect(unknownResponse.status).toBe(404);
     expect(unknownResponse.body).toEqual({ error: "Resource not found" });
+
+    const oversizedResponse = await request(app)
+      .get("/api/tickets/2147483648")
+      .set("Cookie", ownerCookie);
+    expect(oversizedResponse.status).toBe(404);
+    expect(oversizedResponse.body).toEqual({ error: "Resource not found" });
   });
 
   it("requires a session and ignores requester headers before looking up the ticket", async () => {

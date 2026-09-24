@@ -26,6 +26,7 @@ status.
 | PR | Issue | URL | Reviewer comment | My response | Approval/Merge |
 |---|---|---|---|---|---|
 | To be added | Issue 1 | To be added | Contract review pending | To be added after review | Pending |
+| #54 | Issue #44 | [Implement Staff ticket ownership and workflow](https://github.com/songt888/toktickit/pull/54) | Requested an int32 ticket-ID limit and regression case, an independently specified status-transition test, and E2E-06 wording that matches the implemented workflow. Also noted unbounded ID parsing in requester ticket detail and create-ticket reference validation. | Capped parsed database IDs, added oversized-ID 404 assertions for staff mutations and requester detail, rejected out-of-range category/system IDs before Prisma queries, hard-coded the expected transition matrix from `api-spec.md`, and corrected E2E-06. The full server suite now passes (74 tests across 24 files); builds and diff checks pass. | Fixes pushed; awaiting formal approval and merge |
 
 ### PR #38 contract feedback addressed
 

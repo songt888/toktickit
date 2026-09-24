@@ -149,13 +149,20 @@ status transition.
 
 ### Editable operational fields
 
-- Ticket owner with Claim, Reassign, and Unassign behavior.
+- Ticket owner with Claim, Reassign, and Unassign behavior. The assignment
+  picker loads active Staff and Administrators from
+  `GET /api/staff/assignees`; it never loads Requesters or inactive accounts.
+- The signed-in Staff/Admin user may claim an unassigned Ticket directly. The
+  assignee picker supports assigning and reassigning to any eligible user, and
+  Unassign clears the owner.
 - IT Priority.
 - Status with only permitted next values.
-- Confirmation for Closed and Cancelled transitions.
+- A confirmation is required before Closed and Cancelled transitions.
 
 Requested Priority remains visibly read-only. Controls show saving, success,
 validation, conflict, forbidden, not-found, and safe failure messages.
+Every successful update uses the response's new `updatedAt` for the next
+operation. A stale-update conflict offers a refresh action before retrying.
 
 ### Collaboration and attachments
 

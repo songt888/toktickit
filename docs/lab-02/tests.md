@@ -24,7 +24,7 @@ No required test may be skipped, disabled, or reconstructed after implementation
 | UNIT-02 | Unit | AC-04, AC-12 | Ticket and attachment validation boundaries | `server/tests/lab-02/validation.test.ts` | Invalid input rejected | Pass (3 tests) |
 | UNIT-03 | Unit | AC-08 | Query parsing, permitted sort, and pagination | `server/tests/lab-02/query-options.test.ts` | Stable safe options | Pass (4 tests) |
 | API-01 | API | AC-01, AC-02 | Active requester retrieval | `server/tests/lab-02/requesters.api.test.ts` | Active users only | Pass (1 test) |
-| API-02 | API | AC-03, AC-04 | Valid and invalid ticket creation | `server/tests/lab-02/create-ticket.api.test.ts` | 201 or documented 400 | Pass (2 tests) |
+| API-02 | API | AC-03, AC-04 | Valid and invalid ticket creation, including out-of-range reference IDs | `server/tests/lab-02/create-ticket.api.test.ts` | 201 or documented 400 | Pass (3 tests) |
 | API-03 | API | AC-03 | Ticket Number, status, and requesterId persistence | `server/tests/lab-02/create-ticket.api.test.ts` | Saved values correct | Pass (1 test) |
 | API-04 | API | AC-06, AC-07, AC-08 | Owned list, search, filters, sort, pagination | `server/tests/lab-02/my-tickets.api.test.ts` | Correct items and metadata | Pass (4 tests) |
 | API-05 | API | AC-09, AC-10 | Owned detail and cross-requester rejection | `server/tests/lab-02/ticket-detail.api.test.ts` | Owned 200, other 404 | Pass (3 tests) |

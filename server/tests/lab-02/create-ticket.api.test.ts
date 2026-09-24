@@ -102,6 +102,35 @@ describe("Create Ticket API", () => {
     );
   });
 
+  it("rejects reference IDs above the PostgreSQL integer limit with 400", async () => {
+    const [category, relatedSystem] = await Promise.all([
+      prisma.category.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
+      prisma.relatedSystem.findFirst({ where: { isActive: true }, orderBy: { id: "asc" } }),
+    ]);
+    if (!category || !relatedSystem) throw new Error("Seed data is missing");
+
+    const basePayload = {
+      summary: "Out-of-range reference ID",
+      description: "This payload verifies database integer limits for references.",
+      requestedPriority: "LOW",
+    };
+    const [categoryResponse, relatedSystemResponse] = await Promise.all([
+      request(app)
+        .post("/api/tickets")
+        .set("Cookie", authCookie)
+        .send({ ...basePayload, categoryId: 2_147_483_648, relatedSystemId: relatedSystem.id }),
+      request(app)
+        .post("/api/tickets")
+        .set("Cookie", authCookie)
+        .send({ ...basePayload, categoryId: category.id, relatedSystemId: 2_147_483_648 }),
+    ]);
+
+    expect(categoryResponse.status).toBe(400);
+    expect(categoryResponse.body.fieldErrors).toMatchObject({ categoryId: "Category is required." });
+    expect(relatedSystemResponse.status).toBe(400);
+    expect(relatedSystemResponse.body.fieldErrors).toMatchObject({ relatedSystemId: "Related System is required." });
+  });
+
   it("rejects missing requester context and inactive reference records safely", async () => {
     const missingHeader = await request(app).post("/api/tickets").send({});
     expect(missingHeader.status).toBe(401);

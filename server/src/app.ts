@@ -876,6 +876,85 @@ app.post(
   },
 );
 
+app.get(
+  "/api/tickets/:id/internal-notes",
+  requireSession,
+  requireTicketId,
+  async (_req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+    const user = res.locals.authUser;
+
+    try {
+      const database = getPrisma();
+      const ticket = await database.ticket.findFirst({
+        where: accessibleTicketWhere(user, ticketId),
+        select: { id: true },
+      });
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      if (user.role === "REQUESTER") {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const notes = await database.internalNote.findMany({
+        where: { ticketId },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: internalNoteSelect,
+      });
+      res.status(200).json(notes);
+    } catch {
+      res.status(500).json({ error: "Unable to load internal notes" });
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:id/internal-notes",
+  requireSession,
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const ticketId = res.locals.ticketId as number;
+    const user = res.locals.authUser;
+
+    try {
+      const database = getPrisma();
+      const ticket = await database.ticket.findFirst({
+        where: accessibleTicketWhere(user, ticketId),
+        select: { id: true },
+      });
+      if (!ticket) {
+        res.status(404).json({ error: "Resource not found" });
+        return;
+      }
+      if (user.role === "REQUESTER") {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const validationError = validateCommentContent(req.body?.content);
+      if (validationError) {
+        res.status(400).json({ error: "Validation failed", fieldErrors: { content: validationError } });
+        return;
+      }
+
+      const note = await database.internalNote.create({
+        data: {
+          ticketId,
+          authorId: user.id,
+          content: (req.body.content as string).trim(),
+        },
+        select: internalNoteSelect,
+      });
+      res.status(201).json(note);
+    } catch {
+      res.status(500).json({ error: "Unable to add internal note" });
+    }
+  },
+);
+
 app.post(
   "/api/tickets/:id/problem-resolution",
   requireRole("REQUESTER"),

@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
+  addInternalNote,
+  addPublicComment,
   ApiRequestError,
   getStaffAssignees,
   getStaffTicketDetail,
@@ -84,6 +86,12 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus | "">("");
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [publicCommentDraft, setPublicCommentDraft] = useState("");
+  const [internalNoteDraft, setInternalNoteDraft] = useState("");
+  const [publicCommentSaving, setPublicCommentSaving] = useState(false);
+  const [internalNoteSaving, setInternalNoteSaving] = useState(false);
+  const [publicCommentFeedback, setPublicCommentFeedback] = useState<Feedback | null>(null);
+  const [internalNoteFeedback, setInternalNoteFeedback] = useState<Feedback | null>(null);
 
   async function loadDetail() {
     const sequence = ++requestSequence.current;
@@ -173,6 +181,70 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       () => updateStaffTicketStatus(ticket.id, selectedStatus, confirm, ticket.updatedAt),
       `Ticket status was updated to ${selectedStatus}.`,
     );
+  }
+
+  async function submitPublicComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ticket) return;
+    const content = publicCommentDraft.trim();
+    if (!content) {
+      setPublicCommentFeedback({ kind: "error", message: "Write a public comment before posting." });
+      return;
+    }
+    if (content.length > 4000) {
+      setPublicCommentFeedback({ kind: "error", message: "Comments must be 4000 characters or fewer." });
+      return;
+    }
+
+    setPublicCommentSaving(true);
+    setPublicCommentFeedback(null);
+    try {
+      const comment = await addPublicComment(ticket.id, content);
+      setTicket((current) => current
+        ? { ...current, publicComments: [...current.publicComments, comment] }
+        : current);
+      setPublicCommentDraft("");
+      setPublicCommentFeedback({ kind: "success", message: "Public comment posted." });
+    } catch (error) {
+      setPublicCommentFeedback({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Unable to post public comment.",
+      });
+    } finally {
+      setPublicCommentSaving(false);
+    }
+  }
+
+  async function submitInternalNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ticket) return;
+    const content = internalNoteDraft.trim();
+    if (!content) {
+      setInternalNoteFeedback({ kind: "error", message: "Write an internal note before posting." });
+      return;
+    }
+    if (content.length > 4000) {
+      setInternalNoteFeedback({ kind: "error", message: "Notes must be 4000 characters or fewer." });
+      return;
+    }
+
+    setInternalNoteSaving(true);
+    setInternalNoteFeedback(null);
+    try {
+      const note = await addInternalNote(ticket.id, content);
+      setTicket((current) => current
+        ? { ...current, internalNotes: [...current.internalNotes, note] }
+        : current);
+      setInternalNoteDraft("");
+      setInternalNoteFeedback({ kind: "success", message: "Internal note posted." });
+    } catch (error) {
+      setInternalNoteFeedback({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Unable to post internal note.",
+      });
+    } finally {
+      setInternalNoteSaving(false);
+    }
   }
 
   const currentOwnerIsListed = ticket?.owner && assignees.some((user) => user.id === ticket.owner?.id);
@@ -326,8 +398,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
               {saving && <p className="small text-secondary mt-3 mb-0" role="status">Saving Ticket changes…</p>}
             </section>
 
-            <section className="border rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
+            <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>
+              <p className="text-secondary">Visible to the requester and support staff.</p>
               {ticket.publicComments.length === 0
                 ? <p className="alert alert-info" role="status">No public comments yet.</p>
                 : (
@@ -341,10 +414,31 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                     ))}
                   </ol>
                 )}
+              <form className="mt-3" onSubmit={submitPublicComment}>
+                <label className="form-label fw-semibold" htmlFor="staff-public-comment">Add a public comment</label>
+                <textarea
+                  id="staff-public-comment"
+                  className="form-control"
+                  rows={3}
+                  maxLength={4000}
+                  value={publicCommentDraft}
+                  disabled={publicCommentSaving}
+                  onChange={(event) => setPublicCommentDraft(event.target.value)}
+                />
+                <button className="btn btn-outline-primary mt-2" type="submit" disabled={publicCommentSaving}>
+                  {publicCommentSaving ? "Posting comment…" : "Post Public Comment"}
+                </button>
+                {publicCommentFeedback && (
+                  <p className={`mt-2 mb-0 ${publicCommentFeedback.kind === "error" ? "text-danger" : "text-success"}`} role={publicCommentFeedback.kind === "error" ? "alert" : "status"}>
+                    {publicCommentFeedback.message}
+                  </p>
+                )}
+              </form>
             </section>
 
-            <section className="border rounded p-3 mb-4" aria-labelledby="staff-internal-notes-title">
+            <section className="border border-warning rounded p-3 mb-4 bg-warning-subtle" aria-labelledby="staff-internal-notes-title">
               <h3 id="staff-internal-notes-title" className="h5">Internal Notes</h3>
+              <p className="text-secondary">Private to IT Staff and Administrators; not visible to Requesters.</p>
               {ticket.internalNotes.length === 0
                 ? <p className="alert alert-info" role="status">No internal notes yet.</p>
                 : (
@@ -358,6 +452,26 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                     ))}
                   </ol>
                 )}
+              <form className="mt-3" onSubmit={submitInternalNote}>
+                <label className="form-label fw-semibold" htmlFor="staff-internal-note">Add an internal note</label>
+                <textarea
+                  id="staff-internal-note"
+                  className="form-control"
+                  rows={3}
+                  maxLength={4000}
+                  value={internalNoteDraft}
+                  disabled={internalNoteSaving}
+                  onChange={(event) => setInternalNoteDraft(event.target.value)}
+                />
+                <button className="btn btn-warning mt-2" type="submit" disabled={internalNoteSaving}>
+                  {internalNoteSaving ? "Posting note…" : "Post Internal Note"}
+                </button>
+                {internalNoteFeedback && (
+                  <p className={`mt-2 mb-0 ${internalNoteFeedback.kind === "error" ? "text-danger" : "text-success"}`} role={internalNoteFeedback.kind === "error" ? "alert" : "status"}>
+                    {internalNoteFeedback.message}
+                  </p>
+                )}
+              </form>
             </section>
 
             <section className="border rounded p-3" aria-labelledby="staff-attachments-title">

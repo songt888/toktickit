@@ -26,6 +26,7 @@ status.
 | PR | Issue | URL | Reviewer comment | My response | Approval/Merge |
 |---|---|---|---|---|---|
 | To be added | Issue 1 | To be added | Contract review pending | To be added after review | Pending |
+| #54 | Issue #44 | [Implement Staff ticket ownership and workflow](https://github.com/songt888/toktickit/pull/54) | Awaiting teammate review | Submitted API/UI behavior, active-assignee rules, stale-update protection, test results, and responsive evidence for review. | Open; approval and merge pending |
 
 ### PR #38 contract feedback addressed
 

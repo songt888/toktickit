@@ -154,8 +154,10 @@ Staff workflow screenshots:
 - [`mobile-staff-ticket-workflow.png`](../../artifacts/lab-03/screenshots/mobile-staff-ticket-workflow.png) — operational controls at mobile width with no horizontal overflow.
 
 The pull request and teammate review status will be recorded after the PR is
-opened and reviewed. Final release verification remains a separate check from
-`main`.
+opened and reviewed. PR [#54](https://github.com/songt888/toktickit/pull/54)
+targets `lab3-staging`; it is open and awaiting teammate approval. Issue #44 is
+in `PR Review` on the GitHub Project. Final release verification remains a
+separate check from `main`.
 
 ## 3. Acceptance-Criterion Traceability
 

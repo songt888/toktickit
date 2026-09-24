@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { TicketPriority } from "@prisma/client";
+import type { TicketStatus } from "@prisma/client";
 import multer, { MulterError } from "multer";
 import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from "./password.js";
 import {
@@ -19,6 +20,11 @@ import {
 } from "./auth.js";
 import { getPrisma } from "./prisma.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
+import {
+  isPermittedStatusTransition,
+  permittedStatusTransitions,
+  statusTransitionNeedsConfirmation,
+} from "./statusTransition.js";
 import {
   buildTicketOrderBy,
   buildTicketWhere,
@@ -484,6 +490,104 @@ const internalNoteSelect = {
   author: { select: { id: true, name: true, email: true } },
 } as const;
 
+const staffMutationSelect = {
+  id: true,
+  ownerId: true,
+  itPriority: true,
+  currentStatus: true,
+  problemAppearsResolved: true,
+  updatedAt: true,
+  owner: { select: { id: true, name: true, email: true, role: true } },
+} as const;
+
+const staffStatusValues = Object.keys(permittedStatusTransitions) as TicketStatus[];
+
+type StaffTicketMutation = {
+  ownerId?: number | null;
+  itPriority?: TicketPriority;
+  currentStatus?: TicketStatus;
+};
+
+type StaffTicketMutationResult =
+  | { kind: "updated"; ticket: Awaited<ReturnType<typeof readStaffTicketMutation>> }
+  | { kind: "missing" | "stale" | "invalid-owner" | "invalid-transition" };
+
+async function readStaffTicketMutation(ticketId: number) {
+  return getPrisma().ticket.findUnique({
+    where: { id: ticketId },
+    select: staffMutationSelect,
+  });
+}
+
+async function persistStaffTicketMutation(
+  ticketId: number,
+  expectedUpdatedAt: Date,
+  mutation: StaffTicketMutation,
+): Promise<StaffTicketMutationResult> {
+  return getPrisma().$transaction(async (transaction) => {
+    const current = await transaction.ticket.findUnique({
+      where: { id: ticketId },
+      select: { id: true, updatedAt: true, currentStatus: true },
+    });
+    if (!current) return { kind: "missing" };
+    if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) return { kind: "stale" };
+
+    if (typeof mutation.ownerId === "number") {
+      const eligibleOwner = await transaction.user.findFirst({
+        where: {
+          id: mutation.ownerId,
+          isActive: true,
+          role: { in: ["IT_STAFF", "ADMINISTRATOR"] },
+        },
+        select: { id: true },
+      });
+      if (!eligibleOwner) return { kind: "invalid-owner" };
+    }
+
+    if (
+      mutation.currentStatus &&
+      !isPermittedStatusTransition(current.currentStatus, mutation.currentStatus)
+    ) {
+      return { kind: "invalid-transition" };
+    }
+
+    const updatedAt = new Date(Math.max(Date.now(), current.updatedAt.getTime() + 1));
+    const update = await transaction.ticket.updateMany({
+      where: { id: ticketId, updatedAt: current.updatedAt },
+      data: { ...mutation, updatedAt },
+    });
+    if (update.count !== 1) return { kind: "stale" };
+
+    const ticket = await transaction.ticket.findUnique({
+      where: { id: ticketId },
+      select: staffMutationSelect,
+    });
+    if (!ticket) return { kind: "missing" };
+    return { kind: "updated", ticket };
+  });
+}
+
+function sendStaffMutationFailure(res: Response, result: Exclude<StaffTicketMutationResult, { kind: "updated" }>): void {
+  if (result.kind === "missing") {
+    res.status(404).json({ error: "Resource not found" });
+  } else if (result.kind === "stale") {
+    res.status(409).json({ error: "Ticket changed since it was loaded. Refresh and try again." });
+  } else if (result.kind === "invalid-owner") {
+    res.status(400).json({
+      error: "Validation failed",
+      fieldErrors: { ownerId: "Choose an active Staff or Administrator." },
+    });
+  } else {
+    res.status(409).json({ error: "The requested status transition is not permitted." });
+  }
+}
+
+function parseExpectedUpdatedAt(value: unknown): Date | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(value)) return null;
+  const timestamp = new Date(value);
+  return Number.isNaN(timestamp.getTime()) ? null : timestamp;
+}
+
 app.get(
   "/api/staff/tickets",
   requireRole("IT_STAFF", "ADMINISTRATOR"),
@@ -537,6 +641,7 @@ app.get(
         select: {
           ...staffTicketListSelect,
           requesterId: true,
+          ownerId: true,
           categoryId: true,
           relatedSystemId: true,
           description: true,
@@ -574,6 +679,118 @@ app.get(
       res.status(200).json(ticket);
     } catch {
       res.status(500).json({ error: "Unable to load operational ticket detail" });
+    }
+  },
+);
+
+app.get(
+  "/api/staff/assignees",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  async (_req: Request, res: Response) => {
+    try {
+      const assignees = await getPrisma().user.findMany({
+        where: { isActive: true, role: { in: ["IT_STAFF", "ADMINISTRATOR"] } },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        select: { id: true, name: true, email: true, role: true },
+      });
+      res.status(200).json(assignees);
+    } catch {
+      res.status(500).json({ error: "Unable to load eligible assignees" });
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:id/owner",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const ownerId: unknown = req.body?.ownerId;
+    const expectedUpdatedAt = parseExpectedUpdatedAt(req.body?.updatedAt);
+    if (
+      (ownerId !== null &&
+        (typeof ownerId !== "number" ||
+          !Number.isSafeInteger(ownerId) ||
+          ownerId <= 0 ||
+          ownerId > 2_147_483_647)) ||
+      !expectedUpdatedAt
+    ) {
+      res.status(400).json({ error: "Validation failed", fieldErrors: { ownerId: "A valid owner and updatedAt are required." } });
+      return;
+    }
+
+    try {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+        ownerId: ownerId as number | null,
+      });
+      if (result.kind !== "updated") {
+        sendStaffMutationFailure(res, result);
+        return;
+      }
+      res.status(200).json(result.ticket);
+    } catch {
+      res.status(500).json({ error: "Unable to update Ticket owner" });
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:id/it-priority",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const value: unknown = req.body?.itPriority;
+    const expectedUpdatedAt = parseExpectedUpdatedAt(req.body?.updatedAt);
+    const validPriorities = Object.values(TicketPriority) as TicketPriority[];
+    if (typeof value !== "string" || !validPriorities.includes(value as TicketPriority) || !expectedUpdatedAt) {
+      res.status(400).json({ error: "Validation failed", fieldErrors: { itPriority: "Choose a valid IT Priority and include updatedAt." } });
+      return;
+    }
+
+    try {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+        itPriority: value as TicketPriority,
+      });
+      if (result.kind !== "updated") {
+        sendStaffMutationFailure(res, result);
+        return;
+      }
+      res.status(200).json(result.ticket);
+    } catch {
+      res.status(500).json({ error: "Unable to update IT Priority" });
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:id/status",
+  requireRole("IT_STAFF", "ADMINISTRATOR"),
+  requireTicketId,
+  async (req: Request, res: Response) => {
+    const value: unknown = req.body?.status;
+    const expectedUpdatedAt = parseExpectedUpdatedAt(req.body?.updatedAt);
+    if (typeof value !== "string" || !staffStatusValues.includes(value as TicketStatus) || !expectedUpdatedAt) {
+      res.status(400).json({ error: "Validation failed", fieldErrors: { status: "Choose a valid status and include updatedAt." } });
+      return;
+    }
+
+    const status = value as TicketStatus;
+    if (statusTransitionNeedsConfirmation(status) && req.body?.confirm !== true) {
+      res.status(400).json({ error: "Validation failed", fieldErrors: { confirm: "Confirm closing or cancelling this Ticket." } });
+      return;
+    }
+
+    try {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+        currentStatus: status,
+      });
+      if (result.kind !== "updated") {
+        sendStaffMutationFailure(res, result);
+        return;
+      }
+      res.status(200).json(result.ticket);
+    } catch {
+      res.status(500).json({ error: "Unable to update Ticket status" });
     }
   },
 );
@@ -830,19 +1047,23 @@ app.post(
 
 app.get(
   "/api/tickets/:id/attachments",
-  requireRole("REQUESTER"),
+  requireRole("REQUESTER", "IT_STAFF", "ADMINISTRATOR"),
   requireTicketId,
   async (_req: Request, res: Response) => {
-    const requesterId = res.locals.authUser.id;
+    const user = res.locals.authUser;
     const ticketId = res.locals.ticketId as number;
 
     try {
-      if (!(await hasActiveRequester(requesterId))) {
+      if (user.role === "REQUESTER" && !(await hasActiveRequester(user.id))) {
         res.status(404).json({ error: "Requester not found" });
         return;
       }
 
-      if (!(await getOwnedTicket(requesterId, ticketId))) {
+      const ticket = await getPrisma().ticket.findFirst({
+        where: accessibleTicketWhere(user, ticketId),
+        select: { id: true },
+      });
+      if (!ticket) {
         res.status(404).json({ error: "Resource not found" });
         return;
       }
@@ -870,9 +1091,9 @@ app.get(
 
 app.get(
   "/api/attachments/:id/download",
-  requireRole("REQUESTER"),
+  requireRole("REQUESTER", "IT_STAFF", "ADMINISTRATOR"),
   async (req: Request, res: Response) => {
-    const requesterId = res.locals.authUser.id;
+    const user = res.locals.authUser;
     const attachmentId = parsePositiveId(req.params.id);
     if (attachmentId === null) {
       res.status(404).json({ error: "Resource not found" });
@@ -880,7 +1101,7 @@ app.get(
     }
 
     try {
-      if (!(await hasActiveRequester(requesterId))) {
+      if (user.role === "REQUESTER" && !(await hasActiveRequester(user.id))) {
         res.status(404).json({ error: "Requester not found" });
         return;
       }
@@ -889,7 +1110,7 @@ app.get(
         where: {
           id: attachmentId,
           removedAt: null,
-          ticket: { requesterId },
+          ...(user.role === "REQUESTER" ? { ticket: { requesterId: user.id } } : {}),
         },
         select: {
           originalName: true,

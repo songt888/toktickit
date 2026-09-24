@@ -84,7 +84,7 @@ describe("Lab 3 requester authorization", () => {
     }
   });
 
-  it("allows only requester sessions on requester-owned APIs", async () => {
+  it("enforces requester roles while allowing Staff operational attachment reads", async () => {
     const staffList = await request(app)
       .get("/api/tickets")
       .set("Cookie", staffCookie);
@@ -100,7 +100,8 @@ describe("Lab 3 requester authorization", () => {
       .set("Cookie", staffCookie);
 
     expect(staffList.status).toBe(403);
-    expect(staffAttachments.status).toBe(403);
+    expect(staffAttachments.status).toBe(200);
+    expect(staffAttachments.body).toEqual([]);
     expect(administratorCreate.status).toBe(403);
     expect(staffCompatibility.status).toBe(403);
     expect(staffList.body).toEqual({ error: "Forbidden" });
@@ -133,6 +134,9 @@ describe("Lab 3 requester authorization", () => {
     const otherDetail = await request(app)
       .get(`/api/tickets/${ticketId}`)
       .set("Cookie", otherRequesterCookie);
+    const otherAttachments = await request(app)
+      .get(`/api/tickets/${ticketId}/attachments`)
+      .set("Cookie", otherRequesterCookie);
 
     expect(ownerList.status).toBe(200);
     expect(ownerList.body.items.map((item: { id: number }) => item.id)).toContain(ticketId);
@@ -140,6 +144,8 @@ describe("Lab 3 requester authorization", () => {
     expect(otherList.body.items.map((item: { id: number }) => item.id)).not.toContain(ticketId);
     expect(otherDetail.status).toBe(404);
     expect(otherDetail.body).toEqual({ error: "Resource not found" });
+    expect(otherAttachments.status).toBe(404);
+    expect(otherAttachments.body).toEqual({ error: "Resource not found" });
   });
 
   it("permits authenticated reference-data reads without exposing credentials", async () => {

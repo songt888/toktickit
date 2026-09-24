@@ -397,8 +397,8 @@ app.get("/api/tickets", requireRole("REQUESTER"), async (req: Request, res: Resp
 app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: Response) => {
   const requesterId = res.locals.authUser.id;
 
-  const ticketId = Number(req.params.id);
-  if (!/^\d+$/.test(req.params.id) || !Number.isSafeInteger(ticketId) || ticketId <= 0) {
+  const ticketId = parsePositiveId(req.params.id);
+  if (ticketId === null) {
     res.status(404).json({ error: "Resource not found" });
     return;
   }

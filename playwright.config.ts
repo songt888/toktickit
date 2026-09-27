@@ -38,6 +38,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
       testMatch: /staff-ticket-flow\.spec\.ts$/,
     },
+    {
+      name: "admin-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /user-administration\.spec\.ts$/,
+    },
   ],
   webServer: [
     {

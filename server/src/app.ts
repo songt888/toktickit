@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { TicketPriority } from "@prisma/client";
+import { TicketPriority, UserRole } from "@prisma/client";
 import type { TicketStatus } from "@prisma/client";
 import multer, { MulterError } from "multer";
 import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from "./password.js";
@@ -11,6 +11,7 @@ import {
   clearSessionCookie,
   createSession,
   hasAllowedOrigin,
+  normalizeEmail,
   requireSession,
   requirePasswordChangeComplete,
   requireRole,
@@ -19,6 +20,7 @@ import {
   validatePassword,
 } from "./auth.js";
 import { getPrisma } from "./prisma.js";
+import { wouldRemoveLastActiveAdministrator } from "./adminUserRules.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
 import {
   isPermittedStatusTransition,
@@ -232,6 +234,263 @@ app.get("/api/health", (_req: Request, res: Response) => {
 // their contract allows it.
 app.use(requireSession);
 app.use(requirePasswordChangeComplete);
+
+// ---------------------------------------------------------------------------
+// Lab 3 Issue 9 — Administrator user management
+// ---------------------------------------------------------------------------
+const adminUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  isActive: true,
+} as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return typeof error === "object" && error !== null &&
+    "code" in error && error.code === "P2002";
+}
+
+const adminUserRoles = Object.values(UserRole);
+
+app.get("/api/admin/users", requireRole("ADMINISTRATOR"), async (req: Request, res: Response) => {
+  const searchValue = req.query.search;
+  const roleValue = req.query.role;
+  if (
+    (searchValue !== undefined && typeof searchValue !== "string") ||
+    (roleValue !== undefined &&
+      (typeof roleValue !== "string" || !adminUserRoles.includes(roleValue as UserRole)))
+  ) {
+    res.status(400).json({ error: "Invalid user search or role filter" });
+    return;
+  }
+
+  const search = typeof searchValue === "string" ? searchValue.trim() : "";
+  if (search.length > 100) {
+    res.status(400).json({ error: "Search must be 100 characters or fewer" });
+    return;
+  }
+
+  try {
+    const users = await getPrisma().user.findMany({
+      where: {
+        ...(roleValue ? { role: roleValue as UserRole } : {}),
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" as const } },
+                { email: { contains: search.replace(/[\\%_]/g, "\\$&"), mode: "insensitive" as const } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      select: adminUserSelect,
+    });
+    res.status(200).json(users);
+  } catch {
+    res.status(500).json({ error: "Unable to load users" });
+  }
+});
+
+app.post("/api/admin/users", requireRole("ADMINISTRATOR"), async (req: Request, res: Response) => {
+  const body: unknown = req.body;
+  if (!isRecord(body) || Object.keys(body).some((key) => !["name", "email", "role", "isActive", "initialPassword"].includes(key))) {
+    res.status(400).json({ error: "Validation failed", fieldErrors: { form: "Enter valid user details." } });
+    return;
+  }
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const email = normalizeEmail(body.email);
+  const role = body.role;
+  const isActive = body.isActive;
+  const initialPassword = body.initialPassword;
+  const fieldErrors: Record<string, string> = {};
+  if (!name || name.length > 120) fieldErrors.name = "Name must be 1 to 120 characters.";
+  if (!email || email.length > 254) fieldErrors.email = "Enter a valid email address.";
+  if (typeof role !== "string" || !adminUserRoles.includes(role as UserRole)) {
+    fieldErrors.role = "Choose a valid role.";
+  }
+  if (typeof isActive !== "boolean") fieldErrors.isActive = "Choose an account status.";
+  const passwordError = validatePassword(initialPassword);
+  if (passwordError) fieldErrors.initialPassword = passwordError;
+  if (Object.keys(fieldErrors).length > 0) {
+    res.status(400).json({ error: "Validation failed", fieldErrors });
+    return;
+  }
+
+  try {
+    const database = getPrisma();
+    const existing = await database.user.findFirst({
+      where: { email: { equals: email!, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (existing) {
+      res.status(409).json({ error: "A user with this email already exists." });
+      return;
+    }
+
+    const user = await database.user.create({
+      data: {
+        name,
+        email: email!,
+        role: role as UserRole,
+        isActive: isActive as boolean,
+        passwordHash: hashPassword(initialPassword as string),
+        mustChangePassword: true,
+        passwordChangedAt: null,
+      },
+      select: adminUserSelect,
+    });
+    res.status(201).json({ user, mustChangePassword: true });
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      res.status(409).json({ error: "A user with this email already exists." });
+      return;
+    }
+    res.status(500).json({ error: "Unable to create user" });
+  }
+});
+
+app.patch("/api/admin/users/:id", requireRole("ADMINISTRATOR"), async (req: Request, res: Response) => {
+  const userId = parsePositiveId(req.params.id);
+  if (userId === null) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const body: unknown = req.body;
+  const allowedFields = ["name", "email", "role", "isActive"];
+  if (!isRecord(body) || Object.keys(body).length === 0 || Object.keys(body).some((key) => !allowedFields.includes(key))) {
+    res.status(400).json({ error: "Validation failed", fieldErrors: { form: "Provide valid user changes." } });
+    return;
+  }
+
+  const fieldErrors: Record<string, string> = {};
+  const update: { name?: string; email?: string; role?: UserRole; isActive?: boolean } = {};
+  if ("name" in body) {
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name || name.length > 120) fieldErrors.name = "Name must be 1 to 120 characters.";
+    else update.name = name;
+  }
+  if ("email" in body) {
+    const email = normalizeEmail(body.email);
+    if (!email || email.length > 254) fieldErrors.email = "Enter a valid email address.";
+    else update.email = email;
+  }
+  if ("role" in body) {
+    if (typeof body.role !== "string" || !adminUserRoles.includes(body.role as UserRole)) {
+      fieldErrors.role = "Choose a valid role.";
+    } else update.role = body.role as UserRole;
+  }
+  if ("isActive" in body) {
+    if (typeof body.isActive !== "boolean") fieldErrors.isActive = "Choose an account status.";
+    else update.isActive = body.isActive;
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    res.status(400).json({ error: "Validation failed", fieldErrors });
+    return;
+  }
+
+  try {
+    const user = await getPrisma().$transaction(async (transaction) => {
+      // ponytail: one DB advisory lock serializes rare Admin edits; split per account if write volume ever warrants it.
+      await transaction.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(20260927, 42)) AS lock_result`;
+      const current = await transaction.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true, isActive: true },
+      });
+      if (!current) return { kind: "missing" as const };
+
+      if (current.id === res.locals.authUser.id && update.isActive === false) {
+        return { kind: "self-deactivation" as const };
+      }
+
+      if (update.email) {
+        const duplicate = await transaction.user.findFirst({
+          where: { email: { equals: update.email, mode: "insensitive" }, NOT: { id: userId } },
+          select: { id: true },
+        });
+        if (duplicate) return { kind: "duplicate-email" as const };
+      }
+
+      if (current.role === "ADMINISTRATOR" && current.isActive &&
+        (update.role !== undefined || update.isActive === false)) {
+        const activeAdminCount = await transaction.user.count({
+          where: { role: "ADMINISTRATOR", isActive: true },
+        });
+        if (wouldRemoveLastActiveAdministrator(current, update, activeAdminCount)) {
+          return { kind: "last-active-admin" as const };
+        }
+      }
+
+      return {
+        kind: "updated" as const,
+        user: await transaction.user.update({ where: { id: userId }, data: update, select: adminUserSelect }),
+      };
+    });
+
+    if (user.kind === "missing") {
+      res.status(404).json({ error: "User not found" });
+    } else if (user.kind === "self-deactivation") {
+      res.status(409).json({ error: "You cannot deactivate your own account." });
+    } else if (user.kind === "last-active-admin") {
+      res.status(409).json({ error: "The last active Administrator cannot be deactivated or demoted." });
+    } else if (user.kind === "duplicate-email") {
+      res.status(409).json({ error: "A user with this email already exists." });
+    } else {
+      res.status(200).json(user.user);
+    }
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      res.status(409).json({ error: "A user with this email already exists." });
+      return;
+    }
+    res.status(500).json({ error: "Unable to update user" });
+  }
+});
+
+app.post("/api/admin/users/:id/initial-password", requireRole("ADMINISTRATOR"), async (req: Request, res: Response) => {
+  const userId = parsePositiveId(req.params.id);
+  if (userId === null) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  const body: unknown = req.body;
+  const passwordError = isRecord(body) && Object.keys(body).length === 1 && "initialPassword" in body
+    ? validatePassword(body.initialPassword)
+    : "Provide one valid initial password.";
+  if (passwordError) {
+    res.status(400).json({ error: "Validation failed", fieldErrors: { initialPassword: passwordError } });
+    return;
+  }
+
+  try {
+    const user = await getPrisma().user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: hashPassword((body as { initialPassword: string }).initialPassword),
+        mustChangePassword: true,
+        passwordChangedAt: null,
+      },
+      select: adminUserSelect,
+    }).catch((error: unknown) => {
+      if (typeof error === "object" && error !== null && "code" in error && error.code === "P2025") return null;
+      throw error;
+    });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.status(200).json({ user, mustChangePassword: true });
+  } catch {
+    res.status(500).json({ error: "Unable to set the initial password" });
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Compatibility endpoint for older Lab 2 clients. It cannot select another

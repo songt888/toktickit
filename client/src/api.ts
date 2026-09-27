@@ -137,6 +137,29 @@ export interface StaffUser {
   role: Exclude<UserRole, "REQUESTER">;
 }
 
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
+export interface AdminUserInput {
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  initialPassword: string;
+}
+
+export type AdminUserUpdate = Partial<Omit<AdminUserInput, "initialPassword">>;
+
+export interface AdminUserPasswordResponse {
+  user: AdminUser;
+  mustChangePassword: true;
+}
+
 export interface StaffTicketListItem {
   id: number;
   ticketNumber: string;
@@ -357,6 +380,54 @@ export async function getStaffAssignees(): Promise<StaffUser[]> {
   const response = await fetch(`${API_URL}/api/staff/assignees`, { credentials: "include" });
   if (!response.ok) throw await authError(response, "Unable to load eligible assignees.");
   return (await response.json()) as StaffUser[];
+}
+
+export async function getAdminUsers(options: { search?: string; role?: UserRole } = {}): Promise<AdminUser[]> {
+  const query = new URLSearchParams();
+  if (options.search) query.set("search", options.search);
+  if (options.role) query.set("role", options.role);
+  const queryString = query.toString();
+  const response = await fetch(`${API_URL}/api/admin/users${queryString ? `?${queryString}` : ""}`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await authError(response, "Unable to load users.");
+  return (await response.json()) as AdminUser[];
+}
+
+export async function createAdminUser(input: AdminUserInput): Promise<AdminUserPasswordResponse> {
+  const response = await fetch(`${API_URL}/api/admin/users`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw await authError(response, "Unable to create user.");
+  return (await response.json()) as AdminUserPasswordResponse;
+}
+
+export async function updateAdminUser(userId: number, input: AdminUserUpdate): Promise<AdminUser> {
+  const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw await authError(response, "Unable to update user.");
+  return (await response.json()) as AdminUser;
+}
+
+export async function setAdminUserInitialPassword(
+  userId: number,
+  initialPassword: string,
+): Promise<AdminUserPasswordResponse> {
+  const response = await fetch(`${API_URL}/api/admin/users/${userId}/initial-password`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ initialPassword }),
+  });
+  if (!response.ok) throw await authError(response, "Unable to set the initial password.");
+  return (await response.json()) as AdminUserPasswordResponse;
 }
 
 async function patchStaffTicket(

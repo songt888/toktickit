@@ -7,8 +7,9 @@ import MyTickets from "./MyTickets.js";
 import StaffTicketDetail from "./StaffTicketDetail.js";
 import StaffTicketQueue from "./StaffTicketQueue.js";
 import TicketDetail from "./TicketDetail.js";
+import UserManagement from "./UserManagement.js";
 
-type ActivePage = "tickets" | "create" | "detail" | "queue" | "staff-detail";
+type ActivePage = "tickets" | "create" | "detail" | "queue" | "staff-detail" | "users";
 type AuthMode = "checking" | "login" | "change-password" | "authenticated";
 
 function requesterFromUser(user: AuthUser): Requester {
@@ -20,6 +21,7 @@ function isOperationalRole(user: AuthUser | null): boolean {
 }
 
 function defaultPageForUser(user: AuthUser): ActivePage {
+  if (user.role === "ADMINISTRATOR") return "users";
   return isOperationalRole(user) ? "queue" : "tickets";
 }
 
@@ -148,6 +150,17 @@ export default function App() {
             >
               Ticket Queue
             </a>}
+            {authUser.role === "ADMINISTRATOR" && <a
+              className={`nav-link${activePage === "users" ? " active fw-semibold" : ""}`}
+              href="#user-management"
+              aria-current={activePage === "users" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActivePage("users");
+              }}
+            >
+              User Management
+            </a>}
           </div>
         </nav>
       )}
@@ -200,6 +213,10 @@ export default function App() {
           onOpenTicket={handleOpenOperationalTicket}
           visible={activePage === "queue"}
         />
+      )}
+
+      {authMode === "authenticated" && authUser?.role === "ADMINISTRATOR" && activePage === "users" && (
+        <UserManagement />
       )}
 
       {authMode === "authenticated" && authUser && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (

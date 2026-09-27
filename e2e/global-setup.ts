@@ -8,10 +8,12 @@ const e2eStaffPassword = "E2EStaffPassword123";
 const e2eRequesterAEmail = "e2e.requester.a@example.com";
 const e2eRequesterBEmail = "e2e.requester.b@example.com";
 const e2eRequesterPassword = "E2ERequesterPassword123";
+const e2eAdminEmail = "e2e.admin@example.com";
+const e2eAdminPassword = "E2EAdminPassword123";
 const staffWorkflowTicketNumber = "TKT-E2E-ISSUE44-WORKFLOW";
 const staffWorkflowSummary = "E2E Issue 44 staff workflow";
 
-type E2ERole = "REQUESTER" | "IT_STAFF";
+type E2ERole = "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
 
 async function upsertE2EUser(
   prisma: ReturnType<typeof getPrisma>,
@@ -53,6 +55,12 @@ export default async function globalSetup(): Promise<void> {
       name: "E2E Staff User",
       role: "IT_STAFF",
       password: e2eStaffPassword,
+    });
+    await upsertE2EUser(prisma, {
+      email: e2eAdminEmail,
+      name: "E2E Administrator",
+      role: "ADMINISTRATOR",
+      password: e2eAdminPassword,
     });
     await upsertE2EUser(prisma, {
       email: e2eRequesterAEmail,

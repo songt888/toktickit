@@ -1,9 +1,9 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issue #43 staff-queue checks, Issue #44 Staff workflow checks, and
-Issue #41 comments/notes checks are recorded on their feature branches;
-remaining Lab 3 checks are planned for later issues and final release
-verification.
+Status: Issue #43 staff-queue checks and Issue #44 Staff workflow checks are
+recorded on their feature branches. Issue #41 PR #55 has merged into
+`lab3-staging`; Issue #42 Administrator user-management checks are in progress.
+Final release verification remains planned.
 
 All Lab 3 test files will live under `server/tests/lab-03/`,
 `client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
@@ -54,9 +54,9 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Passed |
 | API-14 | API | AC-14 | Internal Note visibility, requester `403` on own Tickets, and safe cross-owner `404` | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403`; cross-owner access is safe `404` | Passed |
 | API-15 | API | AC-15 | Comment/note validation, append-only behavior, and safe plain-text rendering | `server/tests/lab-03/comments-notes.api.test.ts` | Empty/oversized rejected; markup-like content is stored as ordinary text | Passed |
-| API-16 | API | AC-16 | Admin user listing, search, and role filter | `server/tests/lab-03/users-admin.api.test.ts` | Safe user list and query behavior | Planned |
-| API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Planned |
-| API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, last-admin deactivation, and last-admin role demotion | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Planned |
+| API-16 | API | AC-16 | Admin user listing, search, and role filter | `server/tests/lab-03/users-admin.api.test.ts` | Safe user list and query behavior | Passed |
+| API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Passed |
+| API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, last-admin deactivation, and last-admin role demotion | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Passed |
 | API-19 | API | AC-11 | Active eligible assignee listing and role authorization | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Only active Staff/Admin safe fields are returned | Passed |
 | UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
 | UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
@@ -64,7 +64,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
 | UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Passed |
 | UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Passed |
-| UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
+| UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Passed |
 | UI-08 | UI | AC-11, AC-12 | Ticket ownership, IT Priority, permitted status controls, confirmation, and stale-update feedback | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Staff operations reflect server responses and errors | Passed |
 | STYLE-01 | UI style | AC-05, AC-23, AC-24 | Labels, ARIA, focus, badges, Zen Green, read-only fields | `client/tests/lab-03/ui-style.test.tsx` | Visual/accessibility conventions present | Planned |
 | REG-01 | Regression | AC-07 | All Lab 2 requester/attachment API tests after migration | Existing `server/tests/lab-02/` suite | No Lab 2 regression | Passed |
@@ -78,7 +78,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
 | E2E-05 | E2E | AC-09, AC-10 | Issue #43 Staff queue/detail smoke flow and responsive checks | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff queue flow passes at desktop, tablet, and mobile widths | Passed |
 | E2E-06 | E2E | AC-11, AC-12 | Issue #44 claim/reassign/unassign, priority, and permitted status workflow | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff mutations pass through the authenticated UI | Passed |
-| E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Planned |
+| E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Passed |
 | RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
 
 ## Issue #45 Verification
@@ -178,10 +178,36 @@ Results from `feature/lab3-08-comments-notes`:
   text by React; it is not inserted as HTML.
 - E2E-03 and release verification remain planned; this Issue's API and UI
   suites/builds passed.
-- PR [#55](https://github.com/songt888/toktickit/pull/55) targets
-  `lab3-staging` and is open awaiting teammate review; Issue #41 is in
-  `PR Review` on the GitHub Project.
+- PR [#55](https://github.com/songt888/toktickit/pull/55) was approved by
+  `@stickkersz` and merged into `lab3-staging` on 2026-09-27 (merge commit
+  `b75ef063520561de91d997b87c6e03acc820d290`); Issue #41 is Done.
 - `git diff --check` passed.
+
+## Issue #42 Verification
+
+Results from `feature/lab3-09-admin-users`:
+
+- Server: `npm test -- --reporter=dot` — 92 tests passed across 27 files.
+- Client: `npm test -- --reporter=dot` — 55 tests passed across 13 files.
+- Server and client production builds passed.
+- Playwright: `npm run test:e2e -- --project=admin-desktop` — 1 test passed.
+- API coverage includes Admin-only access, safe user fields, case-insensitive
+  search/duplicate-email handling, validation, create/edit, password hashing,
+  forced password change, self-deactivation, and the last-Admin decision rule.
+- UI coverage includes search/filter, create/edit/reset, confirmation before
+  access-impacting edits, and empty/no-results/forbidden/failure states.
+- E2E covers login, list/search/filter, create, edit, initial-password reset,
+  forced password change, and 1280px/820px/390px overflow checks.
+- `git diff --check` passed.
+- PR [#56](https://github.com/songt888/toktickit/pull/56) targets
+  `lab3-staging` and is open awaiting teammate approval; Issue #42 is in
+  `PR Review` on the GitHub Project.
+
+Administrator screenshots:
+
+- [`admin-user-management-desktop.png`](../../artifacts/lab-03/screenshots/admin-user-management-desktop.png) — Admin list at 1280px.
+- [`tablet-admin-user-management.png`](../../artifacts/lab-03/screenshots/tablet-admin-user-management.png) — Admin list at 820px.
+- [`mobile-admin-user-management.png`](../../artifacts/lab-03/screenshots/mobile-admin-user-management.png) — filtered Admin list at 390px.
 
 ## 3. Acceptance-Criterion Traceability
 

@@ -21,6 +21,14 @@ const staff = {
   isActive: true,
   mustChangePassword: false,
 };
+const administrator = {
+  id: 3,
+  name: "Lab Administrator",
+  email: "lab.admin@example.com",
+  role: "ADMINISTRATOR" as const,
+  isActive: true,
+  mustChangePassword: false,
+};
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -40,6 +48,11 @@ function mockStaffWorkspace() {
   });
   vi.spyOn(api, "getCategories").mockResolvedValue([]);
   vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
+}
+
+function mockAdminWorkspace() {
+  vi.spyOn(api, "getAdminUsers").mockResolvedValue([]);
+  mockStaffWorkspace();
 }
 
 describe("Authenticated application shell", () => {
@@ -84,6 +97,17 @@ describe("Authenticated application shell", () => {
     expect(screen.queryByRole("link", { name: "My Tickets" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Create Ticket" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Ticket Queue" })).toBeInTheDocument();
+  });
+
+  it("shows user management only for Administrators and opens it by default", async () => {
+    vi.spyOn(api, "getCurrentUser").mockResolvedValue({ user: administrator, requiresPasswordChange: false });
+    mockAdminWorkspace();
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "User Management" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "User Management" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Ticket Queue" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "My Tickets" })).not.toBeInTheDocument();
   });
 
   it("clears the authenticated shell after logout", async () => {

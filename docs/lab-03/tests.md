@@ -198,8 +198,10 @@ Results from `feature/lab3-09-admin-users`:
   access-impacting edits, and empty/no-results/forbidden/failure states.
 - E2E covers login, list/search/filter, create, edit, initial-password reset,
   forced password change, and 1280px/820px/390px overflow checks.
-- `git diff --check` passed. PR and Kanban review status will be recorded after
-  the branch is pushed and the PR is opened.
+- `git diff --check` passed.
+- PR [#56](https://github.com/songt888/toktickit/pull/56) targets
+  `lab3-staging` and is open awaiting teammate approval; Issue #42 is in
+  `PR Review` on the GitHub Project.
 
 Administrator screenshots:
 

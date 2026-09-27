@@ -1,8 +1,9 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issue #43 staff-queue checks and Issue #44 Staff workflow checks are
-recorded on their feature branches; remaining Lab 3 checks are planned for
-later issues and final release verification.
+Status: Issue #43 staff-queue checks, Issue #44 Staff workflow checks, and
+Issue #41 comments/notes checks are recorded on their feature branches;
+remaining Lab 3 checks are planned for later issues and final release
+verification.
 
 All Lab 3 test files will live under `server/tests/lab-03/`,
 `client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
@@ -37,7 +38,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UNIT-02 | Unit | AC-01, AC-02 | Hash/verify behavior and no plaintext storage | `server/tests/lab-03/password-hash.test.ts` | Hash verifies; plaintext is not persisted | Planned |
 | UNIT-03 | Unit | AC-09, AC-10 | Staff queue query parsing and stable pagination | `server/tests/lab-03/queue-options.test.ts` | Valid options normalized; invalid values rejected | Planned |
 | UNIT-04 | Unit | AC-12 | Status transition matrix and confirmation rules | `server/tests/lab-03/status-transition.test.ts` | Only approved transitions pass | Passed |
-| UNIT-05 | Unit | AC-15 | Comment/note length and safe text handling | `server/tests/lab-03/comment-validation.test.ts` | Empty/oversized content rejected; markup remains plain text | Planned |
+| UNIT-05 | Unit | AC-15 | Comment/note length and accepted markup-like text | `server/tests/lab-03/comment-validation.test.ts` | Empty/oversized content rejected; markup-like content remains eligible for literal client rendering | Passed |
 | API-01 | API | AC-01 | Valid active-user login and safe response | `server/tests/lab-03/auth.api.test.ts` | `200`, session cookie, safe user data | Planned |
 | API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Planned |
 | API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Planned |
@@ -50,9 +51,9 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-10 | API | AC-09, AC-10 | Staff queue search, filters, sort, and pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Correct items and metadata | Passed |
 | API-11 | API | AC-11, AC-12 | Staff detail, attachment metadata/download, ownership, priority, and status changes with last-seen `updatedAt` | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Permitted reads and changes persist; invalid ones fail safely | Passed |
 | API-12 | API | AC-12 | Inactive owner, stale `updatedAt`, and conflicting staff updates | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | No invalid mutation; documented `400`/`409` | Passed |
-| API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Planned |
-| API-14 | API | AC-14 | Internal Note visibility, requester `403` on own Tickets, and safe cross-owner `404` | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403`; cross-owner access is safe `404` | Planned |
-| API-15 | API | AC-15 | Comment/note validation, append-only behavior, and safe plain-text rendering | `server/tests/lab-03/comments-notes.api.test.ts` | Empty/oversized rejected; markup is not executed | Planned |
+| API-13 | API | AC-13 | Public Comment visibility for all permitted roles | `server/tests/lab-03/comments-notes.api.test.ts` | Requester, Staff, Admin can read permitted content | Passed |
+| API-14 | API | AC-14 | Internal Note visibility, requester `403` on own Tickets, and safe cross-owner `404` | `server/tests/lab-03/comments-notes.api.test.ts` | Staff/Admin only; no note content on `403`; cross-owner access is safe `404` | Passed |
+| API-15 | API | AC-15 | Comment/note validation, append-only behavior, and safe plain-text rendering | `server/tests/lab-03/comments-notes.api.test.ts` | Empty/oversized rejected; markup-like content is stored as ordinary text | Passed |
 | API-16 | API | AC-16 | Admin user listing, search, and role filter | `server/tests/lab-03/users-admin.api.test.ts` | Safe user list and query behavior | Planned |
 | API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Planned |
 | API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, last-admin deactivation, and last-admin role demotion | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Planned |
@@ -62,7 +63,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
 | UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
 | UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Passed |
-| UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Planned |
+| UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Passed |
 | UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Planned |
 | UI-08 | UI | AC-11, AC-12 | Ticket ownership, IT Priority, permitted status controls, confirmation, and stale-update feedback | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Staff operations reflect server responses and errors | Passed |
 | STYLE-01 | UI style | AC-05, AC-23, AC-24 | Labels, ARIA, focus, badges, Zen Green, read-only fields | `client/tests/lab-03/ui-style.test.tsx` | Visual/accessibility conventions present | Planned |
@@ -158,6 +159,29 @@ opened and reviewed. PR [#54](https://github.com/songt888/toktickit/pull/54)
 targets `lab3-staging`; it is open and awaiting teammate approval. Issue #44 is
 in `PR Review` on the GitHub Project. Final release verification remains a
 separate check from `main`.
+
+## Issue #41 Verification
+
+Results from `feature/lab3-08-comments-notes`:
+
+- Server: `npm test -- --reporter=dot` — 86 tests passed across 26 files.
+- Client: `npm test -- --reporter=dot` — 50 tests passed across 12 files.
+- Server and client production builds passed.
+- API coverage verifies public-comment visibility for the owner, Staff, and
+  Administrator; backend-controlled author/time; Internal Note role checks and
+  safe `403`/`404` behavior; and blank/oversized validation.
+- UI coverage verifies visibly separated Public Comments/Internal Notes,
+  literal rendering of markup-like text, blank validation, retained drafts after
+  failures, preservation of existing attachment metadata, and that Requester
+  detail does not show Internal Notes.
+- Markup-like content is intentionally accepted under AC-15 and rendered as
+  text by React; it is not inserted as HTML.
+- E2E-03 and release verification remain planned; this Issue's API and UI
+  suites/builds passed.
+- PR [#55](https://github.com/songt888/toktickit/pull/55) targets
+  `lab3-staging` and is open awaiting teammate review; Issue #41 is in
+  `PR Review` on the GitHub Project.
+- `git diff --check` passed.
 
 ## 3. Acceptance-Criterion Traceability
 

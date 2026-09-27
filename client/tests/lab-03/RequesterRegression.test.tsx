@@ -84,6 +84,7 @@ describe("Requester authenticated-session regression", () => {
 
     expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
     expect(getDetail).toHaveBeenCalledWith(ticket.id);
+    expect(screen.queryByRole("heading", { name: "Internal Notes" })).not.toBeInTheDocument();
   });
 
   it("lets the authenticated requester add a public comment and mark the problem resolved", async () => {

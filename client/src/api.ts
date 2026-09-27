@@ -105,6 +105,13 @@ export interface PublicComment {
   author: Requester;
 }
 
+export interface InternalNote {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: Requester;
+}
+
 export interface ProblemResolutionUpdate {
   id: number;
   problemAppearsResolved: boolean;
@@ -180,7 +187,7 @@ export interface StaffTicketDetailData extends StaffTicketListItem {
   createdAt: string;
   attachments: AttachmentMetadata[];
   publicComments: PublicComment[];
-  internalNotes: PublicComment[];
+  internalNotes: InternalNote[];
 }
 
 export interface StaffTicketMutationResponse {
@@ -426,6 +433,31 @@ export async function addPublicComment(ticketId: number, content: string): Promi
   }
 
   return (await response.json()) as PublicComment;
+}
+
+export async function getInternalNotes(ticketId: number): Promise<InternalNote[]> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/internal-notes`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Internal notes request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as InternalNote[];
+}
+
+export async function addInternalNote(ticketId: number, content: string): Promise<InternalNote> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/internal-notes`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  });
+  if (!response.ok) {
+    throw new ApiRequestError(`Internal note request failed (${response.status})`, response.status);
+  }
+
+  return (await response.json()) as InternalNote;
 }
 
 export async function setProblemAppearsResolved(

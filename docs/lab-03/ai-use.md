@@ -33,6 +33,9 @@ will be added as implementation proceeds.
 10. "Review the staff workflow UI and E2E checks for claim, reassignment,
     unassignment, read-only Requested Priority, status confirmation, and mobile
     overflow; identify any assumptions the tests do not prove."
+11. "Compare Issue #41's unsafe-content wording with approved AC-15; recommend
+    one consistent behavior and identify the API and UI tests needed to prove
+    markup-like comments cannot execute."
 
 ## How I Used AI Critically
 
@@ -62,3 +65,11 @@ confirmation dialog; I fixed the test to accept the dialog while its click was
 in progress rather than weakening the status assertion. Human review remains
 important for security, ownership, concurrency, and whether evidence proves
 each acceptance criterion; generated code is a draft, not verification.
+
+For Issue 8, I compared the Issue's original “unsafe content is rejected” line
+with the approved specification, which says markup-like text may be stored and
+must render literally. I kept the approved specification as the contract,
+updated the Issue wording, and verified both sides: the API stores the text as
+content, while the React UI renders it without creating an HTML `script`
+element. This is a deliberate contract decision, not an assumption that
+accepting markup is inherently safe in every renderer.

@@ -1,4 +1,4 @@
-// Prisma schema — datasource and generator are pre-wired.
+// Prisma schema — Lab 3 user/data foundation.
 // Your DATABASE_URL lives in server/.env (copy it from .env.example).
 
 generator client {
@@ -10,21 +10,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  REQUESTER
+  IT_STAFF
+  ADMINISTRATOR
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  NEW
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_REQUESTER
+  RESOLVED
+  CLOSED
+  REOPENED
+  CANCELLED
+}
+
+model User {
+  id                 Int             @id @default(autoincrement())
+  name               String
+  email              String          @unique
+  passwordHash       String
+  role               UserRole        @default(REQUESTER)
+  isActive           Boolean         @default(true)
+  mustChangePassword Boolean         @default(true)
+  passwordChangedAt  DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  requesterTickets   Ticket[]        @relation("RequesterTickets")
+  ownedTickets       Ticket[]        @relation("TicketOwners")
+  publicComments     PublicComment[]
+  internalNotes      InternalNote[]
+  sessions           AuthSession[]
+
+  @@index([isActive, role, name])
+}
+
 model Category {
   id        Int      @id @default(autoincrement())
   name      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tickets   Ticket[]
-
-  @@index([isActive, name])
-}
-
-model RequesterUser {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -44,39 +76,34 @@ model RelatedSystem {
   @@index([isActive, name])
 }
 
-enum TicketPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum TicketStatus {
-  NEW
-}
-
 model Ticket {
-  id                Int            @id @default(autoincrement())
-  ticketNumber      String         @unique
-  ticketDate        DateTime       @default(now())
-  requesterId       Int
-  categoryId        Int
-  relatedSystemId   Int
-  summary           String
-  description       String
-  requestedPriority TicketPriority
-  currentStatus     TicketStatus   @default(NEW)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  requester         RequesterUser  @relation(fields: [requesterId], references: [id])
-  category          Category       @relation(fields: [categoryId], references: [id])
-  relatedSystem     RelatedSystem  @relation(fields: [relatedSystemId], references: [id])
-  attachments       Attachment[]
+  id                       Int             @id @default(autoincrement())
+  ticketNumber             String          @unique
+  ticketDate               DateTime        @default(now())
+  requesterId              Int
+  ownerId                  Int?
+  categoryId               Int
+  relatedSystemId          Int
+  summary                  String
+  description              String
+  requestedPriority        TicketPriority
+  itPriority               TicketPriority
+  currentStatus            TicketStatus    @default(NEW)
+  problemAppearsResolved   Boolean         @default(false)
+  problemAppearsResolvedAt DateTime?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+  requester                User            @relation("RequesterTickets", fields: [requesterId], references: [id])
+  owner                    User?           @relation("TicketOwners", fields: [ownerId], references: [id])
+  category                 Category        @relation(fields: [categoryId], references: [id])
+  relatedSystem            RelatedSystem   @relation(fields: [relatedSystemId], references: [id])
+  publicComments           PublicComment[]
+  internalNotes            InternalNote[]
+  attachments              Attachment[]
 
   @@index([requesterId, updatedAt, id])
-  @@index([requesterId, categoryId])
-  @@index([requesterId, requestedPriority])
-  @@index([requesterId, currentStatus])
+  @@index([ownerId, currentStatus, updatedAt])
+  @@index([currentStatus, itPriority, updatedAt])
 }
 
 model Attachment {
@@ -92,4 +119,40 @@ model Attachment {
   ticket        Ticket    @relation(fields: [ticketId], references: [id])
 
   @@index([ticketId, removedAt])
+}
+
+model PublicComment {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  authorId  Int
+  content   String   @db.VarChar(4000)
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt, id])
+}
+
+model InternalNote {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  authorId  Int
+  content   String   @db.VarChar(4000)
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt, id])
+}
+
+model AuthSession {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, expiresAt])
 }

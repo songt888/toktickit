@@ -1,8 +1,22 @@
 import { expect, test, type Page } from "@playwright/test";
-import path from "node:path";
 
-const requesterA = "Ari Suksan (ari.suksan@example.com)";
+const requesterEmail = "e2e.requester.a@example.com";
+const requesterPassword = "E2ERequesterPassword123";
 const apiBaseURL = "http://127.0.0.1:3000";
+
+async function signIn(page: Page) {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await page.getByLabel("Email").fill(requesterEmail);
+  await page.getByLabel("Password").fill(requesterPassword);
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
+}
+
+async function cookieHeader(page: Page): Promise<string> {
+  const state = await page.context().storageState();
+  return state.cookies.map(({ name, value }) => `${name}=${value}`).join("; ");
+}
 
 async function expectNoHorizontalOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
@@ -12,22 +26,13 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
 }
 
-test("keeps the requester shell usable, labelled, keyboard reachable, and free of horizontal overflow", async ({ page, request }, testInfo) => {
-  await page.goto("/");
-  await expect(page.getByLabel("Choose a Development Requester")).toBeVisible();
-  await page.getByLabel("Choose a Development Requester").selectOption({ label: requesterA });
-  await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled();
-  await page.getByRole("button", { name: "Continue" }).click();
+test("keeps the authenticated requester shell usable and free of horizontal overflow", async ({ page, request }, testInfo) => {
+  await signIn(page);
 
-  const requestersResponse = await request.get(`${apiBaseURL}/api/requesters?active=true`);
-  expect(requestersResponse.status()).toBe(200);
-  const requesters = await requestersResponse.json() as Array<{ id: number; name: string }>;
-  const ari = requesters.find((requester) => requester.name === "Ari Suksan");
-  if (!ari) throw new Error("Ari Suksan was not returned by the active requester API");
-
+  const sessionCookie = await cookieHeader(page);
   const [categoriesResponse, systemsResponse] = await Promise.all([
-    request.get(`${apiBaseURL}/api/categories`),
-    request.get(`${apiBaseURL}/api/related-systems`),
+    request.get(`${apiBaseURL}/api/categories`, { headers: { Cookie: sessionCookie } }),
+    request.get(`${apiBaseURL}/api/related-systems`, { headers: { Cookie: sessionCookie } }),
   ]);
   expect(categoriesResponse.status()).toBe(200);
   expect(systemsResponse.status()).toBe(200);
@@ -39,7 +44,7 @@ test("keeps the requester shell usable, labelled, keyboard reachable, and free o
 
   const summary = `Responsive layout ${testInfo.project.name} ${Date.now()}`;
   const ticketResponse = await request.post(`${apiBaseURL}/api/tickets`, {
-    headers: { "X-Requester-Id": String(ari.id) },
+    headers: { Cookie: sessionCookie },
     data: {
       categoryId: category.id,
       relatedSystemId: system.id,
@@ -50,8 +55,8 @@ test("keeps the requester shell usable, labelled, keyboard reachable, and free o
   });
   expect(ticketResponse.status()).toBe(201);
 
-  await expect(page.getByLabel("Current Development Requester")).toContainText("Ari Suksan");
-  await page.getByRole("link", { name: "My Tickets" }).click();
+  await expect(page.getByLabel("Current user")).toContainText("E2E Requester A");
+  await page.reload();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await expect(page.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
   const visibleTicketList = page.locator(
@@ -64,16 +69,15 @@ test("keeps the requester shell usable, labelled, keyboard reachable, and free o
   await expect(page.locator("#ticket-search")).toBeFocused();
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
-    path: path.resolve(`artifacts/lab-02/screenshots/${testInfo.project.name}-my-tickets.png`),
+    path: `artifacts/lab-02/screenshots/${testInfo.project.name}-my-tickets.png`,
     fullPage: true,
   });
 
-  await visibleTicketList.getByText(summary).locator("..")
-    .getByRole("button", { name: "View details" }).click();
+  await visibleTicketList.getByRole("button", { name: "View details" }).first().click();
   await expect(page.getByRole("heading", { name: "Ticket Detail" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
   await page.screenshot({
-    path: path.resolve(`artifacts/lab-02/screenshots/${testInfo.project.name}-ticket-detail.png`),
+    path: `artifacts/lab-02/screenshots/${testInfo.project.name}-ticket-detail.png`,
     fullPage: true,
   });
 
@@ -81,13 +85,12 @@ test("keeps the requester shell usable, labelled, keyboard reachable, and free o
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expect(page.getByRole("heading", { name: "Create Ticket" })).toBeVisible();
-  await expect(page.getByLabel("Category")).toHaveAccessibleName("Category");
-  await expect(page.getByLabel("Related System")).toHaveAccessibleName("Related System");
-
+  await expect(page.locator("#ticket-category")).toHaveAccessibleName("Category");
+  await expect(page.locator("#ticket-related-system")).toHaveAccessibleName("Related System");
   await expectNoHorizontalOverflow(page);
 
   await page.screenshot({
-    path: path.resolve(`artifacts/lab-02/screenshots/${testInfo.project.name}-create-ticket.png`),
+    path: `artifacts/lab-02/screenshots/${testInfo.project.name}-create-ticket.png`,
     fullPage: true,
   });
 });

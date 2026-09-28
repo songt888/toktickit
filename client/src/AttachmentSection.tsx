@@ -13,7 +13,6 @@ const allowedExtensions = new Set(["jpg", "jpeg", "png", "webp", "pdf"]);
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 
 type AttachmentSectionProps = {
-  requesterId: number;
   ticketId: number;
   initialAttachments: AttachmentMetadata[];
 };
@@ -40,7 +39,6 @@ function validateFile(file: File): string | null {
 }
 
 export default function AttachmentSection({
-  requesterId,
   ticketId,
   initialAttachments,
 }: AttachmentSectionProps) {
@@ -83,7 +81,7 @@ export default function AttachmentSection({
 
     setUploading(true);
     try {
-      const uploaded = await uploadAttachment(requesterId, ticketId, selectedFile);
+      const uploaded = await uploadAttachment(ticketId, selectedFile);
       setAttachments((current) => [...current, uploaded]);
       setSelectedFile(null);
       setInputKey((current) => current + 1);
@@ -98,7 +96,7 @@ export default function AttachmentSection({
     setActionError("");
     setDownloadingId(attachment.id);
     try {
-      const blob = await downloadAttachment(requesterId, attachment.id);
+      const blob = await downloadAttachment(attachment.id);
       const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = objectUrl;
@@ -136,7 +134,7 @@ export default function AttachmentSection({
     setActionError("");
     setRemoving(true);
     try {
-      const removed = await removeAttachment(requesterId, removingId, reason);
+      const removed = await removeAttachment(removingId, reason);
       setAttachments((current) => current.map((attachment) => (
         attachment.id === removed.id ? removed : attachment
       )));
@@ -163,6 +161,7 @@ export default function AttachmentSection({
           <input
             key={inputKey}
             id={`attachment-upload-${ticketId}`}
+            name="attachment"
             className={`form-control${uploadError ? " is-invalid" : ""}`}
             type="file"
             accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
@@ -237,6 +236,7 @@ export default function AttachmentSection({
                   </label>
                   <textarea
                     id={`removal-reason-${attachment.id}`}
+                    name="removalReason"
                     className="form-control mb-2"
                     rows={2}
                     value={removalReason}

@@ -18,7 +18,7 @@ export type CreateTicketInput = {
 export type TicketValidationErrors = Partial<Record<keyof CreateTicketInput, string>>;
 
 function isPositiveInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
 }
 
 export function validateCreateTicketInput(body: unknown): {
@@ -89,6 +89,18 @@ export function validateRemovalReason(reason: unknown): string | null {
   const trimmed = reason.trim();
   if (trimmed.length < 5 || trimmed.length > 500) {
     return "Removal reason must be between 5 and 500 characters.";
+  }
+
+  return null;
+}
+
+export function validateCommentContent(content: unknown): string | null {
+  if (typeof content !== "string" || content.trim().length === 0) {
+    return "Comment content is required.";
+  }
+
+  if (content.trim().length > 4000) {
+    return "Comment content must be 4000 characters or fewer.";
   }
 
   return null;

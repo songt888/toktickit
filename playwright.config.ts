@@ -33,6 +33,41 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
       testMatch: /responsive\.spec\.ts$/,
     },
+    {
+      name: "auth-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /lab-03\/authentication\.spec\.ts$/,
+    },
+    {
+      name: "auth-tablet",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 820, height: 1000 } },
+      testMatch: /lab-03\/authentication\.spec\.ts$/,
+    },
+    {
+      name: "auth-mobile",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
+      testMatch: /lab-03\/authentication\.spec\.ts$/,
+    },
+    {
+      name: "requester-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /lab-03\/requester-flow\.spec\.ts$/,
+    },
+    {
+      name: "accessibility",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /lab-03\/accessibility\.spec\.ts$/,
+    },
+    {
+      name: "staff-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /staff-ticket-flow\.spec\.ts$/,
+    },
+    {
+      name: "admin-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /user-administration\.spec\.ts$/,
+    },
   ],
   webServer: [
     {

@@ -1,59 +1,51 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import "@testing-library/jest-dom";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import App from "../../src/App.js";
 import * as api from "../../src/api.js";
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+const requester = {
+  id: 7,
+  name: "Ari Suksan",
+  email: "ari.suksan@example.com",
+  role: "REQUESTER" as const,
+  isActive: true,
+  mustChangePassword: false,
+};
 
-beforeEach(() => {
-  vi.spyOn(api, "getRequesters").mockResolvedValue([]);
-});
+afterEach(() => vi.restoreAllMocks());
+
+function mockAuthenticatedRequester() {
+  vi.spyOn(api, "getCurrentUser").mockResolvedValue({
+    user: requester,
+    requiresPasswordChange: false,
+  });
+  vi.spyOn(api, "getCategories").mockResolvedValue([]);
+  vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
+  vi.spyOn(api, "getMyTickets").mockResolvedValue({
+    items: [],
+    pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 1 },
+  });
+}
 
 describe("App", () => {
-  // WORKED EXAMPLE — provided for you.
-  it("renders the TokTickIT heading", async () => {
+  it("renders the authenticated requester workspace from the session", async () => {
+    mockAuthenticatedRequester();
+
     render(<App />);
-    expect(screen.getByText(/TokTickIT/i)).toBeInTheDocument();
-    expect(await screen.findByText("No active Development Requesters are available.")).toBeInTheDocument();
+
+    expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
+    expect(screen.getByText("Ari Suksan")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Choose a Development Requester/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Change Requester" })).not.toBeInTheDocument();
   });
 
-  it("shows Online and the categories returned by the API on success", async () => {
-    vi.spyOn(api, "checkSystem").mockResolvedValue({
-      online: true,
-      categories: [
-        { id: 1, name: "API Category One" },
-        { id: 2, name: "API Category Two" },
-      ],
-    });
+  it("shows the sign-in screen when there is no authenticated session", async () => {
+    vi.spyOn(api, "getCurrentUser").mockRejectedValue(new api.ApiRequestError("Authentication required", 401));
 
     render(<App />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Check System" }));
 
-    expect(await screen.findByText("Online")).toBeInTheDocument();
-    expect(screen.getByText("API Category One")).toBeInTheDocument();
-    expect(screen.getByText("API Category Two")).toBeInTheDocument();
-  });
-
-  it("shows a loading state while the API request is pending", async () => {
-    vi.spyOn(api, "checkSystem").mockReturnValue(new Promise(() => {}));
-
-    render(<App />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Check System" }));
-
-    expect(screen.getByText("Checking backend status…")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Loading…" })).toBeDisabled();
-  });
-
-  it("shows an Offline error message when the API is unavailable", async () => {
-    vi.spyOn(api, "checkSystem").mockRejectedValue(new Error("API unavailable"));
-
-    render(<App />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Check System" }));
-
-    expect(await screen.findByText("Offline")).toBeInTheDocument();
-    expect(screen.getByText("API unavailable")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "My Tickets" })).not.toBeInTheDocument();
   });
 });

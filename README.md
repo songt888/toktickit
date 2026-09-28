@@ -54,7 +54,7 @@ cp client/.env.example client/.env
 
 The default `DATABASE_URL` connects to the Docker database above. Keep `server/.env` private; it is ignored by Git.
 
-Initialize Prisma and seed the Lab 2 reference data:
+Initialize Prisma, apply the Lab 2/Lab 3 migrations, and seed reference data and Lab 3 demo users:
 
 ```bash
 cd server
@@ -62,6 +62,18 @@ npx prisma generate
 npx prisma migrate deploy
 npm run prisma:seed
 ```
+
+To sign in as a seeded Lab 3 user, supply a private initial password when seeding. Replace the
+sample value with a local password that meets the 12-character minimum; do not commit it:
+
+```bash
+LAB3_SEED_INITIAL_PASSWORD="LocalOnly-ChangeMe123" npm run prisma:seed
+```
+
+The local demo accounts are `ari.suksan@example.com` (Requester),
+`nattakit.support@example.com` (IT Staff), and `lab.admin@example.com` (Administrator). They use the
+initial password supplied to the seed and must change it at first sign-in. Do not use these demo
+accounts or passwords in a deployed environment.
 
 The seed is safe to run more than once. It creates four active categories, one inactive category
 fixture, six active related systems, one inactive related-system fixture, four active requesters,
@@ -97,13 +109,17 @@ Vite normally serves the frontend at `http://localhost:5173`.
 
 The main requester workflow is:
 
-1. Select an active Development Requester. This selector is a Lab 2 test context, not login or
-   authentication.
+1. Sign in with an active TokTickIT account. If the account requires a password change, complete
+   that step before continuing.
 2. Create a ticket with a category, related system, summary, description, priority, and optional
-   attachment.
-3. Open My Tickets to search, filter, sort, paginate, and view only the selected requester's
-   tickets.
+   attachment. The requester is taken from the authenticated session.
+3. Open My Tickets to search, filter, sort, paginate, and view only the signed-in requester's
+   tickets. There is no requester selector or client-side identity storage.
 4. Open Ticket Detail to view read-only ticket data and attachment metadata.
+
+IT Staff can use Ticket Queue to work with ticket ownership, IT Priority, status, comments, internal
+notes, and attachment metadata. Administrators can use User Management to search, create, edit,
+activate/deactivate accounts, and set initial passwords.
 
 Attachments accept JPG/JPEG, PNG, WEBP, and PDF files up to 5 MB each, with no more than five
 active files per ticket. Files are stored locally under `server/uploads/`, which is ignored by
@@ -111,25 +127,23 @@ Git. Removing an attachment keeps its metadata but prevents further download.
 
 ## Tests and builds
 
-Frontend:
-
-```bash
-cd client
-npm test
-npm run build
-```
-
-Backend:
+Run the complete automated suites and builds:
 
 ```bash
 cd server
-npm test -- tests/lab-02 --reporter=dot
+npm test -- --reporter=dot
 npm run build
+
+cd ../client
+npm test -- --reporter=dot
+npm run build
+
+cd ..
+npm run test:e2e
 ```
 
-The command above runs only the Lab 2 backend tests. They use Vitest and Supertest.
-
-End-to-end and responsive checks from the repository root:
+Vitest and Supertest cover server APIs; Playwright covers authenticated role workflows and
+responsive layouts. To watch the browser during E2E tests:
 
 ```bash
 npm install
@@ -137,5 +151,6 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
-Lab 2 specifications and evidence are in [`docs/lab-02/`](docs/lab-02/), including the API
-contract, UI contract, test traceability, peer-review record, and AI-use reflection.
+Lab 2 and Lab 3 specifications and evidence are in [`docs/lab-02/`](docs/lab-02/) and
+[`docs/lab-03/`](docs/lab-03/), including API/UI contracts, test traceability, peer-review records,
+and AI-use reflections.

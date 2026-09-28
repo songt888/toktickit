@@ -60,9 +60,10 @@ export interface MyTicketsProps {
   requester: Requester;
   onCreateTicket: () => void;
   onOpenTicket: (ticketId: number) => void;
+  visible?: boolean;
 }
 
-export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: MyTicketsProps) {
+export default function MyTickets({ requester, onCreateTicket, onOpenTicket, visible = true }: MyTicketsProps) {
   const [draft, setDraft] = useState<FilterDraft>(defaultDraft);
   const [filters, setFilters] = useState<TicketListOptions>(optionsFromDraft(defaultDraft));
   const [categories, setCategories] = useState<Category[]>([]);
@@ -104,7 +105,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
     setErrorMessage("");
 
     try {
-      const loadedTickets = await getMyTickets(requester.id, filters);
+      const loadedTickets = await getMyTickets(filters);
       if (requestSequence !== ticketRequestSequence.current) return;
       setResult(loadedTickets);
       setState("success");
@@ -124,12 +125,17 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
   }, []);
 
   useEffect(() => {
+    if (!visible) {
+      ticketRequestSequence.current += 1;
+      return;
+    }
+
     void loadPage();
 
     return () => {
       ticketRequestSequence.current += 1;
     };
-  }, [requester.id, filters]);
+  }, [requester.id, filters, visible]);
 
   function updateDraft(field: keyof FilterDraft, value: string) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -202,7 +208,12 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
   );
 
   return (
-    <section id="my-tickets" className="card border-0 shadow-sm mb-4" aria-labelledby="my-tickets-title">
+    <section
+      id="my-tickets"
+      className={`card border-0 shadow-sm mb-4${visible ? "" : " d-none"}`}
+      aria-labelledby="my-tickets-title"
+      aria-hidden={!visible}
+    >
       <div className="card-body">
         <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
           <div>
@@ -220,8 +231,9 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-search">Search Tickets</label>
               <input
                 id="ticket-search"
+                name="search"
                 className="form-control"
-                placeholder="Ticket number, summary, or description"
+                placeholder="Ticket number, summary, or description…"
                 value={draft.search}
                 onChange={(event) => updateDraft("search", event.target.value)}
               />
@@ -230,6 +242,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-category">Category</label>
               <select
                 id="ticket-list-category"
+                name="categoryId"
                 className="form-select"
                 value={draft.categoryId}
                 onChange={(event) => updateDraft("categoryId", event.target.value)}
@@ -242,6 +255,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-system">Related System</label>
               <select
                 id="ticket-list-system"
+                name="relatedSystemId"
                 className="form-select"
                 value={draft.relatedSystemId}
                 onChange={(event) => updateDraft("relatedSystemId", event.target.value)}
@@ -254,6 +268,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-priority">Requested Priority</label>
               <select
                 id="ticket-list-priority"
+                name="requestedPriority"
                 className="form-select"
                 value={draft.requestedPriority}
                 onChange={(event) => updateDraft("requestedPriority", event.target.value)}
@@ -266,6 +281,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-status">Status</label>
               <select
                 id="ticket-list-status"
+                name="currentStatus"
                 className="form-select"
                 value={draft.currentStatus}
                 onChange={(event) => updateDraft("currentStatus", event.target.value)}
@@ -278,6 +294,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-page-size">Page size</label>
               <select
                 id="ticket-list-page-size"
+                name="pageSize"
                 className="form-select"
                 value={draft.pageSize}
                 onChange={(event) =>
@@ -296,6 +313,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-sort">Sort by</label>
               <select
                 id="ticket-list-sort"
+                name="sort"
                 className="form-select"
                 value={draft.sort}
                 onChange={(event) => updateDraft("sort", event.target.value)}
@@ -310,6 +328,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket }: M
               <label className="form-label fw-semibold" htmlFor="ticket-list-order">Order</label>
               <select
                 id="ticket-list-order"
+                name="order"
                 className="form-select"
                 value={draft.order}
                 onChange={(event) => updateDraft("order", event.target.value)}

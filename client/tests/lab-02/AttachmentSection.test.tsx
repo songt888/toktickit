@@ -27,14 +27,13 @@ const removedAttachment: api.AttachmentMetadata = {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  window.localStorage.clear();
   if ("createObjectURL" in window.URL) delete (window.URL as { createObjectURL?: unknown }).createObjectURL;
   if ("revokeObjectURL" in window.URL) delete (window.URL as { revokeObjectURL?: unknown }).revokeObjectURL;
 });
 
 function renderAttachments(initialAttachments = [activeAttachment, removedAttachment]) {
   return render(
-    <AttachmentSection requesterId={1} ticketId={101} initialAttachments={initialAttachments} />,
+    <AttachmentSection ticketId={101} initialAttachments={initialAttachments} />,
   );
 }
 
@@ -59,7 +58,7 @@ describe("Attachment Section UI", () => {
     expect(screen.getByText(/Unavailable for download/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Download network-log.png" }));
-    expect(download).toHaveBeenCalledWith(1, activeAttachment.id);
+    expect(download).toHaveBeenCalledWith(activeAttachment.id);
     expect(createObjectUrl).toHaveBeenCalledOnce();
     expect(revokeObjectUrl).toHaveBeenCalledWith("blob:test");
   });
@@ -78,7 +77,7 @@ describe("Attachment Section UI", () => {
     fireEvent.change(screen.getByLabelText("Upload attachment"), { target: { files: [file] } });
     await user.click(screen.getByRole("button", { name: "Upload" }));
 
-    expect(upload).toHaveBeenCalledWith(1, 101, file);
+    expect(upload).toHaveBeenCalledWith(101, file);
     expect(await screen.findByText("new-evidence.pdf")).toBeInTheDocument();
 
     upload.mockRejectedValueOnce(new Error("Attachment upload failed (500)"));
@@ -105,7 +104,7 @@ describe("Attachment Section UI", () => {
 
     await user.type(screen.getByLabelText("Removal reason"), "No longer needed");
     await user.click(screen.getByRole("button", { name: "Confirm removal" }));
-    expect(remove).toHaveBeenCalledWith(1, activeAttachment.id, "No longer needed");
+    expect(remove).toHaveBeenCalledWith(activeAttachment.id, "No longer needed");
     expect(await screen.findByText(/Unavailable for download/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Download network-log.png" })).not.toBeInTheDocument();
   });

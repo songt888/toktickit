@@ -326,6 +326,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <label className="form-label fw-semibold" htmlFor="staff-assignee">Assign to</label>
                   <select
                     id="staff-assignee"
+                    name="ownerId"
                     className="form-select"
                     value={selectedOwnerId}
                     disabled={saving || Boolean(assigneesError)}
@@ -366,6 +367,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <label className="form-label fw-semibold" htmlFor="staff-ticket-priority">IT Priority</label>
                   <select
                     id="staff-ticket-priority"
+                    name="itPriority"
                     className="form-select"
                     value={selectedPriority}
                     disabled={saving}
@@ -382,6 +384,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <label className="form-label fw-semibold" htmlFor="staff-ticket-status">Status</label>
                   <select
                     id="staff-ticket-status"
+                    name="currentStatus"
                     className="form-select"
                     value={selectedStatus}
                     disabled={saving}
@@ -418,6 +421,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                 <label className="form-label fw-semibold" htmlFor="staff-public-comment">Add a public comment</label>
                 <textarea
                   id="staff-public-comment"
+                  name="publicComment"
                   className="form-control"
                   rows={3}
                   maxLength={4000}
@@ -456,6 +460,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                 <label className="form-label fw-semibold" htmlFor="staff-internal-note">Add an internal note</label>
                 <textarea
                   id="staff-internal-note"
+                  name="internalNote"
                   className="form-control"
                   rows={3}
                   maxLength={4000}

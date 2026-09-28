@@ -82,6 +82,26 @@ test("Administrator can manage users, reset an initial password, and use the res
   await expect(page.locator("article").filter({ hasText: email }).getByText("Issue 42 Updated User")).toBeVisible();
 
   const updatedCard = page.locator("article").filter({ hasText: email });
+  await updatedCard.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Active account").uncheck();
+  await expect(page.getByRole("button", { name: "Save user" })).toBeDisabled();
+  await page.getByLabel("I understand and want to continue.").check();
+  const deactivateResponse = page.waitForResponse((response) =>
+    response.url().includes("/api/admin/users/") && response.request().method() === "PATCH",
+  );
+  await page.getByRole("button", { name: "Save user" }).click();
+  expect((await deactivateResponse).status()).toBe(200);
+  await expect(updatedCard.getByText("Inactive", { exact: true })).toBeVisible();
+
+  await updatedCard.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Active account").check();
+  const activateResponse = page.waitForResponse((response) =>
+    response.url().includes("/api/admin/users/") && response.request().method() === "PATCH",
+  );
+  await page.getByRole("button", { name: "Save user" }).click();
+  expect((await activateResponse).status()).toBe(200);
+  await expect(updatedCard.getByText("Active", { exact: true })).toBeVisible();
+
   await updatedCard.getByRole("button", { name: "Set New Initial Password" }).click();
   await page.getByLabel("New initial password").fill("ResetPassword123");
   const resetResponse = page.waitForResponse((response) =>

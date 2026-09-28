@@ -15,6 +15,7 @@ import {
   requireSession,
   requirePasswordChangeComplete,
   requireRole,
+  revokeOtherSessions,
   revokeCurrentSession,
   toSafeUser,
   validatePassword,
@@ -204,14 +205,18 @@ app.post(
         return;
       }
 
-      const updatedUser = await database.user.update({
-        where: { id: user.id },
-        data: {
-          passwordHash: hashPassword(newPassword),
-          mustChangePassword: false,
-          passwordChangedAt: new Date(),
-        },
-        select: AUTH_USER_SELECT,
+      const updatedUser = await database.$transaction(async (transaction) => {
+        const nextUser = await transaction.user.update({
+          where: { id: user.id },
+          data: {
+            passwordHash: hashPassword(newPassword),
+            mustChangePassword: false,
+            passwordChangedAt: new Date(),
+          },
+          select: AUTH_USER_SELECT,
+        });
+        await revokeOtherSessions(transaction, user.id, req);
+        return nextUser;
       });
       res.status(200).json(safeAuthResponse(updatedUser));
     } catch {

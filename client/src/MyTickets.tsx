@@ -231,8 +231,9 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-search">Search Tickets</label>
               <input
                 id="ticket-search"
+                name="search"
                 className="form-control"
-                placeholder="Ticket number, summary, or description"
+                placeholder="Ticket number, summary, or description…"
                 value={draft.search}
                 onChange={(event) => updateDraft("search", event.target.value)}
               />
@@ -241,6 +242,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-category">Category</label>
               <select
                 id="ticket-list-category"
+                name="categoryId"
                 className="form-select"
                 value={draft.categoryId}
                 onChange={(event) => updateDraft("categoryId", event.target.value)}
@@ -253,6 +255,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-system">Related System</label>
               <select
                 id="ticket-list-system"
+                name="relatedSystemId"
                 className="form-select"
                 value={draft.relatedSystemId}
                 onChange={(event) => updateDraft("relatedSystemId", event.target.value)}
@@ -265,6 +268,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-priority">Requested Priority</label>
               <select
                 id="ticket-list-priority"
+                name="requestedPriority"
                 className="form-select"
                 value={draft.requestedPriority}
                 onChange={(event) => updateDraft("requestedPriority", event.target.value)}
@@ -277,6 +281,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-status">Status</label>
               <select
                 id="ticket-list-status"
+                name="currentStatus"
                 className="form-select"
                 value={draft.currentStatus}
                 onChange={(event) => updateDraft("currentStatus", event.target.value)}
@@ -289,6 +294,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-page-size">Page size</label>
               <select
                 id="ticket-list-page-size"
+                name="pageSize"
                 className="form-select"
                 value={draft.pageSize}
                 onChange={(event) =>
@@ -307,6 +313,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-sort">Sort by</label>
               <select
                 id="ticket-list-sort"
+                name="sort"
                 className="form-select"
                 value={draft.sort}
                 onChange={(event) => updateDraft("sort", event.target.value)}
@@ -321,6 +328,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               <label className="form-label fw-semibold" htmlFor="ticket-list-order">Order</label>
               <select
                 id="ticket-list-order"
+                name="order"
                 className="form-select"
                 value={draft.order}
                 onChange={(event) => updateDraft("order", event.target.value)}

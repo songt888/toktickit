@@ -152,6 +152,24 @@ export async function revokeCurrentSession(
   });
 }
 
+export async function revokeOtherSessions(
+  database: Pick<PrismaClient, "authSession">,
+  userId: number,
+  request: Request,
+): Promise<void> {
+  const token = readSessionToken(request);
+  if (!token) return;
+
+  await database.authSession.updateMany({
+    where: {
+      userId,
+      tokenHash: { not: sessionTokenHash(token) },
+      revokedAt: null,
+    },
+    data: { revokedAt: new Date() },
+  });
+}
+
 export function requireSession(
   request: AuthenticatedRequest,
   response: Response,

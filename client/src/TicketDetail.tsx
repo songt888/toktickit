@@ -282,6 +282,7 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
                 </label>
                 <textarea
                   id={`public-comment-${ticket.id}`}
+                  name="publicComment"
                   className={`form-control${commentFormError ? " is-invalid" : ""}`}
                   rows={4}
                   value={commentContent}

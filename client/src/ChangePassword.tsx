@@ -60,18 +60,18 @@ export default function ChangePassword({ user, onSuccess }: ChangePasswordProps)
         <form onSubmit={handleSubmit} noValidate>
           <div className="mb-3">
             <label className="form-label fw-semibold" htmlFor="current-password">Current password</label>
-            <input id="current-password" className={`form-control${errors.currentPassword ? " is-invalid" : ""}`} type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" />
+            <input id="current-password" name="currentPassword" className={`form-control${errors.currentPassword ? " is-invalid" : ""}`} type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" />
             {errors.currentPassword && <div className="invalid-feedback">{errors.currentPassword}</div>}
           </div>
           <div className="mb-3">
             <label className="form-label fw-semibold" htmlFor="new-password">New password</label>
-            <input id="new-password" className={`form-control${errors.newPassword ? " is-invalid" : ""}`} type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" aria-describedby="password-rules" />
+            <input id="new-password" name="newPassword" className={`form-control${errors.newPassword ? " is-invalid" : ""}`} type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" aria-describedby="password-rules" />
             {errors.newPassword && <div className="invalid-feedback">{errors.newPassword}</div>}
             <div id="password-rules" className="form-text">12–128 characters, including uppercase, lowercase, and a number.</div>
           </div>
           <div className="mb-3">
             <label className="form-label fw-semibold" htmlFor="confirm-password">Confirm new password</label>
-            <input id="confirm-password" className={`form-control${errors.confirmPassword ? " is-invalid" : ""}`} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" />
+            <input id="confirm-password" name="confirmPassword" className={`form-control${errors.confirmPassword ? " is-invalid" : ""}`} type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" />
             {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
           </div>
           <button className="btn btn-success" type="submit" disabled={submitting}>

@@ -97,6 +97,7 @@ export default function App() {
 
   return (
     <div className="container py-4" style={{ maxWidth: operationalUser ? 1200 : 760 }}>
+      <a className="visually-hidden-focusable" href="#main-content">Skip to main content</a>
       <header className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <h1 className="h3 mb-0">
           TokTickIT <span className="text-success">IT Service Desk</span>
@@ -165,67 +166,69 @@ export default function App() {
         </nav>
       )}
 
-      {authMode === "checking" && (
-        <p className="card card-body border-0 shadow-sm" role="status">
-          Checking your session…
-        </p>
-      )}
+      <main id="main-content" tabIndex={-1}>
+        {authMode === "checking" && (
+          <p className="card card-body border-0 shadow-sm" role="status">
+            Checking your session…
+          </p>
+        )}
 
-      {authMode === "login" && <Login onSuccess={handleLogin} />}
+        {authMode === "login" && <Login onSuccess={handleLogin} />}
 
-      {authMode === "change-password" && authUser && (
-        <ChangePassword user={authUser} onSuccess={handlePasswordChanged} />
-      )}
+        {authMode === "change-password" && authUser && (
+          <ChangePassword user={authUser} onSuccess={handlePasswordChanged} />
+        )}
 
-      {authMode === "authenticated" && authUser && !currentRequester && !operationalUser && (
-        <section className="card border-0 shadow-sm" aria-labelledby="role-workspace-title">
-          <div className="card-body">
-            <h2 id="role-workspace-title" className="h4">Welcome, {authUser.name}</h2>
-            <p className="mb-0">
-              Your {authUser.role.replace("_", " ")} workspace will be available in the next Lab 3 issue.
-            </p>
-          </div>
-        </section>
-      )}
+        {authMode === "authenticated" && authUser && !currentRequester && !operationalUser && (
+          <section className="card border-0 shadow-sm" aria-labelledby="role-workspace-title">
+            <div className="card-body">
+              <h2 id="role-workspace-title" className="h4">Welcome, {authUser.name}</h2>
+              <p className="mb-0">
+                Your {authUser.role.replace("_", " ")} workspace will be available in the next Lab 3 issue.
+              </p>
+            </div>
+          </section>
+        )}
 
-      {authMode === "authenticated" && currentRequester && (
-        <MyTickets
-          requester={currentRequester}
-          onCreateTicket={() => setActivePage("create")}
-          onOpenTicket={handleOpenTicket}
-          visible={activePage === "tickets"}
-        />
-      )}
+        {authMode === "authenticated" && currentRequester && (
+          <MyTickets
+            requester={currentRequester}
+            onCreateTicket={() => setActivePage("create")}
+            onOpenTicket={handleOpenTicket}
+            visible={activePage === "tickets"}
+          />
+        )}
 
-      {authMode === "authenticated" && currentRequester && activePage === "create" && (
-        <CreateTicket requester={currentRequester} />
-      )}
+        {authMode === "authenticated" && currentRequester && activePage === "create" && (
+          <CreateTicket requester={currentRequester} />
+        )}
 
-      {authMode === "authenticated" && currentRequester && activePage === "detail" && selectedTicketId !== null && (
-        <TicketDetail
-          ticketId={selectedTicketId}
-          onBack={() => setActivePage("tickets")}
-        />
-      )}
+        {authMode === "authenticated" && currentRequester && activePage === "detail" && selectedTicketId !== null && (
+          <TicketDetail
+            ticketId={selectedTicketId}
+            onBack={() => setActivePage("tickets")}
+          />
+        )}
 
-      {authMode === "authenticated" && operationalUser && (
-        <StaffTicketQueue
-          onOpenTicket={handleOpenOperationalTicket}
-          visible={activePage === "queue"}
-        />
-      )}
+        {authMode === "authenticated" && operationalUser && (
+          <StaffTicketQueue
+            onOpenTicket={handleOpenOperationalTicket}
+            visible={activePage === "queue"}
+          />
+        )}
 
-      {authMode === "authenticated" && authUser?.role === "ADMINISTRATOR" && activePage === "users" && (
-        <UserManagement />
-      )}
+        {authMode === "authenticated" && authUser?.role === "ADMINISTRATOR" && activePage === "users" && (
+          <UserManagement />
+        )}
 
-      {authMode === "authenticated" && authUser && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (
-        <StaffTicketDetail
-          ticketId={selectedTicketId}
-          currentUserId={authUser.id}
-          onBack={() => setActivePage("queue")}
-        />
-      )}
+        {authMode === "authenticated" && authUser && operationalUser && activePage === "staff-detail" && selectedTicketId !== null && (
+          <StaffTicketDetail
+            ticketId={selectedTicketId}
+            currentUserId={authUser.id}
+            onBack={() => setActivePage("queue")}
+          />
+        )}
+      </main>
     </div>
   );
 }

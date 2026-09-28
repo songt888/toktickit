@@ -53,8 +53,10 @@ export default function Login({ onSuccess }: LoginProps) {
             <label className="form-label fw-semibold" htmlFor="login-email">Email</label>
             <input
               id="login-email"
+              name="email"
               className={`form-control${errors.email ? " is-invalid" : ""}`}
               type="email"
+              spellCheck={false}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               aria-invalid={Boolean(errors.email)}
@@ -67,6 +69,7 @@ export default function Login({ onSuccess }: LoginProps) {
             <label className="form-label fw-semibold" htmlFor="login-password">Password</label>
             <input
               id="login-password"
+              name="password"
               className={`form-control${errors.password ? " is-invalid" : ""}`}
               type="password"
               value={password}

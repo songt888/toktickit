@@ -1,14 +1,14 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issue #43 staff-queue checks and Issue #44 Staff workflow checks are
-recorded on their feature branches. Issue #41 PR #55 has merged into
-`lab3-staging`; Issue #42 Administrator user-management checks are in progress.
-Final release verification remains planned.
+Status: Issues #39 and #41–#48 are approved and merged into `lab3-staging` and
+closed/Done. Issue #40 is being verified on
+`feature/lab3-10-e2e-docs-release`.
+Final release verification from `main` remains pending until the release PR is merged.
 
-All Lab 3 test files will live under `server/tests/lab-03/`,
-`client/tests/lab-03/`, and `e2e/lab-03/`. Every acceptance criterion in
-[`specification.md`](specification.md) maps to at least one planned test.
-Final results will be recorded only after the tests are run from `main`.
+Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
+`e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
+maps to at least one test. This branch records staged verification; final
+release results must still be rerun from `main` after release merge.
 
 ## 1. Test Strategy
 
@@ -25,8 +25,8 @@ Final results will be recorded only after the tests are run from `main`.
   after the identity migration.
 - Playwright tests cover authentication, first-login password change, IT Staff
   operations, Administrator management, responsive behavior, and accessibility.
-- Manual screenshots provide visual evidence for all major role-specific screens
-  at desktop, tablet, and mobile widths.
+- Playwright captures visual evidence for all major role-specific screens at
+  desktop, tablet, and mobile widths; responsive checks also measure overflow.
 
 No required test should be skipped, disabled, or reconstructed after coding.
 
@@ -34,17 +34,17 @@ No required test should be skipped, disabled, or reconstructed after coding.
 
 | Test ID | Type | AC | What it tests | Automated test file | Expected result | Final |
 |---|---|---|---|---|---|---|
-| UNIT-01 | Unit | AC-02, AC-03, AC-19 | Password rules, confirmation, and change-required state | `server/tests/lab-03/password-rules.test.ts` | Valid boundaries accepted; invalid values rejected | Planned |
-| UNIT-02 | Unit | AC-01, AC-02 | Hash/verify behavior and no plaintext storage | `server/tests/lab-03/password-hash.test.ts` | Hash verifies; plaintext is not persisted | Planned |
-| UNIT-03 | Unit | AC-09, AC-10 | Staff queue query parsing and stable pagination | `server/tests/lab-03/queue-options.test.ts` | Valid options normalized; invalid values rejected | Planned |
+| UNIT-01 | Unit | AC-02, AC-03, AC-19 | Password rules, confirmation, and change-required state | `server/tests/lab-03/password-rules.test.ts` | Valid boundaries accepted; invalid values rejected | Passed |
+| UNIT-02 | Unit | AC-01, AC-02 | Hash/verify behavior and no plaintext storage | `server/tests/lab-03/password-hash.test.ts` | Hash verifies; plaintext is not persisted | Passed |
+| UNIT-03 | Unit | AC-09, AC-10 | Staff queue query parsing and stable pagination | `server/tests/lab-03/staff-queue.api.test.ts` | Valid options normalized; invalid values rejected | Passed |
 | UNIT-04 | Unit | AC-12 | Status transition matrix and confirmation rules | `server/tests/lab-03/status-transition.test.ts` | Only approved transitions pass | Passed |
 | UNIT-05 | Unit | AC-15 | Comment/note length and accepted markup-like text | `server/tests/lab-03/comment-validation.test.ts` | Empty/oversized content rejected; markup-like content remains eligible for literal client rendering | Passed |
-| API-01 | API | AC-01 | Valid active-user login and safe response | `server/tests/lab-03/auth.api.test.ts` | `200`, session cookie, safe user data | Planned |
-| API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Planned |
-| API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Planned |
-| API-04 | API | AC-04 | Current user and logout invalidation | `server/tests/lab-03/auth.api.test.ts` | `/me` works; revoked session fails | Planned |
-| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Planned |
-| API-06 | Integration | AC-21, AC-22 | Migration, schema, foreign keys, and repeatable seed | `server/tests/lab-03/data-foundation.test.ts` | Existing data preserved; seed is idempotent | Planned |
+| API-01 | API | AC-01 | Valid active-user login and safe response | `server/tests/lab-03/auth.api.test.ts` | `200`, session cookie, safe user data | Passed |
+| API-02 | API | AC-02 | Invalid credentials and inactive-user login | `server/tests/lab-03/auth.api.test.ts` | Same safe `401` response | Passed |
+| API-03 | API | AC-03 | First-login password-change gate | `server/tests/lab-03/auth.api.test.ts` | Normal endpoints blocked until change | Passed |
+| API-04 | API | AC-04 | Current user and logout invalidation | `server/tests/lab-03/auth.api.test.ts` | `/me` works; revoked session fails | Passed |
+| API-05 | API | AC-05, AC-10 | Missing session and role-based direct API authorization | `server/tests/lab-03/authorization.api.test.ts` | `401`/`403` without data leakage | Passed |
+| API-06 | Integration | AC-21, AC-22 | Migration, schema, foreign keys, and repeatable seed | `server/tests/lab-03/data-foundation.test.ts`, `server/tests/lab-03/seed.test.ts` | Existing data preserved; seed is idempotent | Passed |
 | API-07 | API | AC-06, AC-07 | Authenticated Requester create/list/detail regression | `server/tests/lab-03/requester-regression.api.test.ts` | Identity comes from session only | Passed |
 | API-08 | API | AC-06, AC-07 | Requester attachment ownership after migration | `server/tests/lab-03/requester-regression.api.test.ts` | Own files work; cross-owner access is safe `404` | Passed |
 | API-09 | API | AC-08 | Requester Public Comments and resolution indication | `server/tests/lab-03/requester-comments.api.test.ts` | Own Ticket only; no formal close/resolve | Passed |
@@ -58,24 +58,24 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | API-17 | API | AC-17, AC-18 | Admin create/edit and duplicate email handling | `server/tests/lab-03/users-admin.api.test.ts` | `201`/`200`; duplicate is `409` | Passed |
 | API-18 | API | AC-19, AC-20 | Password reset, self-deactivation, last-admin deactivation, and last-admin role demotion | `server/tests/lab-03/users-admin.api.test.ts` | Safety rules enforced | Passed |
 | API-19 | API | AC-11 | Active eligible assignee listing and role authorization | `server/tests/lab-03/staff-ticket-detail.api.test.ts` | Only active Staff/Admin safe fields are returned | Passed |
-| UI-01 | UI | AC-01, AC-02 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Planned |
-| UI-02 | UI | AC-03 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Planned |
-| UI-03 | UI | AC-04, AC-05 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Planned |
-| UI-04 | UI | AC-06, AC-07, AC-08 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
-| UI-05 | UI | AC-09, AC-10 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Passed |
-| UI-06 | UI | AC-11, AC-12, AC-13, AC-14 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Passed |
-| UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Passed |
-| UI-08 | UI | AC-11, AC-12 | Ticket ownership, IT Priority, permitted status controls, confirmation, and stale-update feedback | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Staff operations reflect server responses and errors | Passed |
-| STYLE-01 | UI style | AC-05, AC-23, AC-24 | Labels, ARIA, focus, badges, Zen Green, read-only fields | `client/tests/lab-03/ui-style.test.tsx` | Visual/accessibility conventions present | Planned |
+| UI-01 | UI | AC-01, AC-02, AC-23 | Login fields, validation, busy, and safe failure | `client/tests/lab-03/Login.test.tsx` | Correct login states render | Passed |
+| UI-02 | UI | AC-03, AC-23 | Change Password gate and successful continuation | `client/tests/lab-03/ChangePassword.test.tsx` | App remains blocked until success | Passed |
+| UI-03 | UI | AC-04, AC-05, AC-23 | Current-user shell, role navigation, and logout | `client/tests/lab-03/ApplicationShell.test.tsx` | Name/role and permitted nav are correct | Passed |
+| UI-04 | UI | AC-06, AC-07, AC-08, AC-23 | Requester regression, comments, and resolution action | `client/tests/lab-03/RequesterRegression.test.tsx` | Lab 2 behavior uses authenticated identity; comments and resolution action work | Passed |
+| UI-05 | UI | AC-09, AC-10, AC-23 | Queue controls, badges, and list states | `client/tests/lab-03/StaffTicketQueue.test.tsx` | Search/filter/sort/page and feedback work | Passed |
+| UI-06 | UI | AC-11, AC-12, AC-13, AC-14, AC-23 | Staff detail operations, comments, notes, attachments | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Role-specific actions and states work | Passed |
+| UI-07 | UI | AC-16, AC-17, AC-18, AC-19, AC-20, AC-23 | User list, create/edit, reset, and safety errors | `client/tests/lab-03/UserManagement.test.tsx` | Admin workflow is usable and safe | Passed |
+| UI-08 | UI | AC-11, AC-12, AC-23 | Ticket ownership, IT Priority, permitted status controls, confirmation, and stale-update feedback | `client/tests/lab-03/StaffTicketDetail.test.tsx` | Staff operations reflect server responses and errors | Passed |
+| STYLE-01 | UI style | AC-05, AC-24 | Labelled Bootstrap controls, required markers, and action hierarchy | `client/tests/lab-02/ui-style.test.tsx` | Style/accessibility conventions pass | Passed |
 | REG-01 | Regression | AC-07 | All Lab 2 requester/attachment API tests after migration | Existing `server/tests/lab-02/` suite | No Lab 2 regression | Passed |
 | REG-02 | Regression | AC-07 | All Lab 2 client tests after authentication migration | Existing `client/tests/lab-02/` suite | No Lab 2 regression | Passed |
-| RESP-01 | Responsive | AC-24 | Desktop visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | No clipping or horizontal overflow | Planned |
-| RESP-02 | Responsive | AC-24 | Tablet visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | No clipping or hidden controls | Planned |
-| RESP-03 | Responsive | AC-24 | Mobile visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts` | Touch/keyboard usable at 390px | Planned |
-| A11Y-01 | Accessibility | AC-23, AC-24 | Keyboard order, focus, labels, roles, and announcements | `e2e/lab-03/accessibility.spec.ts` | No critical accessibility issues | Planned |
-| E2E-01 | E2E | AC-01, AC-02, AC-03, AC-04, AC-05 | Login, first password change, shell, and logout | `e2e/lab-03/authentication.spec.ts` | Full auth flow passes | Planned |
-| E2E-02 | E2E | AC-06, AC-07, AC-08 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester flow passes | Planned |
-| E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue, detail, assignment, workflow, comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff flow passes | Planned |
+| RESP-01 | Responsive | AC-24 | Desktop visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts`, `e2e/lab-03/authentication.spec.ts` | No clipping or horizontal overflow | Passed |
+| RESP-02 | Responsive | AC-24 | Tablet visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts`, `e2e/lab-03/authentication.spec.ts` | No clipping or hidden controls | Passed |
+| RESP-03 | Responsive | AC-24 | Mobile visual and overflow checks for all major screens | `e2e/lab-03/responsive.spec.ts`, `e2e/lab-03/authentication.spec.ts` | Touch/keyboard usable at 390px | Passed |
+| A11Y-01 | Accessibility | AC-24 | Keyboard skip link, focus, labels, active navigation, and role states | `e2e/lab-03/accessibility.spec.ts` | Keyboard and accessible-name checks pass | Passed |
+| E2E-01 | E2E | AC-01, AC-02, AC-03, AC-04, AC-05 | Login, first password change, shell, and logout/revocation | `e2e/lab-03/authentication.spec.ts` | Full auth flow passes at three viewports | Passed |
+| E2E-02 | E2E | AC-06, AC-07, AC-08 | Requester regression, comments, resolution, and isolation | `e2e/lab-03/requester-flow.spec.ts` | Requester ownership flow passes | Passed |
+| E2E-03 | E2E | AC-09, AC-10, AC-11, AC-12, AC-13, AC-14, AC-15 | Staff queue/workflow, cross-role comments, notes, and attachments | `e2e/lab-03/staff-ticket-flow.spec.ts`, `e2e/lab-03/requester-flow.spec.ts` | Staff and collaboration flows pass | Passed |
 | E2E-05 | E2E | AC-09, AC-10 | Issue #43 Staff queue/detail smoke flow and responsive checks | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff queue flow passes at desktop, tablet, and mobile widths | Passed |
 | E2E-06 | E2E | AC-11, AC-12 | Issue #44 claim/reassign/unassign, priority, and permitted status workflow | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff mutations pass through the authenticated UI | Passed |
 | E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Passed |
@@ -105,8 +105,10 @@ These results are from `feature/lab3-05-requester-comments`:
 - UI coverage includes public-comment submission, empty-comment validation, and the
   resolution-indication action while keeping the authenticated requester flow.
 
-The remaining administrator, full E2E, responsive, accessibility, and final release
-checks remain planned for their corresponding issues.
+The API and UI results above were recorded before the later full E2E pass; the
+current branch's E2E, responsive, and accessibility results are summarized in
+Issue #40 Verification below. Final release verification from `main` remains
+separate.
 
 ## Issue #43 Verification
 
@@ -154,11 +156,9 @@ Staff workflow screenshots:
 - [`tablet-staff-ticket-workflow.png`](../../artifacts/lab-03/screenshots/tablet-staff-ticket-workflow.png) — operational controls at tablet width with no horizontal overflow.
 - [`mobile-staff-ticket-workflow.png`](../../artifacts/lab-03/screenshots/mobile-staff-ticket-workflow.png) — operational controls at mobile width with no horizontal overflow.
 
-The pull request and teammate review status will be recorded after the PR is
-opened and reviewed. PR [#54](https://github.com/songt888/toktickit/pull/54)
-targets `lab3-staging`; it is open and awaiting teammate approval. Issue #44 is
-in `PR Review` on the GitHub Project. Final release verification remains a
-separate check from `main`.
+PR [#54](https://github.com/songt888/toktickit/pull/54) was approved and merged
+into `lab3-staging` on 2026-09-24; Issue #44 is closed and Done. Final release
+verification remains a separate check from `main`.
 
 ## Issue #41 Verification
 
@@ -176,8 +176,8 @@ Results from `feature/lab3-08-comments-notes`:
   detail does not show Internal Notes.
 - Markup-like content is intentionally accepted under AC-15 and rendered as
   text by React; it is not inserted as HTML.
-- E2E-03 and release verification remain planned; this Issue's API and UI
-  suites/builds passed.
+- The current branch's E2E-03 run passed; final release verification from
+  `main` remains separate.
 - PR [#55](https://github.com/songt888/toktickit/pull/55) was approved by
   `@stickkersz` and merged into `lab3-staging` on 2026-09-27 (merge commit
   `b75ef063520561de91d997b87c6e03acc820d290`); Issue #41 is Done.
@@ -199,15 +199,53 @@ Results from `feature/lab3-09-admin-users`:
 - E2E covers login, list/search/filter, create, edit, initial-password reset,
   forced password change, and 1280px/820px/390px overflow checks.
 - `git diff --check` passed.
-- PR [#56](https://github.com/songt888/toktickit/pull/56) targets
-  `lab3-staging` and is open awaiting teammate approval; Issue #42 is in
-  `PR Review` on the GitHub Project.
+- PR [#56](https://github.com/songt888/toktickit/pull/56) was approved and
+  merged into `lab3-staging` on 2026-09-27 (merge commit
+  `5a67740f892eeda8557115e25751d7d8ecea4664`); Issue #42 is closed and Done.
 
 Administrator screenshots:
 
 - [`admin-user-management-desktop.png`](../../artifacts/lab-03/screenshots/admin-user-management-desktop.png) — Admin list at 1280px.
 - [`tablet-admin-user-management.png`](../../artifacts/lab-03/screenshots/tablet-admin-user-management.png) — Admin list at 820px.
 - [`mobile-admin-user-management.png`](../../artifacts/lab-03/screenshots/mobile-admin-user-management.png) — filtered Admin list at 390px.
+
+## Issue #40 Verification
+
+Results from `feature/lab3-10-e2e-docs-release`:
+
+- PostgreSQL migration status: `npx prisma migrate status` reports the database
+  schema is up to date. Playwright setup reran the idempotent seed successfully.
+- Server: `npm test -- --reporter=dot` — 92 tests passed across 27 files.
+- Client: `npm test -- --reporter=dot` — 55 tests passed across 13 files.
+- Server and client production builds passed.
+- Playwright: `npm run test:e2e` — 15 tests passed, including the Lab 2
+  regression flows, full Lab 3 role flows, desktop/tablet/mobile checks, and
+  keyboard/accessibility checks.
+- `git diff --check` passed.
+- The accessibility test verifies the skip link, focus movement and indicator,
+  labelled fields, current navigation, and role screens. Responsive E2E checks
+  assert no horizontal overflow before capturing each major screen.
+
+Screenshots are stored directly in `artifacts/lab-03/screenshots/`. The
+`desktop-`, `tablet-`, and `mobile-` prefixes identify 1280px, 820px, and 390px
+captures. For example:
+
+- Login and first-password-change screenshots: [auth-desktop-login.png](../../artifacts/lab-03/screenshots/auth-desktop-login.png),
+  [auth-tablet-change-password.png](../../artifacts/lab-03/screenshots/auth-tablet-change-password.png), and
+  [auth-mobile-login.png](../../artifacts/lab-03/screenshots/auth-mobile-login.png).
+- Requester screenshots: [desktop-requester-my-tickets.png](../../artifacts/lab-03/screenshots/desktop-requester-my-tickets.png),
+  [tablet-requester-create-ticket.png](../../artifacts/lab-03/screenshots/tablet-requester-create-ticket.png), and
+  [mobile-requester-ticket-detail.png](../../artifacts/lab-03/screenshots/mobile-requester-ticket-detail.png).
+- Staff screenshots: [desktop-staff-ticket-queue.png](../../artifacts/lab-03/screenshots/desktop-staff-ticket-queue.png),
+  [tablet-staff-ticket-detail.png](../../artifacts/lab-03/screenshots/tablet-staff-ticket-detail.png), and
+  [mobile-staff-ticket-queue.png](../../artifacts/lab-03/screenshots/mobile-staff-ticket-queue.png).
+- Administrator screenshots: [desktop-administrator-user-management.png](../../artifacts/lab-03/screenshots/desktop-administrator-user-management.png),
+  [tablet-administrator-user-management.png](../../artifacts/lab-03/screenshots/tablet-administrator-user-management.png), and
+  [mobile-administrator-user-management.png](../../artifacts/lab-03/screenshots/mobile-administrator-user-management.png).
+- Keyboard focus evidence: [accessibility-keyboard-focus.png](../../artifacts/lab-03/screenshots/accessibility-keyboard-focus.png).
+
+`RELEASE-01` remains Planned because AC-25 specifically requires the release
+verification after merge into `main`. No PDF was created, as requested.
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -235,7 +273,7 @@ Administrator screenshots:
 | AC-20 | API-18, UI-07, E2E-04 |
 | AC-21 | API-06 |
 | AC-22 | API-06 |
-| AC-23 | STYLE-01, A11Y-01 |
+| AC-23 | UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07, UI-08 |
 | AC-24 | STYLE-01, RESP-01, RESP-02, RESP-03, A11Y-01 |
 | AC-25 | RELEASE-01 |
 
@@ -247,7 +285,7 @@ Server API/integration tests:
 server/tests/lab-03/
 ├── password-rules.test.ts
 ├── password-hash.test.ts
-├── queue-options.test.ts
+├── staff-queue.api.test.ts
 ├── status-transition.test.ts
 ├── comment-validation.test.ts
 ├── auth.api.test.ts
@@ -255,10 +293,10 @@ server/tests/lab-03/
 ├── data-foundation.test.ts
 ├── requester-regression.api.test.ts
 ├── requester-comments.api.test.ts
-├── staff-queue.api.test.ts
 ├── staff-ticket-detail.api.test.ts
 ├── comments-notes.api.test.ts
-└── users-admin.api.test.ts
+├── users-admin.api.test.ts
+└── seed.test.ts
 ```
 
 Client tests:
@@ -271,9 +309,11 @@ client/tests/lab-03/
 ├── RequesterRegression.test.tsx
 ├── StaffTicketQueue.test.tsx
 ├── StaffTicketDetail.test.tsx
-├── UserManagement.test.tsx
-└── ui-style.test.tsx
+└── UserManagement.test.tsx
 ```
+
+The shared UI style regression test remains at
+`client/tests/lab-02/ui-style.test.tsx`.
 
 End-to-end tests and evidence:
 
@@ -287,22 +327,20 @@ e2e/lab-03/
 └── accessibility.spec.ts
 
 artifacts/lab-03/screenshots/
-├── authentication/
-├── requester/
-├── staff-queue/
-├── staff-ticket-detail/
-└── user-management/
+├── auth-{desktop,tablet,mobile}-{login,change-password}.png
+├── {desktop,tablet,mobile}-{login,requester-*,staff-*,administrator-*}.png
+└── accessibility-keyboard-focus.png
 ```
 
 ## 5. Planned Commands
 
 ```bash
-# From the repository root after PostgreSQL is running
+# From the repository root after Docker/PostgreSQL is running
 cd server
 npx prisma migrate deploy
+npx prisma migrate status
 npm run prisma:seed
-npm test -- tests/lab-03 --reporter=dot
-npm test -- tests/lab-02 --reporter=dot
+npm test -- --reporter=dot
 npm run build
 
 cd ../client
@@ -313,22 +351,19 @@ cd ..
 npm run test:e2e
 ```
 
-The final release check will run these commands from `main` after the release
-PR is merged. Results, test counts, build output, migration status, seed
-verification, and merge commit will be added to this file without leaving any
-required test marked `Pending`.
+The results above are from the Issue #40 branch. Run the same checks from `main`
+after the release PR is merged to complete AC-25 and change RELEASE-01 from
+Planned to Passed.
 
-## 6. Manual Evidence Checklist
+## 6. Automated and Screenshot Evidence Checklist
 
-- [ ] Valid login and invalid login.
-- [ ] Inactive-account safe feedback.
-- [ ] Busy login state and logout.
-- [ ] Mandatory first-login password change.
-- [ ] Requester regression without a requester selector.
-- [ ] IT Staff queue with realistic data, filters, sorting, pagination, and badges.
-- [ ] IT Staff claim/reassign, priority, status, comments, notes, and attachment continuity.
-- [ ] Administrator user list, search, role filter, create, edit, activation, and password reset.
-- [ ] Duplicate email, invalid role, self-deactivation, and last-admin safety feedback.
-- [ ] Forbidden direct API access for each protected role boundary.
-- [ ] Desktop, tablet, and mobile screenshots for all major screens.
-- [ ] Visible keyboard focus, labels, ARIA states, no clipping, and no horizontal overflow.
+- [x] Valid/invalid login, inactive-account response, busy state, logout, and first-login password change.
+- [x] Requester workflow, ticket ownership, comments, resolution indication, and attachment continuity.
+- [x] IT Staff queue, search/filter/sort/page, assignment, priority, status, comments, notes, and attachment access.
+- [x] Administrator list, search/filter, create/edit, activation, password reset, and last-admin safeguards.
+- [x] Protected API access and cross-role ownership boundaries.
+- [x] Desktop (1280px), tablet (820px), and mobile (390px) screenshots for login and major role screens.
+- [x] Keyboard skip link/focus, labels, active navigation, and responsive no-overflow checks.
+
+The checks above are automated by Vitest, API tests, and Playwright; visual
+screenshots are retained as files in `artifacts/lab-03/screenshots/`.

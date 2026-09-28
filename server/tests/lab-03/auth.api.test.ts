@@ -136,6 +136,11 @@ describe("Lab 3 authentication API", () => {
     expect(login.headers["set-cookie"][0]).toMatch(/SameSite=Lax/);
     expect(login.headers["set-cookie"][0]).toMatch(/Path=\//);
     const oldSessionCookie = login.headers["set-cookie"][0].split(";")[0];
+    const otherLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: activeEmail, password });
+    expect(otherLogin.status).toBe(200);
+    const otherSessionCookie = otherLogin.headers["set-cookie"][0].split(";")[0];
 
     const meBeforeChange = await agent.get("/api/auth/me");
     expect(meBeforeChange.status).toBe(200);
@@ -170,6 +175,12 @@ describe("Lab 3 authentication API", () => {
     const meAfterChange = await agent.get("/api/auth/me");
     expect(meAfterChange.status).toBe(200);
     expect(meAfterChange.body.requiresPasswordChange).toBe(false);
+
+    const otherSessionAfterChange = await request(app)
+      .get("/api/auth/me")
+      .set("Cookie", otherSessionCookie);
+    expect(otherSessionAfterChange.status).toBe(401);
+    expect(otherSessionAfterChange.body).toEqual({ error: "Authentication required" });
 
     const availableApplication = await agent.get("/api/categories");
     expect(availableApplication.status).toBe(200);

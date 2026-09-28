@@ -25,7 +25,7 @@ the comments short but preserved the requested fix and the final review state.
 | #53 | Lab 3 Issue 8 | [Administrator User Management](https://github.com/stickkersz/toktickit/pull/53) | Checked the user-management flow and Administrator safeguards; noted README wording as non-blocking cleanup. | Partner completed the Admin flow and tests. | Approved and merged on 2026-09-24. |
 | #54 | Lab 3 Issue 9 | [E2E and responsive pass](https://github.com/stickkersz/toktickit/pull/54) | Requested name-based category/system lookups instead of hard-coded IDs and a wait for the resolved screenshot. | Partner changed the lookups and synchronization, then retested. | Approved and merged on 2026-09-27. |
 | #56 | Pre-release review fixes | [Pre-release code review fixes](https://github.com/stickkersz/toktickit/pull/56) | Checked the breadcrumb, traceability, and documentation fixes. | Partner applied the requested pre-release documentation fixes. | Approved and merged on 2026-09-27. |
-| #57 | Release | [Lab 3 release](https://github.com/stickkersz/toktickit/pull/57) | Requested one Prisma transaction for password update plus other-session revocation, with a rollback test. | Awaiting partner fix and re-review. | Changes requested; still open. |
+| #57 | Release | [Lab 3 release](https://github.com/stickkersz/toktickit/pull/57) | Requested one Prisma transaction for password update plus other-session revocation, with a rollback test. | Partner implemented the atomic password/session update and rollback coverage in [PR #59](https://github.com/stickkersz/toktickit/pull/59). | Fix merged in PR #59 on 2026-09-28; release PR #57 remains open for final review. |
 
 ## Reviews Received on My Lab 3 Pull Requests
 

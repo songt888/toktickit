@@ -1,14 +1,14 @@
 # Lab 3 Test DD and Traceability Plan
 
-Status: Issues #39 and #41–#48 are approved and merged into `lab3-staging` and
-closed/Done. Issue #40 is being verified on
-`feature/lab3-10-e2e-docs-release`.
-Final release verification from `main` remains pending until the release PR is merged.
+Status: Issues #39–#48 are approved, merged into `main`, and closed/Done.
+Release PR #57 merged into `lab3-staging` as `9393a6e`, and release PR #58
+merged into `main` as `5b234a4`. Final verification was rerun on
+`feature/lab3-final-verification`, based on that `main` commit.
 
 Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
 `e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
-maps to at least one test. This branch records staged verification; final
-release results must still be rerun from `main` after release merge.
+maps to at least one test. This branch records the final verification performed
+after the release merge.
 
 ## 1. Test Strategy
 
@@ -79,7 +79,7 @@ No required test should be skipped, disabled, or reconstructed after coding.
 | E2E-05 | E2E | AC-09, AC-10 | Issue #43 Staff queue/detail smoke flow and responsive checks | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff queue flow passes at desktop, tablet, and mobile widths | Passed |
 | E2E-06 | E2E | AC-11, AC-12 | Issue #44 claim/reassign/unassign, priority, and permitted status workflow | `e2e/lab-03/staff-ticket-flow.spec.ts` | Staff mutations pass through the authenticated UI | Passed |
 | E2E-04 | E2E | AC-16, AC-17, AC-18, AC-19, AC-20 | Admin list, create/edit, reset, and safety rules | `e2e/lab-03/user-administration.spec.ts` | Admin flow passes | Passed |
-| RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Planned |
+| RELEASE-01 | Release | AC-25 | Final migration, seed, tests, builds, E2E, and main verification | Final commands recorded here | All required checks pass with no skips | Passed |
 
 ## Issue #45 Verification
 
@@ -90,8 +90,8 @@ These results are from `feature/lab3-04-requester-authorization` before the pull
 - Server and client TypeScript production builds passed.
 - `git diff --check` passed.
 
-The final Lab 3 release verification remains in `RELEASE-01` and will be recorded after the
-release branch is merged and checked from `main`.
+The final Lab 3 release verification is recorded in `RELEASE-01` and the
+Issue #40 Verification section below.
 
 ## Issue #47 Verification
 
@@ -158,7 +158,7 @@ Staff workflow screenshots:
 
 PR [#54](https://github.com/songt888/toktickit/pull/54) was approved and merged
 into `lab3-staging` on 2026-09-24; Issue #44 is closed and Done. Final release
-verification remains a separate check from `main`.
+verification is recorded in the Issue #40 section below.
 
 ## Issue #41 Verification
 
@@ -176,8 +176,8 @@ Results from `feature/lab3-08-comments-notes`:
   detail does not show Internal Notes.
 - Markup-like content is intentionally accepted under AC-15 and rendered as
   text by React; it is not inserted as HTML.
-- The current branch's E2E-03 run passed; final release verification from
-  `main` remains separate.
+- The current branch's E2E-03 run passed; the final release verification is
+  recorded in the Issue #40 section below.
 - PR [#55](https://github.com/songt888/toktickit/pull/55) was approved by
   `@stickkersz` and merged into `lab3-staging` on 2026-09-27 (merge commit
   `b75ef063520561de91d997b87c6e03acc820d290`); Issue #41 is Done.
@@ -211,7 +211,9 @@ Administrator screenshots:
 
 ## Issue #40 Verification
 
-Results from `feature/lab3-10-e2e-docs-release`:
+Final results from `feature/lab3-final-verification`, based on `main` after
+release PR [#58](https://github.com/songt888/toktickit/pull/58) merged as
+`5b234a4`:
 
 - PostgreSQL migration status: `npx prisma migrate status` reports the database
   schema is up to date. Playwright setup reran the idempotent seed successfully.
@@ -222,6 +224,8 @@ Results from `feature/lab3-10-e2e-docs-release`:
   regression flows, full Lab 3 role flows, desktop/tablet/mobile checks, and
   keyboard/accessibility checks.
 - `git diff --check` passed.
+- Release PR [#57](https://github.com/songt888/toktickit/pull/57) merged into
+  `lab3-staging` as `9393a6e`; release PR #58 merged into `main` as `5b234a4`.
 - The accessibility test verifies the skip link, focus movement and indicator,
   labelled fields, current navigation, and role screens. Responsive E2E checks
   assert no horizontal overflow before capturing each major screen.
@@ -244,8 +248,8 @@ captures. For example:
   [mobile-administrator-user-management.png](../../artifacts/lab-03/screenshots/mobile-administrator-user-management.png).
 - Keyboard focus evidence: [accessibility-keyboard-focus.png](../../artifacts/lab-03/screenshots/accessibility-keyboard-focus.png).
 
-`RELEASE-01` remains Planned because AC-25 specifically requires the release
-verification after merge into `main`. No PDF was created, as requested.
+`RELEASE-01` is Passed because AC-25 was verified after merge into `main`.
+No PDF was created, as requested.
 
 ## 3. Acceptance-Criterion Traceability
 
@@ -351,9 +355,8 @@ cd ..
 npm run test:e2e
 ```
 
-The results above are from the Issue #40 branch. Run the same checks from `main`
-after the release PR is merged to complete AC-25 and change RELEASE-01 from
-Planned to Passed.
+The results above were rerun after the release PR merged into `main`; they
+complete AC-25 and support the Passed status for RELEASE-01.
 
 ## 6. Automated and Screenshot Evidence Checklist
 

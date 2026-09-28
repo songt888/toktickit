@@ -161,6 +161,7 @@ export default function AttachmentSection({
           <input
             key={inputKey}
             id={`attachment-upload-${ticketId}`}
+            name="attachment"
             className={`form-control${uploadError ? " is-invalid" : ""}`}
             type="file"
             accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
@@ -235,6 +236,7 @@ export default function AttachmentSection({
                   </label>
                   <textarea
                     id={`removal-reason-${attachment.id}`}
+                    name="removalReason"
                     className="form-control mb-2"
                     rows={2}
                     value={removalReason}

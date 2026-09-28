@@ -154,31 +154,31 @@ export default function UserManagement() {
             <div className="row g-3">
               <div className="col-md-6">
                 <label className="form-label" htmlFor="admin-user-name">Name</label>
-                <input id="admin-user-name" className="form-control" value={draft.name} maxLength={120}
+                <input id="admin-user-name" name="name" className="form-control" value={draft.name} maxLength={120}
                   onChange={(event) => setDraft({ ...draft, name: event.target.value })} required />
               </div>
               <div className="col-md-6">
                 <label className="form-label" htmlFor="admin-user-email">Email</label>
-                <input id="admin-user-email" className="form-control" type="email" value={draft.email} maxLength={254}
+                <input id="admin-user-email" name="email" className="form-control" type="email" spellCheck={false} value={draft.email} maxLength={254}
                   onChange={(event) => setDraft({ ...draft, email: event.target.value })} required />
               </div>
               <div className="col-md-6">
                 <label className="form-label" htmlFor="admin-user-role">Role</label>
-                <select id="admin-user-role" className="form-select" value={draft.role}
+                <select id="admin-user-role" name="role" className="form-select" value={draft.role}
                   onChange={(event) => setDraft({ ...draft, role: event.target.value as UserRole })}>
                   {roles.map((option) => <option key={option} value={option}>{roleLabel(option)}</option>)}
                 </select>
               </div>
               <div className="col-md-6 d-flex align-items-end pb-2">
                 <div className="form-check">
-                  <input id="admin-user-active" className="form-check-input" type="checkbox" checked={draft.isActive}
+                  <input id="admin-user-active" name="isActive" className="form-check-input" type="checkbox" checked={draft.isActive}
                     onChange={(event) => setDraft({ ...draft, isActive: event.target.checked })} />
                   <label className="form-check-label" htmlFor="admin-user-active">Active account</label>
                 </div>
               </div>
               {!editingUser && <div className="col-md-6">
                 <label className="form-label" htmlFor="admin-user-password">Initial password</label>
-                <input id="admin-user-password" className="form-control" type="password" autoComplete="new-password"
+                <input id="admin-user-password" name="initialPassword" className="form-control" type="password" autoComplete="new-password"
                   value={draft.initialPassword} onChange={(event) => setDraft({ ...draft, initialPassword: event.target.value })} required />
                 <div className="form-text">12–128 characters, including uppercase, lowercase, and a number.</div>
               </div>}
@@ -186,7 +186,7 @@ export default function UserManagement() {
                 <div className="alert alert-warning mb-0">
                   <p className="mb-2">This change affects sign-in access or Administrator availability.</p>
                   <div className="form-check">
-                    <input id="admin-user-confirm-impact" className="form-check-input" type="checkbox" checked={confirmedImpact}
+                    <input id="admin-user-confirm-impact" name="confirmImpact" className="form-check-input" type="checkbox" checked={confirmedImpact}
                       onChange={(event) => setConfirmedImpact(event.target.checked)} />
                     <label className="form-check-label" htmlFor="admin-user-confirm-impact">
                       I understand and want to continue.
@@ -215,12 +215,12 @@ export default function UserManagement() {
       }}>
         <div className="col-12 col-md-6">
           <label className="form-label" htmlFor="admin-user-search">Search name or email</label>
-          <input id="admin-user-search" className="form-control" value={searchDraft} maxLength={100}
+          <input id="admin-user-search" name="search" className="form-control" value={searchDraft} maxLength={100}
             onChange={(event) => setSearchDraft(event.target.value)} />
         </div>
         <div className="col-12 col-md-4">
           <label className="form-label" htmlFor="admin-user-role-filter">Filter by role</label>
-          <select id="admin-user-role-filter" className="form-select" value={roleDraft}
+          <select id="admin-user-role-filter" name="roleFilter" className="form-select" value={roleDraft}
             onChange={(event) => setRoleDraft(event.target.value as UserRole | "")}>
             <option value="">All roles</option>
             {roles.map((option) => <option key={option} value={option}>{roleLabel(option)}</option>)}
@@ -266,7 +266,7 @@ export default function UserManagement() {
             {passwordUserId === user.id && <form className="card-footer bg-white" onSubmit={(event) => void handleSetPassword(event, user)}>
               <label className="form-label" htmlFor={`admin-reset-password-${user.id}`}>New initial password</label>
               <div className="d-flex flex-column flex-sm-row gap-2">
-                <input id={`admin-reset-password-${user.id}`} className="form-control" type="password" autoComplete="new-password"
+                <input id={`admin-reset-password-${user.id}`} name="initialPassword" className="form-control" type="password" autoComplete="new-password"
                   value={passwordDraft} onChange={(event) => setPasswordDraft(event.target.value)} required />
                 <button className="btn btn-success flex-shrink-0" type="submit" disabled={passwordBusy}>
                   {passwordBusy ? "Saving…" : "Set password"}

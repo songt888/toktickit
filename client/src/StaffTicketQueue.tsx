@@ -257,8 +257,9 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-ticket-search">Search Queue</label>
               <input
                 id="staff-ticket-search"
+                name="search"
                 className="form-control"
-                placeholder="Ticket number, summary, description, or requester"
+                placeholder="Ticket number, summary, description, or requester…"
                 value={draft.search}
                 onChange={(event) => updateDraft("search", event.target.value)}
               />
@@ -267,6 +268,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-queue-category">Category</label>
               <select
                 id="staff-queue-category"
+                name="categoryId"
                 className="form-select"
                 value={draft.categoryId}
                 onChange={(event) => updateDraft("categoryId", event.target.value)}
@@ -279,6 +281,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-queue-system">Related System</label>
               <select
                 id="staff-queue-system"
+                name="relatedSystemId"
                 className="form-select"
                 value={draft.relatedSystemId}
                 onChange={(event) => updateDraft("relatedSystemId", event.target.value)}
@@ -291,6 +294,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-requested-priority">Requested Priority</label>
               <select
                 id="staff-requested-priority"
+                name="requestedPriority"
                 className="form-select"
                 value={draft.requestedPriority}
                 onChange={(event) => updateDraft("requestedPriority", event.target.value)}
@@ -303,6 +307,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-it-priority">IT Priority</label>
               <select
                 id="staff-it-priority"
+                name="itPriority"
                 className="form-select"
                 value={draft.itPriority}
                 onChange={(event) => updateDraft("itPriority", event.target.value)}
@@ -315,6 +320,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-status">Status</label>
               <select
                 id="staff-status"
+                name="currentStatus"
                 className="form-select"
                 value={draft.currentStatus}
                 onChange={(event) => updateDraft("currentStatus", event.target.value)}
@@ -327,6 +333,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-owner">Owner</label>
               <select
                 id="staff-owner"
+                name="ownerId"
                 className="form-select"
                 value={draft.ownerId}
                 onChange={(event) => updateDraft("ownerId", event.target.value)}
@@ -339,6 +346,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-sort">Sort by</label>
               <select
                 id="staff-sort"
+                name="sort"
                 className="form-select"
                 value={draft.sort}
                 onChange={(event) => updateDraft("sort", event.target.value as QueueDraft["sort"])}
@@ -355,6 +363,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-order">Order</label>
               <select
                 id="staff-order"
+                name="order"
                 className="form-select"
                 value={draft.order}
                 onChange={(event) => updateDraft("order", event.target.value as QueueDraft["order"])}
@@ -367,6 +376,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
               <label className="form-label fw-semibold" htmlFor="staff-page-size">Page size</label>
               <select
                 id="staff-page-size"
+                name="pageSize"
                 className="form-select"
                 value={draft.pageSize}
                 onChange={(event) => setDraft((current) => ({

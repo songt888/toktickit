@@ -293,6 +293,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
               <label className="form-label fw-semibold" htmlFor="ticket-requester">Requester</label>
               <input
                 id="ticket-requester"
+                name="requester"
                 className="form-control bg-light"
                 value={`${requester.name} (${requester.email})`}
                 readOnly
@@ -308,6 +309,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 </label>
                 <select
                   id="ticket-category"
+                  name="categoryId"
                   className={`form-select${errors.categoryId ? " is-invalid" : ""}`}
                   value={values.categoryId}
                   onChange={(event) => updateValue("categoryId", event.target.value)}
@@ -326,6 +328,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 </label>
                 <select
                   id="ticket-related-system"
+                  name="relatedSystemId"
                   className={`form-select${errors.relatedSystemId ? " is-invalid" : ""}`}
                   value={values.relatedSystemId}
                   onChange={(event) => updateValue("relatedSystemId", event.target.value)}
@@ -345,6 +348,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
               </label>
               <input
                 id="ticket-summary"
+                name="summary"
                 className={`form-control${errors.summary ? " is-invalid" : ""}`}
                 value={values.summary}
                 onChange={(event) => updateValue("summary", event.target.value)}
@@ -360,6 +364,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
               </label>
               <textarea
                 id="ticket-description"
+                name="description"
                 className={`form-control${errors.description ? " is-invalid" : ""}`}
                 rows={5}
                 value={values.description}
@@ -376,6 +381,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
               </label>
               <select
                 id="ticket-priority"
+                name="requestedPriority"
                 className={`form-select${errors.requestedPriority ? " is-invalid" : ""}`}
                 value={values.requestedPriority}
                 onChange={(event) => updateValue("requestedPriority", event.target.value)}
@@ -392,6 +398,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
               <label className="form-label fw-semibold" htmlFor="ticket-attachments">Attachments</label>
               <input
                 id="ticket-attachments"
+                name="attachments"
                 className={`form-control${errors.attachments ? " is-invalid" : ""}`}
                 type="file"
                 multiple

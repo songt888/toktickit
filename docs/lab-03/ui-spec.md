@@ -208,6 +208,8 @@ announced without revealing a password.
 - Error, success, busy, and forbidden messages use text and appropriate ARIA
   roles, not color alone.
 - Focus indicators remain visible for keyboard users.
+- A keyboard-visible skip link moves focus to the single main-content landmark.
+- Every form control has an associated visible label and a meaningful `name`.
 - Buttons have visible text; icon-only buttons have an accessible label.
 - Dialogs and forms return focus predictably after close or save.
 - Destructive or irreversible actions require a clear confirmation.
@@ -241,16 +243,21 @@ overlap, hidden buttons, unreadable text, or unexpected horizontal overflow.
 
 ## 12. Visual Checklist
 
-- [ ] Zen Green tokens are consistent on all Lab 3 screens.
-- [ ] Authenticated name and role are visible in the shell.
-- [ ] Navigation is role-specific and marks the active page.
-- [ ] Requested Priority, IT Priority, status, and role badges are distinct.
-- [ ] Editable and read-only fields are visibly different.
-- [ ] Public Comments and Internal Notes are clearly separated.
-- [ ] Validation is near the relevant field or action.
-- [ ] Busy, disabled, success, forbidden, and failure states are readable.
-- [ ] Keyboard focus is visible and all controls are reachable.
-- [ ] Desktop queue remains readable without a mega-grid.
-- [ ] Tablet and mobile layouts avoid clipping and overlap.
-- [ ] No major screen has unintended horizontal overflow.
-- [ ] Screenshots are readable at normal zoom and grouped by submission part.
+- [x] Zen Green tokens are consistent on all Lab 3 screens.
+- [x] Authenticated name and role are visible in the shell.
+- [x] Navigation is role-specific and marks the active page.
+- [x] Requested Priority, IT Priority, status, and role badges are distinct.
+- [x] Editable and read-only fields are visibly different.
+- [x] Public Comments and Internal Notes are clearly separated.
+- [x] Validation is near the relevant field or action.
+- [x] Busy, disabled, success, forbidden, and failure states are readable.
+- [x] Keyboard focus is visible and all controls are reachable.
+- [x] Desktop queue remains readable without a mega-grid.
+- [x] Tablet and mobile layouts avoid clipping and overlap.
+- [x] No major screen has unintended horizontal overflow.
+- [x] Screenshots are readable at normal zoom and grouped by submission part.
+
+These checks were verified with the Issue #40 Playwright runs, UI tests,
+accessibility assertions, and the screenshot evidence indexed in
+`docs/lab-03/tests.md`. Final `main` release verification remains tracked
+separately as `RELEASE-01`.

@@ -9,8 +9,9 @@ result in the repository and browser.
 
 ## Selected Prompts
 
-The following prompts are the initial examples used for Issue 1. More prompts
-will be added as implementation proceeds.
+These examples summarize prompts I used across Lab 3; wording is lightly
+normalized for readability. I checked generated suggestions against the
+specification, code, tests, and actual browser results.
 
 1. "Read the Lab 3 sheet and separate mandatory requirements from excluded
    scope."
@@ -36,6 +37,16 @@ will be added as implementation proceeds.
 11. "Compare Issue #41's unsafe-content wording with approved AC-15; recommend
     one consistent behavior and identify the API and UI tests needed to prove
     markup-like comments cannot execute."
+12. "Review the full-role Playwright flows against the approved ACs. Check that
+    each screenshot is captured on the intended screen and viewport, ownership
+    failures assert the right response, and the tests do not rely on brittle
+    duplicate labels or guessed tab counts."
+13. "Check the requester, Staff, and Administrator screens at 1280px, 820px,
+    and 390px for horizontal overflow, hidden controls, labelled fields,
+    visible keyboard focus, and correct active navigation."
+14. "Compare the documentation with current GitHub PR/Issue state and actual
+    test output. Record only verified results, keep main-release checks pending
+    until they run after merge, and do not create a PDF."
 
 ## How I Used AI Critically
 
@@ -73,3 +84,12 @@ updated the Issue wording, and verified both sides: the API stores the text as
 content, while the React UI renders it without creating an HTML `script`
 element. This is a deliberate contract decision, not an assumption that
 accepting markup is inherently safe in every renderer.
+
+For Issue 10, the first full Playwright run exposed selectors that matched more
+than one control, and the accessibility test's fixed number of Tab presses was
+not reliable after navigation. I checked the rendered page and test flow, used
+specific control IDs where labels were duplicated, and anchored the keyboard
+check at a known form field before pressing Tab. I reran the failing test and
+the complete E2E suite, then linked the screenshot evidence to the viewport
+names. I left final `main` verification pending until the release is merged and
+did not generate a PDF, as requested.

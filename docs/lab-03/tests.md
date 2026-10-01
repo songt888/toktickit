@@ -7,8 +7,8 @@ merged into `main` as `5b234a4`. Final verification was rerun on
 
 Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
 `e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
-maps to at least one test. The original release verification is retained below;
-the post-PR #60 final-main recheck is recorded in its own section.
+maps to at least one test. This branch records the final verification performed
+after the release merge.
 
 ## 1. Test Strategy
 
@@ -249,25 +249,7 @@ captures. For example:
 - Keyboard focus evidence: [accessibility-keyboard-focus.png](../../artifacts/lab-03/screenshots/accessibility-keyboard-focus.png).
 
 `RELEASE-01` is Passed because AC-25 was verified after merge into `main`.
-The report PDF is maintained as a separate deliverable.
-
-## Final-main verification — 2026-10-02
-
-This is the fresh verification after PR #60 on commit `ac8a3dd`. Both the
-checkout under test and `origin/main` resolved to `ac8a3dd`; no application
-source was changed for this run. The E2E run used the repository test files
-against an isolated PostgreSQL database and a temporary local API port so it
-could not alter the user's working database.
-
-- Prisma migration status: schema up to date (4 migrations); seed completed.
-- Server: `npm test -- --reporter=dot --silent` — 27 files passed, 92 tests passed.
-- Server build: `npm run build` — passed (`tsc`).
-- Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
-- Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
-- Playwright: the repository's 15-test `npm run test:e2e` suite — 15 tests passed. Because the checked-out test files use `127.0.0.1:3000` for direct request-context calls, this isolated recheck used an environment-only copy with that port redirected to its temporary API server; no application or test logic changed.
-
-The terminal evidence in the report distinguishes these final-main results from
-the retained historical release screenshots at `92c88aa`.
+No PDF was created, as requested.
 
 ## 3. Acceptance-Criterion Traceability
 

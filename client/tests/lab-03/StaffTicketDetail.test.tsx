@@ -61,9 +61,42 @@ function setup(detail = ticket) {
   vi.spyOn(api, "getStaffAssignees").mockResolvedValue([staff, administrator]);
 }
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("Staff Ticket Detail operational controls", () => {
+  it("downloads active attachments, hides removed downloads, and safely handles failure", async () => {
+    const attachment: api.AttachmentMetadata = {
+      id: 77, originalName: "test.pdf", mimeType: "application/pdf", sizeBytes: 10,
+      createdAt: "2026-09-24T00:30:00.000Z", removedAt: null, removalReason: null,
+    };
+    setup({ ...ticket, attachments: [attachment, {
+      ...attachment, id: 78, originalName: "removed.pdf", removedAt: attachment.createdAt,
+      removalReason: "Old file",
+    }] });
+    const download = vi.spyOn(api, "downloadAttachment").mockResolvedValue(new Blob(["test"]));
+    vi.stubGlobal("URL", class extends URL {
+      static createObjectURL = vi.fn(() => "blob:test");
+      static revokeObjectURL = vi.fn();
+    });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<StaffTicketDetail ticketId={ticket.id} currentUserId={staff.id} onBack={vi.fn()} />);
+    const button = await screen.findByRole("button", { name: "Download test.pdf" });
+    expect(screen.queryByRole("button", { name: "Download removed.pdf" })).not.toBeInTheDocument();
+    await user.click(button);
+    await waitFor(() => expect(click).toHaveBeenCalledOnce());
+    expect(download).toHaveBeenCalledWith(77);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+    download.mockRejectedValueOnce(new Error("private server detail"));
+    await user.click(button);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to download attachment. Please try again.");
+    expect(screen.queryByText("private server detail")).not.toBeInTheDocument();
+    expect(button).toBeEnabled();
+  });
+
   it("claims the Ticket as the signed-in user and keeps Requested Priority read-only", async () => {
     setup();
     const mutation = vi.spyOn(api, "updateStaffTicketOwner").mockResolvedValue(updated({

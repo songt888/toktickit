@@ -3,6 +3,8 @@ import {
   addInternalNote,
   addPublicComment,
   ApiRequestError,
+  downloadAttachment,
+  type AttachmentMetadata,
   getStaffAssignees,
   getStaffTicketDetail,
   StaffTicketDetailData,
@@ -92,6 +94,30 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
   const [internalNoteSaving, setInternalNoteSaving] = useState(false);
   const [publicCommentFeedback, setPublicCommentFeedback] = useState<Feedback | null>(null);
   const [internalNoteFeedback, setInternalNoteFeedback] = useState<Feedback | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [downloadError, setDownloadError] = useState("");
+
+  async function handleDownload(attachment: AttachmentMetadata) {
+    if (attachment.removedAt || downloadingId !== null) return;
+    setDownloadError("");
+    setDownloadingId(attachment.id);
+    try {
+      const blob = await downloadAttachment(attachment.id);
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = attachment.originalName;
+        link.click();
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch {
+      setDownloadError("Unable to download attachment. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   async function loadDetail() {
     const sequence = ++requestSequence.current;
@@ -491,10 +517,19 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                         <span className="small text-secondary">
                           {attachment.removedAt ? "Removed" : "Active"} · {attachment.sizeBytes} bytes
                         </span>
+                        {!attachment.removedAt && (
+                          <button type="button" className="btn btn-outline-primary btn-sm"
+                            disabled={downloadingId !== null}
+                            aria-label={`Download ${attachment.originalName}`}
+                            onClick={() => void handleDownload(attachment)}>
+                            {downloadingId === attachment.id ? "Downloading…" : "Download"}
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
                 )}
+              {downloadError && <p className="text-danger mt-2 mb-0" role="alert">{downloadError}</p>}
             </section>
           </>
         )}

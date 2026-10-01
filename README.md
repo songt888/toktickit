@@ -67,7 +67,7 @@ To sign in as a seeded Lab 3 user, supply a private initial password when seedin
 sample value with a local password that meets the 12-character minimum; do not commit it:
 
 ```bash
-LAB3_SEED_INITIAL_PASSWORD="LocalOnly-ChangeMe123" npm run prisma:seed
+LAB3_SEED_INITIAL_PASSWORD="<YOUR_LOCAL_PASSWORD>" npm run prisma:seed
 ```
 
 The local demo accounts are `ari.suksan@example.com` (Requester),

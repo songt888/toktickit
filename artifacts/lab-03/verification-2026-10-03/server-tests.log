@@ -1,0 +1,111 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm test -- --reporter=verbose --silent
+
+> toktickit-server@1.0.0 test
+> vitest run --reporter=verbose --silent
+
+
+ RUN  v2.1.9 /Users/song/Documents/Codex/2026-09-05/ca/work/lab3-final-main-check/server
+
+ ✓ tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > creates the role-based user model and preserves ticket data structures
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > requires Administrator role and returns only safe, stable user data
+ ✓ tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > preserves seeded user IDs, ticket ownership, attachments, and real hashes across reseeding
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > lists only active Staff and Administrators as safe assignees
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > allows Staff and Administrators while rejecting other roles
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > requires an authenticated session for requester-owned routes
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > keeps operational attachment metadata and download available to Staff
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > rejects invalid filters and treats wildcard characters as literal search text
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > creates append-only comments with backend author/time and safe text
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > uploads a permitted file with generated storage and retrievable metadata
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > serves ordered Public Comments to their owner, Staff, and Administrators
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > protects comments and resolution by authenticated ownership
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > supports search, filters, stable sorting, owner display, and pagination metadata
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > uses the default sort and id tiebreaker for equal updatedAt values
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > enforces requester roles while allowing Staff operational attachment reads
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > rejects empty, whitespace-only, and oversized comments
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > updates only the requester resolution indication and never the Ticket status
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > supports claiming, assigning, reassigning, and unassigning with fresh versions
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > creates normalized users with a hashed initial password and rejects duplicate email
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > derives ownership from the session and hides another requester's ticket
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > permits authenticated reference-data reads without exposing credentials
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > restricts Internal Notes to Staff and Administrators without leaking them
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > searches ticket fields and requester names while treating wildcards literally
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > rejects invalid or inactive owners without changing the Ticket
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > rejects unsupported query values with a safe 400 response
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > updates only IT Priority and rejects Requester mutations
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > rejects blank and oversized public comments and internal notes without inserting rows
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > validates create and edit values, normalizes email, and prevents duplicate email
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > opens safe operational Ticket Detail and protects the route by role
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > keeps comments and notes append-only
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > enforces allowed transitions and requires confirmation for terminal changes
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > rejects stale concurrent mutations and leaves the winner intact
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > returns safe missing and stale responses
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > rejects unsupported, oversized, and sixth active files safely
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > resets a user's password without returning it and requires a change at next login
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > rejects self-deactivation and evaluates the last-active-Administrator rule
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > allows owner download but rejects cross-requester and removed-file access
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > soft-removes an attachment with a reason and keeps metadata
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > requires a session and ignores requester headers before attachment access
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > validates input and returns the same safe failure for invalid or inactive accounts
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > provides the documented defaults
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > parses search, filters, sorting, and pagination
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > rejects unsupported query values
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > always scopes the database filter to the selected requester
+ ✓ tests/lab-02/data-foundation.test.ts > Lab 2 database foundation > creates the required tables, columns, unique constraints, and ticket sequence
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > returns active related systems in id order
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > creates one owned ticket with an official number and NEW status
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects invalid payloads without creating a ticket
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects reference IDs above the PostgreSQL integer limit with 400
+ ✓ tests/lab-03/seed.test.ts > Lab 3 seed > seeds every role, active/inactive split, workflow data, and safe password state
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects missing requester context and inactive reference records safely
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > trims and accepts a valid ticket payload
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > rejects missing, short, and unsupported values
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > enforces the permitted attachment type and size boundaries
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > returns read-only ticket fields and attachment metadata for the owner
+ ✓ tests/lab-02/seed.test.ts > Lab 2 seed > seeds the required reference data and active/inactive reference split
+ ✓ tests/lab-03/status-transition.test.ts > Staff Ticket status transition rules > allows exactly the documented transition matrix
+ ✓ tests/lab-03/status-transition.test.ts > Staff Ticket status transition rules > requires explicit confirmation only for Closed and Cancelled
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > does not reveal a ticket to another requester or an unknown ticket id
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > returns only the selected requester's tickets with pagination metadata
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > requires a session and ignores requester headers before looking up the ticket
+ ✓ tests/lab-03/requester-regression.api.test.ts > Requester session regression coverage > keeps create, list, detail, and attachment APIs on session identity
+ ✓ tests/lab-03/requester-regression.api.test.ts > Requester session regression coverage > returns a safe 404 for another requester's session
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > applies search, filters, sorting, and page-size options
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > rejects invalid query parameters safely
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > requires a session and ignores a spoofed requester header
+ ✓ tests/lab-02/seed.test.ts > Lab 2 seed > is safe to run repeatedly without creating duplicates
+ ✓ tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+ ✓ tests/lab-01/seed.test.ts > category seed > is safe to run twice without creating duplicates
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > creates a safe session, exposes current user, changes the initial password, and logs out
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > accepts a password with the required length and character classes
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > rejects passwords outside the length and character rules
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > rejects non-string input
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > rejects an expired session
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: undefined
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: null
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 42
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content:    
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 
+	
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > accepts content up to 4000 characters and rejects longer content
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > allows markup-like text under the approved plain-text rendering policy
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > revokes a session when its user becomes inactive
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > rejects credentialed state-changing requests from an unknown origin
+ ✓ tests/lab-02/ticket-number.test.ts > Ticket Number generation > formats the database sequence value with the UTC ticket date
+ ✓ tests/lab-02/ticket-number.test.ts > Ticket Number generation > keeps different sequence values unique
+ ✓ tests/lab-01/categories.test.ts > GET /api/categories > returns the four seeded categories in id order
+ ✓ tests/lab-03/password-hash.test.ts > Lab 3 password hashing > creates salted scrypt hashes that verify without storing plaintext
+ ✓ tests/lab-03/password-hash.test.ts > Lab 3 password hashing > does not treat the migration marker as a usable password hash
+ ✓ tests/lab-02/requesters.api.test.ts > GET /api/requesters > returns only the authenticated requester for compatibility
+ ✓ tests/lab-01/health.test.ts > GET /api/health > returns 200 with status ok and the service name
+ ✓ tests/lab-01/health.test.ts > GET /api/health > returns 200 even when the client sends a cache validator
+
+ Test Files  27 passed (27)
+      Tests  92 passed (92)
+   Start at  04:04:20
+   Duration  1.40s (transform 327ms, setup 0ms, collect 3.27s, tests 4.36s, environment 3ms, prepare 1.16s)
+
+
+Exit code: 0

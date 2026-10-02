@@ -1,0 +1,11 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm run prisma:seed
+
+> toktickit-server@1.0.0 prisma:seed
+> tsx prisma/seed.ts
+
+Seeded 5 categories, 7 related systems, and 5 requesters.
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+Exit code: 0

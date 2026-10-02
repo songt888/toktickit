@@ -1,0 +1,11 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm exec -- prisma migrate status
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "lab3_report_f6dc6f2_20261003", schema "public" at "localhost:5432"
+
+4 migrations found in prisma/migrations
+
+Database schema is up to date!
+
+Exit code: 0

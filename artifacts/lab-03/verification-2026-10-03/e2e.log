@@ -1,0 +1,35 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm run test:e2e -- --config=playwright.report.config.ts --workers=1 --reporter=list
+
+> test:e2e
+> playwright test --config=playwright.report.config.ts --workers=1 --reporter=list
+
+
+> toktickit-server@1.0.0 prisma:seed
+> tsx prisma/seed.ts
+
+Seeded 5 categories, 7 related systems, and 5 requesters.
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+Running 15 tests using 1 worker
+
+  ✓   1 [desktop] › e2e/lab-02/requester-ticket-flow.spec.ts:23:5 › covers authenticated requester ticket creation, detail, attachments, and isolation (2.2s)
+  ✓   2 [responsive] › e2e/lab-02/responsive.spec.ts:29:5 › keeps the authenticated requester shell usable and free of horizontal overflow (576ms)
+  ✓   3 [responsive] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (1.3s)
+  ✓   4 [tablet] › e2e/lab-02/responsive.spec.ts:29:5 › keeps the authenticated requester shell usable and free of horizontal overflow (561ms)
+  ✓   5 [tablet] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (1.3s)
+  ✓   6 [mobile] › e2e/lab-02/responsive.spec.ts:29:5 › keeps the authenticated requester shell usable and free of horizontal overflow (602ms)
+  ✓   7 [mobile] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (1.3s)
+  ✓   8 [auth-desktop] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (675ms)
+  ✓   9 [auth-tablet] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (656ms)
+  ✓  10 [auth-mobile] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (720ms)
+  ✓  11 [requester-desktop] › e2e/lab-03/requester-flow.spec.ts:24:5 › covers requester ownership, comments, resolution, and Staff collaboration with attachments (2.2s)
+  ✓  12 [accessibility] › e2e/lab-03/accessibility.spec.ts:31:5 › keyboard navigation, labels, active navigation, and feedback are accessible (777ms)
+  ✓  13 [staff-desktop] › e2e/lab-03/staff-ticket-flow.spec.ts:24:5 › covers the staff queue, operational detail, and responsive layouts (608ms)
+  ✓  14 [staff-desktop] › e2e/lab-03/staff-ticket-flow.spec.ts:85:5 › claims, reassigns, unassigns, reprioritizes, and changes status with confirmation (879ms)
+  ✓  15 [admin-desktop] › e2e/lab-03/user-administration.spec.ts:34:5 › Administrator can manage users, reset an initial password, and use the responsive screen (1.2s)
+
+  15 passed (20.0s)
+
+Exit code: 0

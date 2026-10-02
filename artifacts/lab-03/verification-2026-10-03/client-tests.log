@@ -1,0 +1,74 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm test -- --reporter=verbose --no-file-parallelism
+
+> toktickit-client@1.0.0 test
+> vitest run --reporter=verbose --no-file-parallelism
+
+
+ RUN  v2.1.9 /Users/song/Documents/Codex/2026-09-05/ca/work/lab3-final-main-check/client
+
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > downloads active attachments, hides removed downloads, and safely handles failure
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > claims the Ticket as the signed-in user and keeps Requested Priority read-only
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > assigns to an eligible user, updates IT Priority, and saves a permitted status
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > requires confirmation before moving a Ticket to Closed
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > offers a refresh when the server rejects a stale update
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > posts Public Comments and private Internal Notes as plain text
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > validates blank collaboration forms and preserves drafts after request failures
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > shows API-backed ticket fields and the Create Ticket action
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > preserves list query state and active navigation after returning from detail
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > refreshes the list when returning from Create Ticket
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > applies search, filter, sorting, page size, and pagination controls
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > distinguishes an empty list from a filtered no-results state
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > shows a failure state and can retry the API request
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > uses the authenticated requester and does not expose identity switching
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > ignores an older ticket response when a newer request finishes first
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows read-only ticket fields and separated attachment metadata
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows a loading state while the detail request is pending
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > keeps the public comment form disabled until comments finish loading
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > keeps comment loading errors separate from form validation errors
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows a not-found failure and can retry
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > adds plain-text comments and keeps resolution separate from ticket status
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows validation feedback for an empty public comment
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > shows the selected requester and reference data from the APIs
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > shows field-level validation and does not call the create API for invalid input
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > submits once, shows a busy state, and displays the generated ticket number
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > uploads selected attachments after the ticket is created
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > preserves entered values and shows a safe error when creation fails
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > reports unsupported, oversized, and excessive attachments clearly
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > lists safe user data and applies name/email search and role filters
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > creates and edits users, then sets an initial password without displaying it
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > requires confirmation before changing account access
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > shows distinct empty, no-results, forbidden, and retryable failure states
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > shows metadata, downloads active files, and hides download for removed files
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > uploads a valid file and reports an upload failure
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > requires a reason before confirming soft removal
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > renders identity from auth/me and does not expose the old requester selector
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > passes only ticket identifiers to the detail API after authenticated list navigation
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > lets the authenticated requester add a public comment and mark the problem resolved
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows the safe user, role, permitted navigation, and no requester selector
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > keeps normal screens blocked when the session requires a password change
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows the staff queue navigation and workspace for an IT Staff session
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows user management only for Administrators and opens it by default
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > clears the authenticated shell after logout
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > shows operational fields, ownership, badges, and opens Ticket Detail
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > sends search, filter, sort, and pagination options to the API
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > shows no-results and retryable failure states
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > enforces the password rules and confirmation
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > submits a valid change and continues with the updated user
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > shows a safe API failure and keeps the form visible
+ ✓ tests/lab-02/ui-style.test.tsx > TokTickIT UI style and accessibility contract > uses labelled Bootstrap controls, visible required markers, and action hierarchy
+ ✓ tests/lab-03/Login.test.tsx > Login > shows field validation without calling the API
+ ✓ tests/lab-03/Login.test.tsx > Login > shows a busy state and returns the authenticated user on success
+ ✓ tests/lab-03/Login.test.tsx > Login > shows a safe message for invalid credentials
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > shows the requester from the authenticated session without a selector
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > does not read or write a requester identity in local storage
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > shows sign in when the authenticated session is unavailable
+
+ Test Files  13 passed (13)
+      Tests  56 passed (56)
+   Start at  04:04:22
+   Duration  6.91s (transform 121ms, setup 186ms, collect 546ms, tests 3.56s, environment 1.52s, prepare 243ms)
+
+
+Exit code: 0

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const requesterEmail = "e2e.requester.a@example.com";
 const requesterPassword = "E2ERequesterPassword123";
-const apiBaseURL = "http://127.0.0.1:3000";
+const apiBaseURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 
 async function signIn(page: Page) {
   await page.goto("/");

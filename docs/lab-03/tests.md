@@ -2,8 +2,9 @@
 
 Status: Issues #39–#48 are approved, merged into `main`, and closed/Done.
 Release PR #57 merged into `lab3-staging` as `9393a6e`, and release PR #58
-merged into `main` as `5b234a4`. Final verification was rerun on
-`feature/lab3-final-verification`, based on that `main` commit.
+merged into `main` as `5b234a4`. Final verification was rerun against
+`main` at `ac8a3dd` after PR #60; the original release verification is retained
+below.
 
 Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
 `e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
@@ -264,7 +265,7 @@ could not alter the user's working database.
 - Server build: `npm run build` — passed (`tsc`).
 - Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
 - Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
-- Playwright: the repository's 15-test `npm run test:e2e` suite — 15 tests passed. Because the checked-out test files use `127.0.0.1:3000` for direct request-context calls, this isolated recheck used an environment-only copy with that port redirected to its temporary API server; no application or test logic changed.
+- Playwright: the repository's 15-test `npm run test:e2e` suite — 15 tests passed. Direct request-context calls now read `E2E_API_URL` (defaulting to `http://127.0.0.1:3000`), so the final-main run uses the repository test files without a patched copy.
 
 The terminal evidence in the report distinguishes these final-main results from
 the retained historical release screenshots at `92c88aa`.

@@ -4,7 +4,7 @@ import path from "node:path";
 const requesterAEmail = "e2e.requester.a@example.com";
 const requesterBEmail = "e2e.requester.b@example.com";
 const requesterPassword = "E2ERequesterPassword123";
-const apiBaseURL = "http://127.0.0.1:3000";
+const apiBaseURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 
 async function signIn(page: Page, email: string) {
   await page.goto("/");

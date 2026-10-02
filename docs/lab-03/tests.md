@@ -2,14 +2,15 @@
 
 Status: Issues #39–#48 are approved, merged into `main`, and closed/Done.
 Release PR #57 merged into `lab3-staging` as `9393a6e`, and release PR #58
-merged into `main` as `5b234a4`. Final verification was rerun against
-`main` at `ac8a3dd` after PR #60; the original release verification is retained
-below.
+merged into `main` as `5b234a4`. PR #63 merged on 2026-10-02 at 14:37
+Asia/Bangkok as `f6dc6f2`. The latest verification below was run on an isolated
+`main` checkout of `f6dc6f249e75d11829d9ec9a0640ef6a884e902e` on 2026-10-03.
+Earlier release and post-PR #60 results are retained as historical records.
 
 Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
 `e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
 maps to at least one test. The original release verification is retained below;
-the post-PR #60 final-main recheck is recorded in its own section.
+the latest final-main recheck is recorded in its own section.
 
 ## 1. Test Strategy
 
@@ -265,10 +266,66 @@ could not alter the user's working database.
 - Server build: `npm run build` — passed (`tsc`).
 - Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
 - Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
-- Playwright: the final-main evidence run recorded 15 tests passed using a port-patched copy. The repository now reads `E2E_API_URL` for direct request-context calls, Vite's API proxy, and the server webServer port; a fresh branch rerun remains pending because Chromium was blocked before test execution in this environment.
+- Playwright: this earlier `ac8a3dd` evidence run recorded 15 tests passed using a port-patched copy. At the time of this record a fresh branch rerun was pending because Chromium was blocked. The completed `f6dc6f2` rerun below supersedes that pending status.
 
 The terminal evidence in the report distinguishes these final-main results from
 the retained historical release screenshots at `92c88aa`.
+
+## Final-main verification — 2026-10-03
+
+Source under test: branch `main`, commit
+`f6dc6f249e75d11829d9ec9a0640ef6a884e902e`, the merge of approved PR #63.
+The remote `main` SHA was checked again after the run and still matched.
+`b2ed779` is a later report/screenshot snapshot, not a commit merged by PR #63.
+The application, test and documentation files at that snapshot match `f6dc6f2`;
+its differences are the report and screenshot artifacts.
+
+The checks ran in a normal macOS VS Code Terminal against the separate
+`lab3_report_f6dc6f2_20261003` PostgreSQL database. Application source and all
+tracked test files were unchanged. Chromium opened successfully. The external
+evidence runner inherited the repository Playwright configuration, set only
+the UI base URL and Vite launch port to `5176`, and used the repository's
+`E2E_API_URL=http://127.0.0.1:3012` support for API requests, proxy and server
+port. This avoided the running development app; it did not patch test URLs.
+
+Commands and results (all exit codes were 0):
+
+- `npm exec -- prisma migrate deploy` and `npm exec -- prisma migrate status`:
+  4 migrations, schema up to date. `npm run prisma:seed` completed.
+- Server: `npm test -- --reporter=verbose --silent`: **92 tests / 27 files passed**.
+- Client: `npm test -- --reporter=verbose --no-file-parallelism`:
+  **56 tests / 13 files passed**.
+- Server and client: `npm run build`: TypeScript and Vite production builds passed.
+- E2E: `npm run test:e2e -- --config=playwright.report.config.ts --workers=1 --reporter=list`:
+  **15 tests passed in 20.0 seconds**.
+
+The local `playwright.report.config.ts` runner was:
+
+```ts
+import base from './playwright.config';
+export default {
+  ...base,
+  use: { ...base.use, baseURL: 'http://127.0.0.1:5176' },
+  webServer: [
+    base.webServer[0],
+    { ...base.webServer[1],
+      command: 'npm run dev -- --host 127.0.0.1 --port 5176 --strictPort',
+      url: 'http://127.0.0.1:5176', reuseExistingServer: false },
+  ],
+};
+```
+
+Complete raw output, including every test name, SHA, command and exit code:
+[server](../../artifacts/lab-03/verification-2026-10-03/server-tests.log),
+[client](../../artifacts/lab-03/verification-2026-10-03/client-tests.log),
+[E2E](../../artifacts/lab-03/verification-2026-10-03/e2e.log),
+[migration status](../../artifacts/lab-03/verification-2026-10-03/migration-status.log),
+[seed](../../artifacts/lab-03/verification-2026-10-03/seed.log),
+[server build](../../artifacts/lab-03/verification-2026-10-03/server-build.log),
+[client build](../../artifacts/lab-03/verification-2026-10-03/client-build.log).
+
+This documentation update is submitted for review through a separate PR;
+`f6dc6f2` remains the application commit under test.
 
 ## 3. Acceptance-Criterion Traceability
 

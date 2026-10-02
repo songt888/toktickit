@@ -265,7 +265,7 @@ could not alter the user's working database.
 - Server build: `npm run build` — passed (`tsc`).
 - Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
 - Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
-- Playwright: the final-main evidence run recorded 15 tests passed. This branch makes that run reproducible from repository test files: direct request-context calls now read `E2E_API_URL` (defaulting to `http://127.0.0.1:3000`).
+- Playwright: the final-main evidence run recorded 15 tests passed using a port-patched copy. The repository now reads `E2E_API_URL` for direct request-context calls, Vite's API proxy, and the server webServer port; a fresh branch rerun remains pending because Chromium was blocked before test execution in this environment.
 
 The terminal evidence in the report distinguishes these final-main results from
 the retained historical release screenshots at `92c88aa`.

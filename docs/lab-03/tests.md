@@ -257,9 +257,9 @@ The report PDF is maintained as a separate deliverable.
 
 This is the fresh verification after PR #60 on commit `ac8a3dd`. Both the
 checkout under test and `origin/main` resolved to `ac8a3dd`; no application
-source was changed for this run. The E2E run used the repository test files
-against an isolated PostgreSQL database and a temporary local API port so it
-could not alter the user's working database.
+source was changed for the unit/API/UI checks. The historical E2E result used
+a port-patched copy of the tests, against an isolated PostgreSQL database;
+it is not evidence of an unmodified final-main E2E run.
 
 - Prisma migration status: schema up to date (4 migrations); seed completed.
 - Server: `npm test -- --reporter=dot --silent` — 27 files passed, 92 tests passed.
@@ -324,8 +324,38 @@ Complete raw output, including every test name, SHA, command and exit code:
 [server build](../../artifacts/lab-03/verification-2026-10-03/server-build.log),
 [client build](../../artifacts/lab-03/verification-2026-10-03/client-build.log).
 
-This documentation update is submitted for review through a separate PR;
-`f6dc6f2` remains the application commit under test.
+This documentation update and the report are submitted through
+[PR #64](https://github.com/songt888/toktickit/pull/64), branch
+`docs/lab3-report-corrections`, pending review. The report links this updated
+record on the review branch, not the older record on `main`. `f6dc6f2` remains
+the verified final-main application commit; a report/documentation commit is
+not a new main release.
+
+### Additional native browser captures — 2026-10-03
+
+These are real Edge screenshots of the unchanged `f6dc6f2` application, captured
+from the documentation branch with no application/test source differences.
+They are manual evidence, not additional automated test passes.
+
+- **Empty queue:** a separate local database, `lab3_report_empty_20261003`,
+  contains the migrated users/reference data but zero Tickets. Search is blank
+  and all filters are unrestricted. The UI says "No tickets are currently in
+  the operational queue." This is distinct from filtered no-results feedback.
+- **Staff detail:** consecutive desktop views show Ticket Information,
+  Operational Controls, Public Comments, Internal Notes, and Attachments.
+  The report crops between whole rows/sections, preserving their contents.
+- **Staff failure:** after the isolated local API was stopped, posting an
+  Internal Note shows the actual "Failed to fetch" message next to the action.
+  The draft, existing note and attachment metadata remain visible.
+- **Administrator failure:** saving a valid edit while that local API is
+  unavailable shows "Failed to fetch"; name/email/role/activation inputs and
+  the previously loaded user list remain. This is a network failure, not the
+  separate duplicate-email validation case. No edit was saved.
+
+The screenshots do not claim that "Failed to fetch" is a tailored recovery
+message. No stack trace, password or session token is displayed. Only the
+isolated capture services were stopped; the user's database and development
+app were not reset or modified.
 
 ## 3. Acceptance-Criterion Traceability
 

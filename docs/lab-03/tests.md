@@ -2,13 +2,14 @@
 
 Status: Issues #39–#48 are approved, merged into `main`, and closed/Done.
 Release PR #57 merged into `lab3-staging` as `9393a6e`, and release PR #58
-merged into `main` as `5b234a4`. Final verification was rerun on
-`feature/lab3-final-verification`, based on that `main` commit.
+merged into `main` as `5b234a4`. Final verification was rerun against
+`main` at `ac8a3dd` after PR #60; the original release verification is retained
+below.
 
 Lab 3 tests live under `server/tests/lab-03/`, `client/tests/lab-03/`, and
 `e2e/lab-03/`. Every acceptance criterion in [`specification.md`](specification.md)
-maps to at least one test. This branch records the final verification performed
-after the release merge.
+maps to at least one test. The original release verification is retained below;
+the post-PR #60 final-main recheck is recorded in its own section.
 
 ## 1. Test Strategy
 
@@ -249,7 +250,25 @@ captures. For example:
 - Keyboard focus evidence: [accessibility-keyboard-focus.png](../../artifacts/lab-03/screenshots/accessibility-keyboard-focus.png).
 
 `RELEASE-01` is Passed because AC-25 was verified after merge into `main`.
-No PDF was created, as requested.
+The report PDF is maintained as a separate deliverable.
+
+## Final-main verification — 2026-10-02
+
+This is the fresh verification after PR #60 on commit `ac8a3dd`. Both the
+checkout under test and `origin/main` resolved to `ac8a3dd`; no application
+source was changed for this run. The E2E run used the repository test files
+against an isolated PostgreSQL database and a temporary local API port so it
+could not alter the user's working database.
+
+- Prisma migration status: schema up to date (4 migrations); seed completed.
+- Server: `npm test -- --reporter=dot --silent` — 27 files passed, 92 tests passed.
+- Server build: `npm run build` — passed (`tsc`).
+- Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
+- Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
+- Playwright: the final-main evidence run recorded 15 tests passed using a port-patched copy. The repository now reads `E2E_API_URL` for direct request-context calls, Vite's API proxy, and the server webServer port; a fresh branch rerun remains pending because Chromium was blocked before test execution in this environment.
+
+The terminal evidence in the report distinguishes these final-main results from
+the retained historical release screenshots at `92c88aa`.
 
 ## 3. Acceptance-Criterion Traceability
 

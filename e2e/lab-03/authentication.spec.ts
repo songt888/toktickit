@@ -5,7 +5,7 @@ import path from "node:path";
 
 const initialPassword = "InitialE2EPassword123";
 const nextPassword = "ChangedE2EPassword123";
-const apiBaseURL = "http://127.0.0.1:3000";
+const apiBaseURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 const prisma = getPrisma();
 
 test("requires an initial password change and revokes the session on logout", async ({ page, request }, testInfo) => {

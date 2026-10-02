@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const e2eApiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
+const e2eApiPort = new URL(e2eApiURL).port || "3000";
+
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
@@ -73,7 +76,8 @@ export default defineConfig({
     {
       command: "npm run dev",
       cwd: "server",
-      url: "http://127.0.0.1:3000/api/health",
+      url: `${e2eApiURL}/api/health`,
+      env: { PORT: e2eApiPort },
       reuseExistingServer: true,
       timeout: 120_000,
     },

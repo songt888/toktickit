@@ -265,7 +265,7 @@ could not alter the user's working database.
 - Server build: `npm run build` — passed (`tsc`).
 - Client: `npm test -- --reporter=dot --no-file-parallelism` — 13 files passed, 56 tests passed.
 - Client build: `npm run build` — passed (Vite production build, 37 modules transformed).
-- Playwright: the repository's 15-test `npm run test:e2e` suite — 15 tests passed. Direct request-context calls now read `E2E_API_URL` (defaulting to `http://127.0.0.1:3000`), so the final-main run uses the repository test files without a patched copy.
+- Playwright: the final-main evidence run recorded 15 tests passed. This branch makes that run reproducible from repository test files: direct request-context calls now read `E2E_API_URL` (defaulting to `http://127.0.0.1:3000`).
 
 The terminal evidence in the report distinguishes these final-main results from
 the retained historical release screenshots at `92c88aa`.

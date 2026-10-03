@@ -324,12 +324,12 @@ Complete raw output, including every test name, SHA, command and exit code:
 [server build](../../artifacts/lab-03/verification-2026-10-03/server-build.log),
 [client build](../../artifacts/lab-03/verification-2026-10-03/client-build.log).
 
-This documentation update and the report are submitted through
+This documentation update and the report use the review workflow in
 [PR #64](https://github.com/songt888/toktickit/pull/64), branch
-`docs/lab3-report-corrections`, pending review. The report links this updated
-record on the review branch, not the older record on `main`. `f6dc6f2` remains
-the verified final-main application commit; a report/documentation commit is
-not a new main release.
+`docs/lab3-report-corrections`. Immutable report links identify the version of
+this verification record. `f6dc6f2` identifies the final-main application
+commit used for the recorded test run, independently of later documentation
+merges. A report/documentation commit is not a new application release.
 
 ### Additional native browser captures — 2026-10-03
 

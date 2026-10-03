@@ -1,0 +1,28 @@
+FINAL MAIN: f6dc6f249e75d11829d9ec9a0640ef6a884e902e
+Branch: main (isolated checkout)
+Command: npm exec -- prisma migrate deploy
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "lab3_report_f6dc6f2_20261003", schema "public" at "localhost:5432"
+
+4 migrations found in prisma/migrations
+
+Applying migration `20260812160000_init`
+Applying migration `20260828090000_lab2_data_foundation`
+Applying migration `20260919090000_lab3_user_data_foundation`
+Applying migration `20260919093000_lab3_schema_alignment`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260812160000_init/
+    └─ migration.sql
+  └─ 20260828090000_lab2_data_foundation/
+    └─ migration.sql
+  └─ 20260919090000_lab3_user_data_foundation/
+    └─ migration.sql
+  └─ 20260919093000_lab3_schema_alignment/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+
+Exit code: 0

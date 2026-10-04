@@ -2,14 +2,16 @@
 
 Author: Kirakit Kingkaew ([songt888](https://github.com/songt888)).
 Requested peer: Nattakit Prasertsak ([stickkersz](https://github.com/stickkersz)).
-Status: Issue #65 contract prepared for review; no approval or merge recorded.
+Status: [PR #74](https://github.com/songt888/toktickit/pull/74) opened for the
+Issue #65 contract; no approval or merge recorded. The PR's live review request
+and formal review state are authoritative.
 
 ## Contract review
 
 - Issue: [#65](https://github.com/songt888/toktickit/issues/65).
 - Branch: `feature/lab4-01-contract` -> `lab4-staging`.
 - Integration baseline: `9313209d224592c9265bb8595aa7cc0f1336b9db` from released main.
-- PR: Pending creation; insert actual URL after GitHub confirms it.
+- PR: [#74 — Define Lab 4 engineering contract and test plan](https://github.com/songt888/toktickit/pull/74).
 - Formal review: Pending. No teammate comments/responses/approval have occurred
   in this record. Do not treat AI/document checks as teammate approval.
 - Merge SHA: Pending. #65 remains open; #66 remains Backlog until approval/merge.
@@ -37,8 +39,10 @@ Executed on 2026-10-05 (Asia/Bangkok) in the isolated contract worktree:
   in tests.md; API/UI/model/status/gate/metric naming reviewed against the current
   Lab 3 code. New runner/filter capabilities are explicitly marked as increments.
 
-Original workspace hash preservation and final staged-diff check are verified
-before commit/push. No Lab 4 feature tests, migration, SQL triggers or runtime
+Original workspace hashes were verified unchanged (including separate
+Playwright edits and the existing PDF deletion); the staged diff contained
+only nine scoped contract/workflow/checker files. Initial contract commit:
+`f67233e`. No Lab 4 feature tests, migration, SQL triggers or runtime
 gate/metrics have been executed; their matrix stays Planned. Builds validate
 the unchanged application baseline, not the proposed feature implementation.
 
@@ -58,7 +62,7 @@ own document rather than carrying them forward as Lab 4 evidence.
 
 ## Review and release checklist
 
-- [ ] Contract PR URL and actual review request recorded.
+- [x] Contract PR URL recorded; consult its live review request state.
 - [ ] All feedback resolved and both traceability directions checked again.
 - [ ] Teammate formally APPROVED the current revision before merge.
 - [ ] Merge to lab4-staging verified; #65 closed and Kanban Done afterward.

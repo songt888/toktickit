@@ -48,6 +48,8 @@ isolated worktree; other local changes remain in the original workspace.
 Proposed decisions are recorded in [specification.md](specification.md), not
 approved by this index. Consult [reviewer.md](reviewer.md) and the live Project
 for the actual PR/review state; #66 remains Backlog until approval/merge.
+Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
+`lab4-staging`. Formal approval/merge is pending.
 
 1. **Action actor and assignee:** distinguish backend-attributed creator /
    performed-by from approved active assignee and the primary Ticket Owner.

@@ -3,8 +3,9 @@
 ## LLM used and current scope
 
 OpenAI Codex (the VS Code session UI displayed GPT-6.1-Sol, high) assisted
-with Lab 4 planning and the Issue #65 engineering contract. This is specification
-work; no Lab 4 feature coding or teammate approval is claimed. The student
+with Lab 4 planning and the Issue #65 engineering contract. Claude Code
+(Claude Sonnet 5.5) was added later, for example to read the Lab 4 handout and
+to help review partner PR #81. This is specification work; no Lab 4 feature coding or teammate approval is claimed. The student
 owns the design choices and must compare the contract with the handout,
 review feedback and later implemented behavior.
 
@@ -19,12 +20,13 @@ completed with actual later implementation/review prompts in Issue #73.
    available here; no wording is reconstructed.
 2. Actual planning acceptance visible in that conversation: "ok accept this plan".
    This authorized the Lab 4 workflow/Issue plan, not approval of the contract.
-3. Actual Issue #65 instruction in this conversation (selected exact excerpts):
-   "จัดทำเอกสารใน docs/lab-04/";
-   "กำหนดให้ชัด: Action assignee/status, ขอบเขต append-only, Resolution gate และ Dashboard calculations";
-   "ตรวจความสอดคล้องของ schema, API, UI, business rules และ AC/test mapping";
-   "Commit/push แล้วเปิด PR เข้า lab4-staging";
-   "รอ teammate Approve และ Merge".
+3. Actual Issue #65 instruction in this conversation (selected excerpts,
+   originally written in Thai and translated to English here):
+   "Write the documents in docs/lab-04/";
+   "Define clearly: Action assignee/status, the append-only boundary, the Resolution gate, and Dashboard calculations";
+   "Check consistency of the schema, API, UI, business rules, and AC/test mapping";
+   "Commit/push and open a PR into lab4-staging";
+   "Wait for a teammate to Approve and Merge".
    These are excerpts from one prompt, not five independent prompts.
 
 Current count: two known text prompts plus one file input, not the final

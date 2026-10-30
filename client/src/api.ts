@@ -211,6 +211,16 @@ export interface StaffTicketDetailData extends StaffTicketListItem {
   attachments: AttachmentMetadata[];
   publicComments: PublicComment[];
   internalNotes: InternalNote[];
+  // Lab 4: the server always sends these; optional so Lab 3 fixtures stay valid.
+  lastResolvedAt?: string | null;
+  resolutionGate?: ResolutionGate;
+}
+
+export interface ResolutionGate {
+  canResolve: boolean;
+  completedActions: number;
+  pendingActions: number;
+  unsettledFollowUpActions: number;
 }
 
 export interface StaffTicketMutationResponse {
@@ -220,6 +230,7 @@ export interface StaffTicketMutationResponse {
   itPriority: TicketPriority;
   currentStatus: TicketStatus;
   problemAppearsResolved: boolean;
+  lastResolvedAt?: string | null;
   updatedAt: string;
 }
 
@@ -241,7 +252,12 @@ export interface SystemStatus {
 }
 
 export class ApiRequestError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly body?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "ApiRequestError";
   }
@@ -249,8 +265,8 @@ export class ApiRequestError extends Error {
 
 async function authError(response: Response, fallback: string): Promise<ApiRequestError> {
   try {
-    const body = (await response.json()) as { error?: string };
-    return new ApiRequestError(body.error || fallback, response.status);
+    const body = (await response.json()) as { error?: string; code?: string };
+    return new ApiRequestError(body.error || fallback, response.status, body.code, body);
   } catch {
     return new ApiRequestError(fallback, response.status);
   }

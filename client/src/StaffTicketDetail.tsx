@@ -7,6 +7,7 @@ import {
   type AttachmentMetadata,
   getStaffAssignees,
   getStaffTicketDetail,
+  type ResolutionGate,
   StaffTicketDetailData,
   StaffUser,
   TicketPriority,
@@ -61,7 +62,22 @@ function statusBadgeClass(status: TicketStatus): string {
   }
 }
 
+// What is still needed before Resolved is allowed (specification BR-13).
+function resolutionGateText(gate: ResolutionGate): string {
+  const needed: string[] = [];
+  if (gate.completedActions === 0) needed.push("complete at least one Action");
+  if (gate.pendingActions > 0) needed.push(`finish or cancel ${gate.pendingActions} pending Action${gate.pendingActions === 1 ? "" : "s"}`);
+  if (gate.unsettledFollowUpActions > 0) {
+    needed.push(`settle the follow-up on ${gate.unsettledFollowUpActions} completed Action${gate.unsettledFollowUpActions === 1 ? "" : "s"}`);
+  }
+  return `To resolve this Ticket, ${needed.join("; ")}.`;
+}
+
 function errorFeedback(error: unknown): Feedback {
+  if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED") {
+    const gate = error.body?.resolutionGate as ResolutionGate | undefined;
+    return { kind: "error", message: gate ? `${error.message} ${resolutionGateText(gate)}` : error.message };
+  }
   if (error instanceof ApiRequestError && error.status === 409) {
     return {
       kind: "error",
@@ -178,6 +194,13 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       setFeedback({ kind: "success", message: successMessage });
     } catch (error) {
       setFeedback(errorFeedback(error));
+      // Keep the selection and show the server's current gate, so the user can see what to fix.
+      if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
+        const gate = error.body.resolutionGate as ResolutionGate;
+        setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
+        // Resolved is no longer a valid choice, so return the control to the current status.
+        setSelectedStatus(ticket.currentStatus);
+      }
     } finally {
       setSaving(false);
     }
@@ -275,6 +298,11 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
 
   const currentOwnerIsListed = ticket?.owner && assignees.some((user) => user.id === ticket.owner?.id);
 
+  // The matrix decides whether Resolved is offered; the gate decides whether it can be chosen now.
+  const resolveBlocked = Boolean(
+    ticket && permittedNextStatuses[ticket.currentStatus].includes("RESOLVED") && ticket.resolutionGate && !ticket.resolutionGate.canResolve,
+  );
+
   return (
     <section id="staff-ticket-detail" className="card border-0 shadow-sm mb-4" aria-labelledby="staff-ticket-detail-title">
       <div className="card-body">
@@ -336,6 +364,8 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                 <dd className="col-sm-8"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Problem Appears Resolved</dt>
                 <dd className="col-sm-8">{ticket.problemAppearsResolved ? "Yes" : "No"}</dd>
+                <dt className="col-sm-4">Last Resolved</dt>
+                <dd className="col-sm-8">{ticket.lastResolvedAt ? formatDate(ticket.lastResolvedAt) : "Not recorded"}</dd>
                 <dt className="col-sm-4">Summary</dt>
                 <dd className="col-sm-8">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
@@ -414,12 +444,30 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                     className="form-select"
                     value={selectedStatus}
                     disabled={saving}
+                    aria-describedby={resolveBlocked ? "staff-resolution-gate" : undefined}
                     onChange={(event) => setSelectedStatus(event.target.value as TicketStatus)}
                   >
                     <option value={ticket.currentStatus}>{ticket.currentStatus} (current)</option>
-                    {permittedNextStatuses[ticket.currentStatus].map((status) => <option key={status} value={status}>{status}</option>)}
+                    {permittedNextStatuses[ticket.currentStatus].map((status) => (
+                      <option key={status} value={status} disabled={status === "RESOLVED" && resolveBlocked}>
+                        {status === "RESOLVED" && resolveBlocked ? "RESOLVED (work not complete)" : status}
+                      </option>
+                    ))}
                   </select>
-                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus} onClick={changeStatus}>
+                  {ticket.resolutionGate && (
+                    <div className="mt-2" aria-labelledby="staff-resolution-readiness">
+                      <p id="staff-resolution-readiness" className="small fw-semibold mb-1">Resolution readiness</p>
+                      <ul className="small list-unstyled mb-1">
+                        <li>Completed Actions: {ticket.resolutionGate.completedActions}</li>
+                        <li>Pending Actions: {ticket.resolutionGate.pendingActions}</li>
+                        <li>Unsettled follow-up: {ticket.resolutionGate.unsettledFollowUpActions}</li>
+                      </ul>
+                      <p id="staff-resolution-gate" className="form-text text-body mb-0">
+                        {ticket.resolutionGate.canResolve ? "Ready to resolve." : resolutionGateText(ticket.resolutionGate)}
+                      </p>
+                    </div>
+                  )}
+                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus || (selectedStatus === "RESOLVED" && resolveBlocked)} onClick={changeStatus}>
                     Update Status
                   </button>
                 </div>

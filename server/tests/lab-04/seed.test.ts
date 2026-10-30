@@ -25,7 +25,8 @@ describe("Lab 4 seed (DB-03)", () => {
 
   it("DB-03a keeps Lab 3 tickets untouched: no invented history or resolution time", async () => {
     const legacy = await prisma.ticket.findMany({
-      where: { NOT: lab4TicketWhere },
+      // The Lab 3 seed Tickets; other suites create Tickets through the API, which now records events.
+      where: { ticketNumber: { in: ["TKT-20260919-900001", "TKT-20260919-900002"] } },
       include: { statusEvents: true },
     });
     expect(legacy.length).toBeGreaterThan(0);

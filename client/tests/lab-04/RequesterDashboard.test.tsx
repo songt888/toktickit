@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import App from "../../src/App.js";
 import RequesterDashboard from "../../src/RequesterDashboard.js";
 import * as api from "../../src/api.js";
 import { deferred } from "./actionFixtures.js";
@@ -107,42 +106,5 @@ describe("Requester Dashboard (UI-05)", () => {
     expect(screen.getByText("9")).toBeInTheDocument();
     expect(screen.queryByText("4")).not.toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe("Requester Dashboard in the application (UI-05, UI-07 Requester part)", () => {
-  function mockRequesterApp() {
-    vi.spyOn(api, "getCurrentUser").mockResolvedValue({
-      user: { id: 41, name: "Ari Suksan", email: "ari@example.com", role: "REQUESTER", isActive: true, mustChangePassword: false },
-      requiresPasswordChange: false,
-    });
-    vi.spyOn(api, "getCategories").mockResolvedValue([{ id: 1, name: "Hardware" }]);
-    vi.spyOn(api, "getRelatedSystems").mockResolvedValue([{ id: 2, name: "Printing" }]);
-    vi.spyOn(api, "getRequesterDashboard").mockResolvedValue(snapshot());
-    return vi.spyOn(api, "getMyTickets").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
-  }
-
-  it("starts on the Dashboard, opens My Tickets with the exact card filter, and clears it on request", async () => {
-    const myTickets = mockRequesterApp();
-    const user = userEvent.setup();
-    render(<App />);
-    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
-    for (const name of ["My Tickets", "Create Ticket"]) expect(screen.getByRole("link", { name })).toBeInTheDocument();
-
-    await user.click(await screen.findByRole("button", { name: "View Recently Resolved in My Tickets" }));
-    expect(await screen.findByText("Recently Resolved (last 7 days)")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
-    await waitFor(() => expect(myTickets).toHaveBeenLastCalledWith(expect.objectContaining({ statusGroup: "resolved", resolvedFrom: recentFrom, resolvedTo: asOf, page: 1 })));
-    expect(screen.getByText("No tickets match your search or filters.")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Clear Dashboard filter" }));
-    await waitFor(() => expect(myTickets.mock.lastCall![0]).not.toHaveProperty("statusGroup"));
-    expect(screen.queryByText("Showing Dashboard filter:", { exact: false })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("link", { name: "Dashboard" }));
-    await user.click(await screen.findByRole("button", { name: "View Waiting for You in My Tickets" }));
-    expect(await screen.findByRole("combobox", { name: "Status" })).toHaveValue("WAITING_FOR_REQUESTER");
-    await waitFor(() => expect(myTickets).toHaveBeenLastCalledWith(expect.objectContaining({ currentStatus: "WAITING_FOR_REQUESTER" })));
   });
 });

@@ -78,3 +78,37 @@ describe("Actions Taken authorization (AUTH-01, Action endpoints)", () => {
     expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(0);
   });
 });
+
+describe("Requester Dashboard authorization (AUTH-01, Requester Dashboard)", () => {
+  it("needs a session, a completed password change and the Requester role", async () => {
+    const admin = await world.user("admin", "ADMINISTRATOR");
+    expect((await request(app).get("/api/dashboard/requester")).status).toBe(401);
+    for (const user of [staff, admin]) expect((await send("get", "/api/dashboard/requester", user.cookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: true } });
+    expect((await send("get", "/api/dashboard/requester", other.cookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: false } });
+  });
+
+  it("scopes counts and lists to the session, ignores or rejects another Requester's id, and leaks no private fields", async () => {
+    const requester = await world.user("dash-owner", "REQUESTER");
+    const mine = await world.ticket(requester.id);
+    const theirs = await world.ticket(other.id);
+    await prisma.internalNote.create({ data: { ticketId: mine.id, authorId: staff.id, content: "PRIVATE-STAFF-NOTE" } });
+
+    const dashboard = await send("get", "/api/dashboard/requester", requester.cookie);
+    expect(dashboard.body.metrics.openTickets).toBe(1);
+    expect(dashboard.body.recentTickets.map((item: { id: number }) => item.id)).toEqual([mine.id]);
+    expect(JSON.stringify(dashboard.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|description/);
+    expect((await send("get", `/api/dashboard/requester?requesterId=${other.id}`, requester.cookie)).status).toBe(400);
+
+    const list = await send("get", `/api/tickets?requesterId=${other.id}&pageSize=50`, requester.cookie);
+    expect(list.body.items.map((item: { id: number }) => item.id)).toEqual([mine.id]);
+    expect(list.body.items.map((item: { id: number }) => item.id)).not.toContain(theirs.id);
+  });
+
+  it("rejects a deactivated Requester session", async () => {
+    const requester = await world.user("dash-inactive", "REQUESTER");
+    await prisma.user.update({ where: { id: requester.id }, data: { isActive: false } });
+    expect((await send("get", "/api/dashboard/requester", requester.cookie)).status).toBe(401);
+  });
+});

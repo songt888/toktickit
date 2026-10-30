@@ -79,11 +79,20 @@ describe("Requester Dashboard API (API-11)", () => {
     expect(response.body.metrics).toEqual(await referenceCounts(owner.id, recentFrom, asOf));
   });
 
-  it("lists at most five recent own Tickets by updatedAt then id, inside the window, with the summary shape only", async () => {
+  async function recentAt(cookie: string, asOf: Date) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(asOf);
+    const response = await send("get", "/api/dashboard/requester", cookie);
+    vi.useRealTimers();
+    return response.body.recentTickets as Array<Record<string, unknown>>;
+  }
+
+  it("lists recent own Tickets inside the inclusive window by updatedAt then id, with the summary shape only", async () => {
     const asOf = new Date(Math.floor(Date.now() / 1000) * 1000);
     const recentFrom = new Date(asOf.getTime() - 7 * DAY);
     const requester = await world.user("recent", "REQUESTER");
     const tie = new Date(asOf.getTime() - DAY);
+    // Four inside the window (under the limit of five), so each bound decides membership on its own.
     const ids = {
       lowerBound: await ticketAt(requester.id, "NEW", recentFrom),
       outside: await ticketAt(requester.id, "NEW", new Date(recentFrom.getTime() - 1)),
@@ -91,21 +100,22 @@ describe("Requester Dashboard API (API-11)", () => {
       upperBound: await ticketAt(requester.id, "OPEN", asOf, null, "x".repeat(300)),
       tieA: await ticketAt(requester.id, "IN_PROGRESS", tie),
       tieB: await ticketAt(requester.id, "IN_PROGRESS", tie),
-      older: await ticketAt(requester.id, "CLOSED", new Date(asOf.getTime() - 2 * DAY), asOf),
-      oldest: await ticketAt(requester.id, "NEW", new Date(asOf.getTime() - 3 * DAY)),
     };
     await ticketAt(other.id, "NEW", asOf);
 
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(asOf);
-    const response = await send("get", "/api/dashboard/requester", requester.cookie);
-    vi.useRealTimers();
-
-    const items = response.body.recentTickets as Array<Record<string, unknown>>;
-    expect(items.map((item) => item.id)).toEqual([ids.upperBound, ids.tieB, ids.tieA, ids.older, ids.oldest]);
+    const items = await recentAt(requester.cookie, asOf);
+    expect(items.map((item) => item.id)).toEqual([ids.upperBound, ids.tieB, ids.tieA, ids.lowerBound]);
     expect(Object.keys(items[0]).sort()).toEqual(["currentStatus", "id", "itPriority", "lastResolvedAt", "owner", "summary", "ticketNumber", "updatedAt"]);
     expect((items[0].summary as string).length).toBe(240);
     expect(items[0].owner).toBeNull();
+  });
+
+  it("returns at most five recent Tickets, the newest ones", async () => {
+    const asOf = new Date(Math.floor(Date.now() / 1000) * 1000);
+    const requester = await world.user("limit", "REQUESTER");
+    const ids: number[] = [];
+    for (let hour = 1; hour <= 6; hour += 1) ids.push(await ticketAt(requester.id, "NEW", new Date(asOf.getTime() - hour * 3_600_000)));
+    expect((await recentAt(requester.cookie, asOf)).map((item) => item.id)).toEqual(ids.slice(0, 5));
   });
 
   it("is for Requesters only, needs a session and takes no query parameters", async () => {

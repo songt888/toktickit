@@ -12,8 +12,9 @@ and formal review state are authoritative.
 - Branch: `feature/lab4-01-contract` -> `lab4-staging`.
 - Integration baseline: `9313209d224592c9265bb8595aa7cc0f1336b9db` from released main.
 - PR: [#74 — Define Lab 4 engineering contract and test plan](https://github.com/songt888/toktickit/pull/74).
-- Formal review: Pending. No teammate comments/responses/approval have occurred
-  in this record. Do not treat AI/document checks as teammate approval.
+- Formal review: stickkersz requested changes at `36041aa` and again at
+  `5fd3b76` (see Reviews received). Approval is still pending; do not treat
+  AI/document checks as teammate approval.
 - Merge SHA: Pending. #65 remains open; #66 remains Backlog until approval/merge.
 
 Review focus: Action creator/assignee and lifecycle, editable current projection
@@ -48,7 +49,12 @@ the unchanged application baseline, not the proposed feature implementation.
 
 ## Reviews received / responses
 
-No Lab 4 review received yet. On each actual review, record its PR URL,
+| Reviewed commit | Reviewer comment | My response | State |
+|---|---|---|---|
+| `36041aa` | The PDF/`.gitignore` commit does not belong in a contract PR; `api-spec.md:289` limited paging to `page=1`; `reviewer.md` did not log my review of #81. | Reverted the PDF commit (untracking moved to #75); `page` is now an integer >= 1 (default 1) in `api-spec.md` and BR-19; logged the #81 review. | CHANGES_REQUESTED |
+| `5fd3b76` | PDF/`.gitignore` and `page >= 1` fixed; still needed #81's merge SHA and the stale "no teammate review" lines. | Recorded `3c51c16` for #81 and updated the PR #74 review status. | Pending recheck |
+
+On each further actual review, record its PR URL,
 reviewer, reviewed commit, quoted/paraphrased concern, concrete response,
 follow-up verification, formal APPROVED/CHANGES_REQUESTED state and eventual
 merge SHA. Use Fixing for requested changes; PR Review after the corrected PR
@@ -58,7 +64,7 @@ is ready. A comment is not formal approval.
 
 | PR | Reviewed commit | Finding | Partner response | Outcome |
 |---|---|---|---|---|
-| [stickkersz/toktickit#81](https://github.com/stickkersz/toktickit/pull/81) Lab 4 Issue 01 contract | `07e50fc` | Idempotency-Key had no stored request fingerprint, so a reused key with a different body (BR-39, AC-40) could not be detected; no Cancel path from `WAITING_FOR_REQUESTER` or `REOPENED`. Non-blocking: BR-31 Unassigned scope note, BR-15 `version` bump, Complete-dialog `actionAt` pre-fill. | Added `requestHash` on the four create tables, two Cancel transitions with BR-15 auto-cancel, and the BR-31/BR-15 notes (the pre-fill was already in ui-spec). | CHANGES_REQUESTED, then APPROVED at `42424fe`. Merge SHA to be recorded after merge. |
+| [stickkersz/toktickit#81](https://github.com/stickkersz/toktickit/pull/81) Lab 4 Issue 01 contract | `07e50fc` | Idempotency-Key had no stored request fingerprint, so a reused key with a different body (BR-39, AC-40) could not be detected; no Cancel path from `WAITING_FOR_REQUESTER` or `REOPENED`. Non-blocking: BR-31 Unassigned scope note, BR-15 `version` bump, Complete-dialog `actionAt` pre-fill. | Added `requestHash` on the four create tables, two Cancel transitions with BR-15 auto-cancel, and the BR-31/BR-15 notes (the pre-fill was already in ui-spec). | CHANGES_REQUESTED, then APPROVED at `42424fe`. Merged to `lab4-staging` as `3c51c16`. |
 
 Only actual reviewed partner PRs are added here. Lab 3 records stay in their own document.
 

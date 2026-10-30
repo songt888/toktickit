@@ -1,7 +1,7 @@
 # Lab 4 Test DD and Traceability Plan
 
 Status: rows marked **Pass** ran green with `npm test` in `server` (DB rows in Issue #66, Action
-rows in Issue #67, workflow rows in Issue #69; UI rows with `npm test` in `client`); **Partial** rows say what is still owed; every other row stays **Planned**.
+rows in Issue #67, workflow rows in Issue #69; UI rows with `npm test` in `client`, Action UI rows in Issue #68; E2E rows with `npm run test:e2e` at the root); **Partial** rows say what is still owed; every other row stays **Planned**.
 Do not copy Lab 3 totals or claim unimplemented test paths already exist.
 The specification's AC table and this matrix must agree in both directions.
 
@@ -62,17 +62,17 @@ implementation Issues. All IDs are local to Lab 4; none is an executed result.
 | API-11 | API | AC-14 | Independent owned counts and bounded recent list at every time boundary/null legacy date, zero snapshot | `server/tests/lab-04/requester-dashboard.api.test.ts` | Planned |
 | API-12 | API | AC-15 | Independent Staff/Admin counts, zero buckets, active priority scope, assignee-not-performer myActions, bounded/tied lists and snapshot consistency | `server/tests/lab-04/staff-dashboard.api.test.ts` | Planned |
 | API-13 | API | AC-16 | Status groups/all Requester statuses/date bounds/exact count-to-list equality and paginated myActions query | `server/tests/lab-04/dashboard-drilldown.api.test.ts` | Planned |
-| UI-01 | UI | AC-02, AC-03, AC-04 | Action field/lifecycle validation, active picker/reference failure, completed corrections/ineligible assignee, conditional note and cancel confirmation | `client/tests/lab-04/ActionsTaken.test.tsx` | Planned |
-| UI-02 | UI | AC-06, AC-07 | Read-only Requester full Action/history view, no private fields/write controls, stable paging and focus | `client/tests/lab-04/ActionsTaken.test.tsx` | Planned |
+| UI-01 | UI | AC-02, AC-03, AC-04 | Action field/lifecycle validation, active picker/reference failure, completed corrections/ineligible assignee, conditional note and cancel confirmation | `client/tests/lab-04/ActionsTaken.test.tsx` | Pass |
+| UI-02 | UI | AC-06, AC-07 | Read-only Requester full Action/history view, no private fields/write controls, stable paging and focus | `client/tests/lab-04/RequesterActionsTaken.test.tsx` | Pass |
 | UI-03 | UI | AC-08, AC-09, AC-18 | Permitted Ticket states, gate explanation, advisory independence, fresh status/confirmation and 409 review | `client/tests/lab-04/TicketWorkflow.test.tsx` | Pass |
-| UI-04 | UI | AC-10, AC-11, AC-18 | Double-click/ambiguous retry UUIDs, replay refresh, updated versions, 400/409/network/500 retained drafts, safe refresh and stale response guards | `client/tests/lab-04/ActionsTaken.test.tsx` | Planned |
+| UI-04 | UI | AC-10, AC-11, AC-18 | Double-click/ambiguous retry UUIDs, replay refresh, updated versions, 400/409/network/500 retained drafts, safe refresh and stale response guards | `client/tests/lab-04/ActionsTaken.test.tsx` | Pass |
 | UI-05 | UI | AC-16, AC-17 | Requester cards, zero/loading/failure/forbidden, exact filter callbacks/date bounds, independent stale-response handling | `client/tests/lab-04/RequesterDashboard.test.tsx` | Planned |
 | UI-06 | UI | AC-16, AC-17 | Staff/Admin counts/captions/pending Actions and paging, exact Queue/Detail callbacks, zero/error/old snapshot states | `client/tests/lab-04/StaffDashboard.test.tsx` | Planned |
 | UI-07 | UI | AC-17, AC-18 | Dashboard initial destination/nav/identity/password gate, prior screens, logout draft/data cleanup and stale cross-user response prevention | `client/tests/lab-04/ApplicationShell.test.tsx` | Planned |
 | STYLE-01 | UI style | AC-19, AC-20 | Zen Green tokens, semantic form/metric labels, required/error/status cues, editable/read-only/private distinction | `client/tests/lab-04/ui-style.test.tsx` | Planned |
 | RESP-01 | Responsive | AC-19 | All Dashboard/Action list/create/edit/history/workflow/myActions views at 1280/820/390px; measure overflow and inspect clipping/overlap | `e2e/lab-04/responsive.spec.ts` | Planned |
 | A11Y-01 | Accessibility | AC-20 | Keyboard activation, labels/focus/skip/active-nav/error announcements, cancel dialog trap/return focus | `e2e/lab-04/accessibility.spec.ts` | Planned |
-| E2E-01 | E2E | AC-01, AC-03, AC-04, AC-05, AC-06 | Different Staff Actions on one Ticket, assign/edit/start/complete/cancel/history and Requester visibility/isolation | `e2e/lab-04/actions-taken-flow.spec.ts` | Planned |
+| E2E-01 | E2E | AC-01, AC-03, AC-04, AC-05, AC-06 | Different Staff Actions on one Ticket, assign/edit/start/complete/cancel/history and Requester visibility/isolation | `e2e/lab-04/actions-taken-flow.spec.ts` | Pass |
 | E2E-02 | E2E | AC-07, AC-08, AC-09 | Record ordered work, failed gate, settled follow-up, resolve/close/reopen/cancel and shared history | `e2e/lab-04/ticket-resolution.spec.ts` | Planned |
 | E2E-03 | E2E | AC-14, AC-15, AC-16, AC-17 | Three roles' owned/operational metrics, myActions, zero/failure states, every card/list drill-down and matching DB queries | `e2e/lab-04/dashboards.spec.ts` | Planned |
 | REG-01 | Regression | AC-21 | Run all existing Lab 1-3 server/client checks plus preserved root E2E projects; independently assert critical security/business behavior | Existing `server/tests/lab-01/`, `server/tests/lab-02/`, `server/tests/lab-03/`, `client/tests/lab-01/`, `client/tests/lab-02/`, `client/tests/lab-03/`, `e2e/lab-02/`, `e2e/lab-03/` | Planned |

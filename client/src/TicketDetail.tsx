@@ -9,6 +9,7 @@ import {
   setProblemAppearsResolved,
 } from "./api.js";
 import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
+import ActionsTaken from "./ActionsTaken.js";
 import AttachmentSection from "./AttachmentSection.js";
 
 type DetailState = "loading" | "success" | "error";
@@ -306,6 +307,8 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
                 </button>
               </form>
             </section>
+
+            <ActionsTaken key={ticket.id} ticketId={ticket.id} ticketStatus={ticket.currentStatus} />
 
             <AttachmentSection
               ticketId={ticket.id}

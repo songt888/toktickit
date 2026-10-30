@@ -71,6 +71,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
       testMatch: /user-administration\.spec\.ts$/,
     },
+    {
+      name: "lab4-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /lab-04\/.*\.spec\.ts$/,
+    },
   ],
   webServer: [
     {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import ActionsTaken from "./ActionsTaken.js";
 import {
   addInternalNote,
   addPublicComment,
@@ -169,6 +170,29 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       setAssigneesError("Eligible assignees could not be loaded. You can still claim or unassign this Ticket.");
     }
     setState("success");
+  }
+
+  // Quiet reload after an Action write: new Ticket timestamp and gate, without resetting the screen.
+  async function refreshTicket() {
+    const sequence = requestSequence.current;
+    try {
+      const fresh = await getStaffTicketDetail(ticketId);
+      if (sequence === requestSequence.current) setTicket(fresh);
+    } catch {
+      // The next write or Refresh reports the problem; the current values stay visible.
+    }
+  }
+
+  async function retryAssignees() {
+    const sequence = requestSequence.current;
+    try {
+      const loaded = await getStaffAssignees();
+      if (sequence !== requestSequence.current) return;
+      setAssignees(loaded);
+      setAssigneesError("");
+    } catch {
+      if (sequence === requestSequence.current) setAssigneesError("Eligible assignees could not be loaded. You can still claim or unassign this Ticket.");
+    }
   }
 
   useEffect(() => {
@@ -474,6 +498,23 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
               </div>
               {saving && <p className="small text-secondary mt-3 mb-0" role="status">Saving Ticket changes…</p>}
             </section>
+
+            <ActionsTaken
+              key={ticket.id}
+              ticketId={ticket.id}
+              ticketStatus={ticket.currentStatus}
+              editable={{
+                currentUserId,
+                ticketUpdatedAt: ticket.updatedAt,
+                assignees,
+                assigneesError,
+                onRetryAssignees: () => void retryAssignees(),
+                onChanged: (updatedAt) => {
+                  setTicket((current) => (current ? { ...current, updatedAt } : current));
+                  void refreshTicket();
+                },
+              }}
+            />
 
             <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>

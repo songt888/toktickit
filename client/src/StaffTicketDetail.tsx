@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import ActionsTaken from "./ActionsTaken.js";
 import {
   addInternalNote,
   addPublicComment,
@@ -93,6 +94,8 @@ function errorFeedback(error: unknown): Feedback {
 
 export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: StaffTicketDetailProps) {
   const requestSequence = useRef(0);
+  const refreshSequence = useRef(0);
+  const refreshPending = useRef(false);
   const [ticket, setTicket] = useState<StaffTicketDetailData | null>(null);
   const [assignees, setAssignees] = useState<StaffUser[]>([]);
   const [assigneesError, setAssigneesError] = useState("");
@@ -171,6 +174,40 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setState("success");
   }
 
+  // Quiet reload after an Action write: new Ticket timestamp and gate, without resetting the screen.
+  async function refreshTicket() {
+    const sequence = requestSequence.current;
+    // Only the newest refresh may land; an older one would roll updatedAt back and make the next write 409.
+    const refresh = ++refreshSequence.current;
+    refreshPending.current = true;
+    try {
+      const fresh = await getStaffTicketDetail(ticketId);
+      if (sequence === requestSequence.current && refresh === refreshSequence.current) setTicket(fresh);
+    } catch {
+      // The next write or Refresh reports the problem; the current values stay visible.
+    } finally {
+      if (refresh === refreshSequence.current) refreshPending.current = false;
+    }
+  }
+
+  // After a local Ticket update, a refresh already in flight would bring back older values, but it also
+  // carries the new resolution gate. Replace it with one that starts after this update.
+  function restartPendingRefresh() {
+    if (refreshPending.current) void refreshTicket();
+  }
+
+  async function retryAssignees() {
+    const sequence = requestSequence.current;
+    try {
+      const loaded = await getStaffAssignees();
+      if (sequence !== requestSequence.current) return;
+      setAssignees(loaded);
+      setAssigneesError("");
+    } catch {
+      if (sequence === requestSequence.current) setAssigneesError("Eligible assignees could not be loaded. You can still claim or unassign this Ticket.");
+    }
+  }
+
   useEffect(() => {
     void loadDetail();
     return () => {
@@ -187,6 +224,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setFeedback(null);
     try {
       const updated = await operation();
+      restartPendingRefresh();
       setTicket((current) => current ? { ...current, ...updated } : current);
       setSelectedOwnerId(updated.ownerId === null ? "" : String(updated.ownerId));
       setSelectedPriority(updated.itPriority);
@@ -197,6 +235,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       // Keep the selection and show the server's current gate, so the user can see what to fix.
       if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
         const gate = error.body.resolutionGate as ResolutionGate;
+        restartPendingRefresh();
         setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
         // Resolved is no longer a valid choice, so return the control to the current status.
         setSelectedStatus(ticket.currentStatus);
@@ -249,6 +288,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setPublicCommentFeedback(null);
     try {
       const comment = await addPublicComment(ticket.id, content);
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, publicComments: [...current.publicComments, comment] }
         : current);
@@ -281,6 +321,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setInternalNoteFeedback(null);
     try {
       const note = await addInternalNote(ticket.id, content);
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, internalNotes: [...current.internalNotes, note] }
         : current);
@@ -474,6 +515,23 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
               </div>
               {saving && <p className="small text-secondary mt-3 mb-0" role="status">Saving Ticket changes…</p>}
             </section>
+
+            <ActionsTaken
+              key={ticket.id}
+              ticketId={ticket.id}
+              ticketStatus={ticket.currentStatus}
+              editable={{
+                currentUserId,
+                ticketUpdatedAt: ticket.updatedAt,
+                assignees,
+                assigneesError,
+                onRetryAssignees: () => void retryAssignees(),
+                onChanged: (updatedAt) => {
+                  setTicket((current) => (current ? { ...current, updatedAt } : current));
+                  void refreshTicket();
+                },
+              }}
+            />
 
             <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>

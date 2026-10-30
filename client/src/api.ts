@@ -642,3 +642,85 @@ export async function checkSystem(): Promise<SystemStatus> {
   const categories = (await categoriesResponse.json()) as Category[];
   return { online: true, categories };
 }
+
+// Lab 4 Actions Taken (api-spec section 4).
+export type ActionStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface ActionTaken {
+  id: number;
+  ticketId: number;
+  actionAt: string;
+  description: string;
+  result: string;
+  performedBy: { id: number; name: string };
+  assignee: { id: number; name: string; role: UserRole; isActive: boolean };
+  status: ActionStatus;
+  followUpRequired: boolean;
+  followUpNote: string | null;
+  attachmentNotes: string | null;
+  cancellationReason: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Pagination {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface ActionListResponse {
+  items: ActionTaken[];
+  pagination: Pagination;
+  ticketUpdatedAt: string;
+}
+
+export interface ActionRevision {
+  version: number;
+  operation: "CREATE" | "EDIT" | "ASSIGN" | "STATUS";
+  actor: { id: number; name: string };
+  createdAt: string;
+  snapshot: ActionTaken;
+}
+
+export interface ActionWriteResponse {
+  action: ActionTaken;
+  ticketUpdatedAt: string;
+  replayed: boolean;
+}
+
+export async function getActionsTaken(ticketId: number, page = 1): Promise<ActionListResponse> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/actions-taken?page=${page}&pageSize=10`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load Actions Taken.");
+  return (await response.json()) as ActionListResponse;
+}
+
+export async function getActionRevisions(
+  ticketId: number,
+  actionId: number,
+  page = 1,
+): Promise<{ items: ActionRevision[]; pagination: Pagination }> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/actions-taken/${actionId}/revisions?page=${page}&pageSize=10`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await authError(response, "Unable to load the Action history.");
+  return (await response.json()) as { items: ActionRevision[]; pagination: Pagination };
+}
+
+// One request body per command; the caller keeps mutationId stable across retries of the same draft.
+export async function writeActionTaken(
+  method: "POST" | "PATCH",
+  path: string,
+  body: Record<string, unknown>,
+): Promise<ActionWriteResponse> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw await authError(response, "Unable to save the Action.");
+  return (await response.json()) as ActionWriteResponse;
+}

@@ -165,9 +165,9 @@ accessible metric/action names and standard keyboard activation.
 - [ ] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.
 - [ ] Dashboard labels, counts, scope captions and drill-downs match the API.
 - [ ] My Actions means current assignee; zero/loading/forbidden/failure states work.
-- [ ] Actions list/create/reassign/edit/start/complete/cancel/history are usable.
-- [ ] Performed by, Ticket Owner and Assigned to are clearly distinguished.
-- [ ] Requester Action view is read-only and never exposes Internal Notes.
+- [x] Actions list/create/reassign/edit/start/complete/cancel/history are usable.
+- [x] Performed by, Ticket Owner and Assigned to are clearly distinguished.
+- [x] Requester Action view is read-only and never exposes Internal Notes.
 - [ ] Required fields, errors, inactive assignee and gate failure are clear.
 - [ ] Conflict/retry preserves draft and clears stale confirmations.
 - [ ] Keyboard order, focus restoration, labels and announcements are verified.

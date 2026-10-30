@@ -198,6 +198,8 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
         const gate = error.body.resolutionGate as ResolutionGate;
         setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
+        // Resolved is no longer a valid choice, so return the control to the current status.
+        setSelectedStatus(ticket.currentStatus);
       }
     } finally {
       setSaving(false);
@@ -452,10 +454,20 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                       </option>
                     ))}
                   </select>
-                  {resolveBlocked && ticket.resolutionGate && (
-                    <p id="staff-resolution-gate" className="form-text text-body mb-0">{resolutionGateText(ticket.resolutionGate)}</p>
+                  {ticket.resolutionGate && (
+                    <div className="mt-2" aria-labelledby="staff-resolution-readiness">
+                      <p id="staff-resolution-readiness" className="small fw-semibold mb-1">Resolution readiness</p>
+                      <ul className="small list-unstyled mb-1">
+                        <li>Completed Actions: {ticket.resolutionGate.completedActions}</li>
+                        <li>Pending Actions: {ticket.resolutionGate.pendingActions}</li>
+                        <li>Unsettled follow-up: {ticket.resolutionGate.unsettledFollowUpActions}</li>
+                      </ul>
+                      <p id="staff-resolution-gate" className="form-text text-body mb-0">
+                        {ticket.resolutionGate.canResolve ? "Ready to resolve." : resolutionGateText(ticket.resolutionGate)}
+                      </p>
+                    </div>
                   )}
-                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus} onClick={changeStatus}>
+                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus || (selectedStatus === "RESOLVED" && resolveBlocked)} onClick={changeStatus}>
                     Update Status
                   </button>
                 </div>

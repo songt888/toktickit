@@ -48,6 +48,16 @@ describe("Ticket workflow controls (UI-03)", () => {
     const help = "To resolve this Ticket, finish or cancel 2 pending Actions; settle the follow-up on 1 completed Action.";
     expect(screen.getByText(help)).toBeInTheDocument();
     expect(statusSelect()).toHaveAccessibleDescription(help);
+    const readiness = screen.getByText("Resolution readiness").parentElement!;
+    expect(within(readiness).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Completed Actions: 1", "Pending Actions: 2", "Unsettled follow-up: 1",
+    ]);
+  });
+
+  it("shows readiness counts when the gate is met too", async () => {
+    await open_(detail({ resolutionGate: open }));
+    expect(screen.getByText("Completed Actions: 2")).toBeInTheDocument();
+    expect(screen.getByText("Ready to resolve.")).toBeInTheDocument();
   });
 
   it("resolves when the gate is met and refreshes status and last-resolved time", async () => {
@@ -79,6 +89,9 @@ describe("Ticket workflow controls (UI-03)", () => {
       "Complete the recorded work and settle required follow-up before resolving. To resolve this Ticket, complete at least one Action; finish or cancel 1 pending Action.",
     );
     expect(within(statusSelect()).getByRole("option", { name: "RESOLVED (work not complete)" })).toBeDisabled();
+    expect(statusSelect()).toHaveValue("IN_PROGRESS");
+    expect(screen.getByRole("button", { name: "Update Status" })).toBeDisabled();
+    expect(screen.getByText("Pending Actions: 1")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Refresh Ticket" })).not.toBeInTheDocument();
   });
 
@@ -89,5 +102,29 @@ describe("Ticket workflow controls (UI-03)", () => {
     await user.click(screen.getByRole("button", { name: "Update Status" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("This Ticket changed after you opened it.");
     expect(screen.getByRole("button", { name: "Refresh Ticket" })).toBeInTheDocument();
+  });
+
+  it("asks for confirmation before Closed and asks again after a conflict", async () => {
+    const user = await open_(detail({ currentStatus: "RESOLVED", resolutionGate: open, lastResolvedAt: "2026-10-30T01:30:00.000Z" }));
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValue(true);
+    const save = vi.spyOn(api, "updateStaffTicketStatus")
+      .mockRejectedValueOnce(new api.ApiRequestError("Ticket changed", 409, "STALE_STATE"))
+      .mockResolvedValueOnce({
+        id: 801, ownerId: staff.id, owner: staff, itPriority: "HIGH", currentStatus: "CLOSED",
+        problemAppearsResolved: false, lastResolvedAt: "2026-10-30T01:30:00.000Z", updatedAt: "2026-10-30T04:00:00.000Z",
+      });
+    await user.selectOptions(statusSelect(), "CLOSED");
+    await user.click(screen.getByRole("button", { name: "Update Status" }));
+    expect(save).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Update Status" }));
+    expect(save).toHaveBeenLastCalledWith(801, "CLOSED", true, "2026-10-30T02:00:00.000Z");
+    expect(await screen.findByRole("alert")).toHaveTextContent("This Ticket changed after you opened it.");
+
+    // The earlier confirmation does not carry over: the retry asks again.
+    await user.click(screen.getByRole("button", { name: "Update Status" }));
+    expect(confirm).toHaveBeenCalledTimes(3);
+    expect(await screen.findByText("Ticket status was updated to CLOSED.")).toBeInTheDocument();
+    expect(optionLabels()).toEqual(["CLOSED (current)", "REOPENED"]);
   });
 });

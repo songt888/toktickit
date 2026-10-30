@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +16,9 @@ const stamp = `${process.pid}_${Date.now()}`;
 const dbA = `lab4_upgrade_${stamp}`;
 const dbB = `lab4_restore_${stamp}`;
 const tmp = mkdtempSync(path.join(tmpdir(), "lab4-migrations-"));
+// Private uploads dir: the shared server/uploads is edited by other suites in parallel.
+const uploadsDir = path.join(tmp, "uploads");
+mkdirSync(uploadsDir);
 const admin = getPrisma();
 const clients: PrismaClient[] = [];
 
@@ -74,7 +77,9 @@ async function populateLab3(db: PrismaClient) {
     });
     await db.publicComment.create({ data: { ticketId: ticket.id, authorId: user.id, content: `Comment ${n}` }, select: { id: true } });
     await db.internalNote.create({ data: { ticketId: ticket.id, authorId: staff.id, content: `Note ${n}` }, select: { id: true } });
-    await db.attachment.create({ data: { ticketId: ticket.id, originalName: `file${n}.png`, storedName: `stored-${stamp}-${n}.png`, mimeType: "image/png", sizeBytes: 1000 + n }, select: { id: true } });
+    const storedName = `stored-${stamp}-${n}.png`;
+    writeFileSync(path.join(uploadsDir, storedName), Buffer.alloc(1000 + n, n + 1));
+    await db.attachment.create({ data: { ticketId: ticket.id, originalName: `file${n}.png`, storedName, mimeType: "image/png", sizeBytes: 1000 + n }, select: { id: true } });
   }
   await db.authSession.create({ data: { userId: user.id, tokenHash: `hash-${stamp}`, expiresAt: new Date("2030-01-01T00:00:00Z") }, select: { id: true } });
 }
@@ -98,12 +103,10 @@ async function sequences(db: PrismaClient, names?: string[]) {
   return Object.fromEntries(rows.filter((r) => !names || names.includes(r.sequencename)).map((r) => [r.sequencename, String(r.last_value)]));
 }
 
-// Upload files are never touched by the migration; name, size and content hash prove it.
+// The Attachment files are never touched by the migration; name, size and content hash prove it.
 function uploadManifest() {
-  const dir = path.join(serverDir, "uploads");
-  if (!existsSync(dir)) return [];
-  return readdirSync(dir).sort().map((name) => {
-    const file = path.join(dir, name);
+  return readdirSync(uploadsDir).sort().map((name) => {
+    const file = path.join(uploadsDir, name);
     return [name, statSync(file).size, createHash("sha256").update(readFileSync(file)).digest("hex")];
   });
 }
@@ -125,6 +128,10 @@ describe("Lab 4 migration on a populated Lab 3 database (DB-02)", () => {
     const rowsBefore = await lab3Rows(lab3);
     const seqBefore = await sequences(lab3);
     const filesBefore = uploadManifest();
+    // Every legacy Attachment row has its file, with the recorded size.
+    expect(filesBefore.map(([name, size]) => [name, size])).toEqual(
+      (rowsBefore.Attachment as Array<{ storedName: string; sizeBytes: number }>).map((a) => [a.storedName, a.sizeBytes]).sort(),
+    );
     expect(rowsBefore.Ticket).toHaveLength(3);
     await lab3.$disconnect();
 

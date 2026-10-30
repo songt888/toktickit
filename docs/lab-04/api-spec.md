@@ -286,7 +286,7 @@ dates in the browser. Existing queries without new parameters work unchanged.
 
 GET `/api/staff/actions-taken`: Staff/Admin only. Accept only
 `assigneeId=me`, `statusGroup=pending`, `ticketStatusGroup=active`,
-page=1 and pageSize=10/25/50; omitted scope fields default to these same values.
+`page` (integer >= 1, default 1) and `pageSize` 10/25/50; omitted scope fields default to these same values.
 Reject alternate user ids/unknown groups with 400. Return paginated Action
 summaries ordered updatedAt DESC,id DESC; filter assignment from the session,
 PLANNED/IN_PROGRESS, parent active status. This is the exact myActions

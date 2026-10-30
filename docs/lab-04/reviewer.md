@@ -56,9 +56,11 @@ is ready. A comment is not formal approval.
 
 ## Reviews performed for partner
 
-No Lab 4 partner review recorded yet. Add only actual reviewed partner PRs,
-reviewed commits, findings and review outcomes. Preserve Lab 3 records in their
-own document rather than carrying them forward as Lab 4 evidence.
+| PR | Reviewed commit | Finding | Partner response | Outcome |
+|---|---|---|---|---|
+| [stickkersz/toktickit#81](https://github.com/stickkersz/toktickit/pull/81) Lab 4 Issue 01 contract | `07e50fc` | Idempotency-Key had no stored request fingerprint, so a reused key with a different body (BR-39, AC-40) could not be detected; no Cancel path from `WAITING_FOR_REQUESTER` or `REOPENED`. Non-blocking: BR-31 Unassigned scope note, BR-15 `version` bump, Complete-dialog `actionAt` pre-fill. | Added `requestHash` on the four create tables, two Cancel transitions with BR-15 auto-cancel, and the BR-31/BR-15 notes (the pre-fill was already in ui-spec). | CHANGES_REQUESTED, then APPROVED at `42424fe`. Merge SHA to be recorded after merge. |
+
+Only actual reviewed partner PRs are added here. Lab 3 records stay in their own document.
 
 ## Review and release checklist
 

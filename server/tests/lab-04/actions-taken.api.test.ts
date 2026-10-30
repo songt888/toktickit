@@ -211,16 +211,20 @@ describe("Actions Taken API", () => {
 
     // Inject a failure at the revision insert, after the projection and Ticket timestamp were written.
     const realTransaction = prisma.$transaction.bind(prisma) as (...args: unknown[]) => Promise<unknown>;
-    vi.spyOn(prisma, "$transaction").mockImplementationOnce(((work: (tx: unknown) => Promise<unknown>, options: unknown) =>
+    const failingCreate = vi.fn(async () => { throw new Error("injected failure"); });
+    const transactionSpy = vi.spyOn(prisma, "$transaction").mockImplementationOnce(((work: (tx: unknown) => Promise<unknown>, options: unknown) =>
       realTransaction(async (tx: Record<string, unknown>) => work(new Proxy(tx, {
+        // Override only create; every other delegate method (the replay lookup included) stays real.
         get: (target, key) => key === "actionTakenRevision"
-          ? { ...(target.actionTakenRevision as object), create: async () => { throw new Error("injected failure"); } }
-          : target[key as string],
+          ? new Proxy(target.actionTakenRevision as object, { get: (delegate, name) => (name === "create" ? failingCreate : Reflect.get(delegate, name)) })
+          : Reflect.get(target, key),
       })), options)) as never);
     const failed = await send("patch", path(ticket.id, `/${first.action.id}`), staff.cookie, {
       ...(await current(ticket.id, first.action.id)), description: "Never saved",
     });
-    vi.restoreAllMocks();
+    transactionSpy.mockRestore();
+    // The failure came from the stubbed insert, after the projection and Ticket writes ran.
+    expect(failingCreate).toHaveBeenCalledTimes(1);
     expect(failed.status).toBe(500);
     expect(JSON.stringify(failed.body)).not.toMatch(/injected|prisma|stack/i);
     expect(await counts(ticket.id)).toEqual(before);

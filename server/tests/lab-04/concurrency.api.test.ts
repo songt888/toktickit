@@ -67,30 +67,26 @@ describe("Actions Taken concurrency", () => {
     const races: Race[] = [
       { name: "assign vs deactivate", userChange: { isActive: false } },
       { name: "create vs demote", userChange: { role: "REQUESTER" } },
+      { name: "start vs deactivate", userChange: { isActive: false } },
       { name: "complete vs deactivate", userChange: { isActive: false } },
     ];
     for (const race of races) {
       for (let round = 0; round < 3; round++) {
         const ticket = await world.ticket(requester.id);
         const target = await world.user(`target-${races.indexOf(race)}-${round}`, "IT_STAFF");
-        // Complete needs the target already assigned; the other races assign it in the racing write.
-        const seeded = race.name.startsWith("complete") ? (await createAction(ticket.id, staff.cookie, { assigneeId: target.id })).action : null;
-        const write = async () => {
-          const stamp = await ticketStamp(ticket.id);
-          if (race.name.startsWith("create")) {
-            return send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(stamp, { assigneeId: target.id }));
-          }
-          if (seeded) {
-            return send("patch", `/api/tickets/${ticket.id}/actions-taken/${seeded.id}/status`, staff.cookie, {
-              mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1, status: "COMPLETED", result: "Done",
-            });
-          }
-          const { action } = await createAction(ticket.id, staff.cookie);
-          return send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}/assignee`, staff.cookie, {
-            mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: 1, assigneeId: target.id,
-          });
-        };
-        const [result, change] = await Promise.all([write(), send("patch", `/api/admin/users/${target.id}`, admin.cookie, race.userChange)]);
+        // Everything except the racing write is prepared first, so both requests start together.
+        const kind = race.name.split(" ")[0];
+        const action = kind === "create" ? null
+          : (await createAction(ticket.id, staff.cookie, kind === "assign" ? {} : { assigneeId: target.id })).action;
+        const stamp = await ticketStamp(ticket.id);
+        const actionPath = `/api/tickets/${ticket.id}/actions-taken/${action?.id}`;
+        const common = { mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1 };
+        const write = kind === "create"
+          ? send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(stamp, { assigneeId: target.id }))
+          : kind === "assign"
+            ? send("patch", `${actionPath}/assignee`, staff.cookie, { ...common, assigneeId: target.id })
+            : send("patch", `${actionPath}/status`, staff.cookie, { ...common, status: kind === "start" ? "IN_PROGRESS" : "COMPLETED", ...(kind === "complete" ? { result: "Done" } : {}) });
+        const [result, change] = await Promise.all([write, send("patch", `/api/admin/users/${target.id}`, admin.cookie, race.userChange)]);
         expect(change.status, race.name).toBe(200);
         if (result.status < 300) {
           // The snapshot is read under the User lock, so it shows the assignee as it was at commit.
@@ -102,7 +98,7 @@ describe("Actions Taken concurrency", () => {
           prisma.actionTaken.count({ where: { ticketId: ticket.id } }),
           prisma.actionTakenRevision.count({ where: { action: { ticketId: ticket.id } } }),
         ]);
-        expect(revisions, race.name).toBeGreaterThanOrEqual(actions);
+        expect(revisions, race.name).toBe(actions + (result.status < 300 && kind !== "create" ? 1 : 0));
       }
     }
 

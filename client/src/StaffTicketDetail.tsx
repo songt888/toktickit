@@ -95,6 +95,7 @@ function errorFeedback(error: unknown): Feedback {
 export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: StaffTicketDetailProps) {
   const requestSequence = useRef(0);
   const refreshSequence = useRef(0);
+  const refreshPending = useRef(false);
   const [ticket, setTicket] = useState<StaffTicketDetailData | null>(null);
   const [assignees, setAssignees] = useState<StaffUser[]>([]);
   const [assigneesError, setAssigneesError] = useState("");
@@ -178,12 +179,21 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     const sequence = requestSequence.current;
     // Only the newest refresh may land; an older one would roll updatedAt back and make the next write 409.
     const refresh = ++refreshSequence.current;
+    refreshPending.current = true;
     try {
       const fresh = await getStaffTicketDetail(ticketId);
       if (sequence === requestSequence.current && refresh === refreshSequence.current) setTicket(fresh);
     } catch {
       // The next write or Refresh reports the problem; the current values stay visible.
+    } finally {
+      if (refresh === refreshSequence.current) refreshPending.current = false;
     }
+  }
+
+  // After a local Ticket update, a refresh already in flight would bring back older values, but it also
+  // carries the new resolution gate. Replace it with one that starts after this update.
+  function restartPendingRefresh() {
+    if (refreshPending.current) void refreshTicket();
   }
 
   async function retryAssignees() {
@@ -214,8 +224,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setFeedback(null);
     try {
       const updated = await operation();
-      // A Ticket refresh started before this save would bring back older values.
-      refreshSequence.current += 1;
+      restartPendingRefresh();
       setTicket((current) => current ? { ...current, ...updated } : current);
       setSelectedOwnerId(updated.ownerId === null ? "" : String(updated.ownerId));
       setSelectedPriority(updated.itPriority);
@@ -226,7 +235,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       // Keep the selection and show the server's current gate, so the user can see what to fix.
       if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
         const gate = error.body.resolutionGate as ResolutionGate;
-        refreshSequence.current += 1;
+        restartPendingRefresh();
         setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
         // Resolved is no longer a valid choice, so return the control to the current status.
         setSelectedStatus(ticket.currentStatus);
@@ -279,7 +288,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setPublicCommentFeedback(null);
     try {
       const comment = await addPublicComment(ticket.id, content);
-      refreshSequence.current += 1;
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, publicComments: [...current.publicComments, comment] }
         : current);
@@ -312,7 +321,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setInternalNoteFeedback(null);
     try {
       const note = await addInternalNote(ticket.id, content);
-      refreshSequence.current += 1;
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, internalNotes: [...current.internalNotes, note] }
         : current);

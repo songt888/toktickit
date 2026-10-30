@@ -73,7 +73,7 @@ Public action text is shared with the owning Requester. IDs used for edits are
 
 ### GET `/api/tickets/:ticketId/actions-taken`
 
-Owner Requester or Staff/Admin. Query: `page=1`, `pageSize=10|25|50` (default 10).
+Owner Requester or Staff/Admin. Query: `page` (integer >= 1, default 1), `pageSize=10|25|50` (default 10).
 Returns 200 `{ items: Action[], pagination: { page, pageSize, totalItems,
 totalPages }, ticketUpdatedAt: UTC_ISO }`. Order `actionAt ASC,id ASC`.
 No extra status filtering hides cancelled/completed work from the Requester.

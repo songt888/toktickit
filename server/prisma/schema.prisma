@@ -1,4 +1,4 @@
-// Prisma schema — Lab 3 user/data foundation.
+// Prisma schema — Lab 4 Actions Taken and Status History foundation.
 // Your DATABASE_URL lives in server/.env (copy it from .env.example).
 
 generator client {
@@ -50,6 +50,10 @@ model User {
   publicComments     PublicComment[]
   internalNotes      InternalNote[]
   sessions           AuthSession[]
+  performedActions   ActionTaken[]         @relation("ActionPerformer")
+  assignedActions    ActionTaken[]         @relation("ActionAssignee")
+  actionRevisions    ActionTakenRevision[] @relation("ActionRevisionActor")
+  ticketStatusEvents TicketStatusEvent[]   @relation("TicketStatusActor")
 
   @@index([isActive, role, name])
 }
@@ -100,7 +104,11 @@ model Ticket {
   publicComments           PublicComment[]
   internalNotes            InternalNote[]
   attachments              Attachment[]
+  lastResolvedAt           DateTime?
+  actionsTaken             ActionTaken[]
+  statusEvents             TicketStatusEvent[]
 
+  @@index([lastResolvedAt, id])
   @@index([requesterId, updatedAt, id])
   @@index([ownerId, currentStatus, updatedAt])
   @@index([currentStatus, itPriority, updatedAt])
@@ -155,4 +163,75 @@ model AuthSession {
   user      User      @relation(fields: [userId], references: [id])
 
   @@index([userId, expiresAt])
+}
+
+enum ActionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ActionOperation {
+  CREATE
+  EDIT
+  ASSIGN
+  STATUS
+}
+
+model ActionTaken {
+  id                 Int                   @id @default(autoincrement())
+  ticketId           Int
+  performedById      Int
+  assigneeId         Int
+  actionAt           DateTime
+  description        String                @db.VarChar(4000)
+  result             String                @default("") @db.VarChar(4000)
+  followUpRequired   Boolean               @default(false)
+  followUpNote       String?               @db.VarChar(2000)
+  attachmentNotes    String?               @db.VarChar(2000)
+  status             ActionStatus          @default(PLANNED)
+  cancellationReason String?               @db.VarChar(500)
+  version            Int                   @default(1)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  ticket             Ticket                @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  performedBy        User                  @relation("ActionPerformer", fields: [performedById], references: [id], onDelete: Restrict)
+  assignee           User                  @relation("ActionAssignee", fields: [assigneeId], references: [id], onDelete: Restrict)
+  revisions          ActionTakenRevision[]
+
+  @@index([ticketId, actionAt, id])
+  @@index([ticketId, status])
+  @@index([assigneeId, status, updatedAt, id])
+}
+
+model ActionTakenRevision {
+  id              Int             @id @default(autoincrement())
+  actionId        Int
+  version         Int
+  actorId         Int
+  operation       ActionOperation
+  mutationId      String          @db.Uuid
+  requestHash     String          @db.Char(64)
+  snapshot        Json
+  ticketUpdatedAt DateTime
+  createdAt       DateTime        @default(now())
+  action          ActionTaken     @relation(fields: [actionId], references: [id], onDelete: Restrict)
+  actor           User            @relation("ActionRevisionActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@unique([actionId, version])
+  @@unique([actorId, mutationId])
+}
+
+model TicketStatusEvent {
+  id         Int           @id @default(autoincrement())
+  ticketId   Int
+  actorId    Int
+  fromStatus TicketStatus?
+  toStatus   TicketStatus
+  createdAt  DateTime      @default(now())
+  ticket     Ticket        @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  actor      User          @relation("TicketStatusActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId, createdAt, id])
 }

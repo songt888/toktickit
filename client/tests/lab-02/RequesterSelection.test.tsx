@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { openMyTickets } from "../openMyTickets.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import App from "../../src/App.js";
@@ -33,6 +34,7 @@ describe("Authenticated requester context", () => {
     mockWorkspace();
 
     render(<App />);
+    await openMyTickets();
 
     expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
     expect(screen.getByText("Tickets created by Ari Suksan.")).toBeInTheDocument();
@@ -46,6 +48,7 @@ describe("Authenticated requester context", () => {
     mockWorkspace();
 
     render(<App />);
+    await openMyTickets();
     await screen.findByRole("heading", { name: "My Tickets" });
 
     expect(window.localStorage.length).toBe(0);

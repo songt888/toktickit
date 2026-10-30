@@ -38,7 +38,9 @@ test("checks the requester, Staff, and Administrator screens at this viewport", 
   await expect(page.getByLabel("Email")).toBeVisible();
   await capture(page, viewport, "login");
 
-  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "My Tickets");
+  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "Dashboard");
+  await page.getByRole("link", { name: "My Tickets" }).click();
+  await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await capture(page, viewport, "requester-my-tickets");
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expect(page.getByRole("heading", { name: "Create Ticket" })).toBeVisible();

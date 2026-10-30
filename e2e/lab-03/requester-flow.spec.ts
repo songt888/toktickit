@@ -25,6 +25,7 @@ test("covers requester ownership, comments, resolution, and Staff collaboration 
   test.setTimeout(90_000);
   await page.goto("/");
   await signIn(page, "e2e.requester.a@example.com");
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expect(page.getByRole("heading", { name: "Create Ticket" })).toBeVisible();
@@ -58,6 +59,7 @@ test("covers requester ownership, comments, resolution, and Staff collaboration 
   await expect(page.getByText("Attachments uploaded: 1/1.")).toBeVisible();
   await expect(page.getByText(created.ticketNumber)).toBeVisible();
 
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   const ticketRow = page.getByRole("row").filter({ hasText: summary });
@@ -113,6 +115,7 @@ test("covers requester ownership, comments, resolution, and Staff collaboration 
 
   await logout(page);
   await signIn(page, "e2e.requester.b@example.com");
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await expect(page.getByText(summary)).toHaveCount(0);
 
@@ -150,6 +153,7 @@ test("covers requester ownership, comments, resolution, and Staff collaboration 
 
   await logout(page);
   await signIn(page, "e2e.requester.a@example.com");
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await page.getByLabel("Search Tickets").fill(summary);
   const requesterListPromise = page.waitForResponse((response) =>
     response.url().includes("/api/tickets?") && response.request().method() === "GET",

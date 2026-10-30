@@ -66,7 +66,9 @@ describe("Authenticated application shell", () => {
 
     expect(await screen.findByText("Ari Suksan")).toBeInTheDocument();
     expect(screen.getByText("REQUESTER")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
+    // Lab 4: Requesters start on the Dashboard; My Tickets stays in the navigation.
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "My Tickets" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "Create Ticket" })).toBeInTheDocument();
     expect(screen.queryByLabelText(/Choose a Development Requester/)).not.toBeInTheDocument();
     expect(screen.queryByText(/passwordHash/i)).not.toBeInTheDocument();

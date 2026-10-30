@@ -135,6 +135,7 @@ test("E2E-01 records Actions by different staff, runs the lifecycle and shows th
 
   // The Requester sees both Actions read-only; another Requester cannot read or write them.
   await signIn(page, requesterA);
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await page.getByRole("row").filter({ hasText: summary }).getByRole("button", { name: "View details" }).click();
   await expect(page.getByRole("heading", { name: "Actions Taken" })).toBeVisible();

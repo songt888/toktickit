@@ -10,7 +10,9 @@ import {
   TicketListOptions,
   TicketPriority,
   TicketListResponse,
+  TicketStatus,
 } from "./api.js";
+import type { TicketScope } from "./RequesterDashboard.js";
 
 type PageState = "loading" | "success" | "error";
 
@@ -19,7 +21,7 @@ type FilterDraft = {
   categoryId: string;
   relatedSystemId: string;
   requestedPriority: "" | TicketPriority;
-  currentStatus: "" | "NEW";
+  currentStatus: "" | TicketStatus;
   sort: NonNullable<TicketListOptions["sort"]>;
   order: NonNullable<TicketListOptions["order"]>;
   pageSize: 10 | 25 | 50;
@@ -37,6 +39,7 @@ const defaultDraft: FilterDraft = {
 };
 
 const priorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+const statuses: TicketStatus[] = ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "RESOLVED", "CLOSED", "REOPENED", "CANCELLED"];
 
 function optionsFromDraft(draft: FilterDraft, page = 1): TicketListOptions {
   return {
@@ -61,11 +64,15 @@ export interface MyTicketsProps {
   onCreateTicket: () => void;
   onOpenTicket: (ticketId: number) => void;
   visible?: boolean;
+  // Set when opened from a Dashboard card; its filter is applied exactly until the user changes filters.
+  initialScope?: TicketScope | null;
 }
 
-export default function MyTickets({ requester, onCreateTicket, onOpenTicket, visible = true }: MyTicketsProps) {
-  const [draft, setDraft] = useState<FilterDraft>(defaultDraft);
-  const [filters, setFilters] = useState<TicketListOptions>(optionsFromDraft(defaultDraft));
+export default function MyTickets({ requester, onCreateTicket, onOpenTicket, visible = true, initialScope = null }: MyTicketsProps) {
+  const initialDraft: FilterDraft = { ...defaultDraft, currentStatus: initialScope?.filter.currentStatus ?? "" };
+  const [scope, setScope] = useState<TicketScope | null>(initialScope);
+  const [draft, setDraft] = useState<FilterDraft>(initialDraft);
+  const [filters, setFilters] = useState<TicketListOptions>({ ...optionsFromDraft(defaultDraft), ...initialScope?.filter });
   const [categories, setCategories] = useState<Category[]>([]);
   const [relatedSystems, setRelatedSystems] = useState<RelatedSystem[]>([]);
   const [result, setResult] = useState<TicketListResponse | null>(null);
@@ -143,10 +150,12 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setScope(null);
     setFilters(optionsFromDraft(draft));
   }
 
   function clearFilters() {
+    setScope(null);
     setDraft(defaultDraft);
     setFilters(optionsFromDraft(defaultDraft));
   }
@@ -161,6 +170,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
   }
 
   const hasFilters = Boolean(
+    scope ||
     filters.search ||
       filters.categoryId ||
       filters.relatedSystemId ||
@@ -225,6 +235,13 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
           </button>
         </div>
 
+        {scope && (
+          <div className="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2" role="status">
+            <span>Showing Dashboard filter: <strong>{scope.label}</strong></span>
+            <button className="btn btn-sm btn-outline-success" type="button" onClick={clearFilters}>Clear Dashboard filter</button>
+          </div>
+        )}
+
         <form className="border rounded p-3 mb-4 bg-light" onSubmit={applyFilters}>
           <div className="row g-3">
             <div className="col-12">
@@ -287,7 +304,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
                 onChange={(event) => updateDraft("currentStatus", event.target.value)}
               >
                 <option value="">All statuses</option>
-                <option value="NEW">NEW</option>
+                {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </div>
             <div className="col-md-4">

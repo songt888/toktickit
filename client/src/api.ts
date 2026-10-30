@@ -239,7 +239,13 @@ export interface TicketListOptions {
   categoryId?: number;
   relatedSystemId?: number;
   requestedPriority?: TicketPriority;
-  currentStatus?: "NEW";
+  currentStatus?: TicketStatus;
+  // Lab 4 Dashboard drill-down (api-spec section 6); dates are the Dashboard's returned ISO values.
+  statusGroup?: "active" | "resolved";
+  updatedFrom?: string;
+  updatedTo?: string;
+  resolvedFrom?: string;
+  resolvedTo?: string;
   sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority";
   order?: "asc" | "desc";
   page?: number;
@@ -723,4 +729,30 @@ export async function writeActionTaken(
   });
   if (!response.ok) throw await authError(response, "Unable to save the Action.");
   return (await response.json()) as ActionWriteResponse;
+}
+
+// Lab 4 Requester Dashboard (api-spec section 5).
+export interface DashboardTicket {
+  id: number;
+  ticketNumber: string;
+  summary: string;
+  currentStatus: TicketStatus;
+  itPriority: TicketPriority;
+  owner: { id: number; name: string } | null;
+  updatedAt: string;
+  lastResolvedAt: string | null;
+}
+
+export interface RequesterDashboardData {
+  asOf: string;
+  recentFrom: string;
+  displayTimeZone: string;
+  metrics: { openTickets: number; waitingForRequester: number; recentlyResolved: number };
+  recentTickets: DashboardTicket[];
+}
+
+export async function getRequesterDashboard(): Promise<RequesterDashboardData> {
+  const response = await fetch(`${API_URL}/api/dashboard/requester`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Dashboard.");
+  return (await response.json()) as RequesterDashboardData;
 }

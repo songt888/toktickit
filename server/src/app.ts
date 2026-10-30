@@ -24,6 +24,7 @@ import { getPrisma } from "./prisma.js";
 import { wouldRemoveLastActiveAdministrator } from "./adminUserRules.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
 import { registerActionRoutes } from "./actionsTaken.js";
+import { registerDashboardRoutes } from "./dashboard.js";
 import { readResolutionGate, type ResolutionGate } from "./resolutionGate.js";
 import {
   isPermittedStatusTransition,
@@ -1605,5 +1606,6 @@ app.get("/api/categories", async (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 registerActionRoutes(app);
+registerDashboardRoutes(app);
 
 export default app;

@@ -23,6 +23,7 @@ import {
 import { getPrisma } from "./prisma.js";
 import { wouldRemoveLastActiveAdministrator } from "./adminUserRules.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
+import { registerActionRoutes } from "./actionsTaken.js";
 import {
   isPermittedStatusTransition,
   permittedStatusTransitions,
@@ -1567,5 +1568,7 @@ app.get("/api/categories", async (_req: Request, res: Response) => {
   }
 });
 // ---------------------------------------------------------------------------
+
+registerActionRoutes(app);
 
 export default app;

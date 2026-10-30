@@ -1,7 +1,7 @@
 # Lab 4 Test DD and Traceability Plan
 
-Status: DB-01 to DB-03 are **Pass** from Issue #66 (`npm test` in `server`); every other row stays
-**Planned** until its test runs.
+Status: rows marked **Pass** ran green with `npm test` in `server` (DB rows in Issue #66, Action
+rows in Issue #67); **Partial** rows say what is still owed; every other row stays **Planned**.
 Do not copy Lab 3 totals or claim unimplemented test paths already exist.
 The specification's AC table and this matrix must agree in both directions.
 
@@ -36,26 +36,26 @@ implementation Issues. All IDs are local to Lab 4; none is an executed result.
 
 | Test ID | Type | AC | What it tests / expected result | Automated test file | Final |
 |---|---|---|---|---|---|
-| UNIT-01 | Unit | AC-02 | Length/date/offset/protected-field/follow-up boundaries; literal text accepted, invalid input rejected | `server/tests/lab-04/action-validation.test.ts` | Planned |
-| UNIT-02 | Unit | AC-04 | Hard-coded Action transition pairs and terminal edit/cancel/completion rules | `server/tests/lab-04/action-status-transition.test.ts` | Planned |
+| UNIT-01 | Unit | AC-02 | Length/date/offset/protected-field/follow-up boundaries; literal text accepted, invalid input rejected | `server/tests/lab-04/action-validation.test.ts` | Pass |
+| UNIT-02 | Unit | AC-04 | Hard-coded Action transition pairs and terminal edit/cancel/completion rules | `server/tests/lab-04/action-status-transition.test.ts` | Pass |
 | UNIT-03 | Unit | AC-08 | All 64 Ticket pairs against independent expected pairs and confirmations | `server/tests/lab-04/status-transition.test.ts` | Planned |
 | UNIT-04 | Unit | AC-09 | Gate truth table: zero, all-cancelled, pending, follow-up, mixed completed/cancelled, advisory independence | `server/tests/lab-04/resolution-gate.test.ts` | Planned |
 | UNIT-05 | Unit | AC-14 | Inclusive UTC rolling bounds, Bangkok display conversion, null legacy resolution time | `server/tests/lab-04/dashboard-dates.test.ts` | Planned |
-| API-01 | API | AC-01 | Staff/Admin create: Ticket/session performer/default or chosen eligible assignee, PLANNED, owner unchanged, initial revision | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-02 | API | AC-02 | Full create/merged-patch field validation, no write on error, Unicode/literal text and date boundaries | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-03 | API | AC-03 | Default/valid/reassigned eligible users; inactive/Requester/null rejection; deactivated historical identity readable | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-04 | API | AC-04 | Start/complete/cancel, required result/reason/confirm, no-op and invalid pairs, resolved/closed/cancelled parent lock | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-05 | API | AC-05 | Descriptive/completed follow-up corrections append exactly one snapshot; no cancelled edits or history DELETE/PATCH | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-06 | API | AC-07 | Equal action/event dates, revisions, paging/counts and max page sizes have deterministic order | `server/tests/lab-04/action-history.api.test.ts` | Planned |
+| API-01 | API | AC-01 | Staff/Admin create: Ticket/session performer/default or chosen eligible assignee, PLANNED, owner unchanged, initial revision | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-02 | API | AC-02 | Full create/merged-patch field validation, no write on error, Unicode/literal text and date boundaries | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-03 | API | AC-03 | Default/valid/reassigned eligible users; inactive/Requester/null rejection; deactivated historical identity readable | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-04 | API | AC-04 | Start/complete/cancel, required result/reason/confirm, no-op and invalid pairs, resolved/closed/cancelled parent lock | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-05 | API | AC-05 | Descriptive/completed follow-up corrections append exactly one snapshot; no cancelled edits or history DELETE/PATCH | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-06 | API | AC-07 | Equal action/event dates, revisions, paging/counts and max page sizes have deterministic order | `server/tests/lab-04/action-history.api.test.ts` | Pass |
 | API-07 | API | AC-08 | Direct status calls for allowed/forbidden pairs and confirmations; one event only on success | `server/tests/lab-04/ticket-workflow.api.test.ts` | Planned |
 | API-08 | API | AC-09, AC-12 | Direct backend gate, advisory isolation, legacy resolved/closed grandfathering and reopened zero-Action gate | `server/tests/lab-04/ticket-workflow.api.test.ts` | Planned |
-| API-09 | API | AC-10 | Stale Action/Ticket versions, monotonic timestamps and injected failure rollback preserve projection/revision/event consistency | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| API-10 | API | AC-11 | Lost-response replay of create/edit/assignment/status; exact stored result; payload/route mismatch safe 409 | `server/tests/lab-04/actions-taken.api.test.ts` | Planned |
-| AUTH-01 | Authorization | AC-06, AC-21 | Missing/password-gated/inactive sessions; owning Requester reads all shared work, own write 403, cross-owner 404, no secret/private fields | `server/tests/lab-04/authorization.api.test.ts` | Planned |
+| API-09 | API | AC-10 | Stale Action/Ticket versions, monotonic timestamps and injected failure rollback preserve projection/revision/event consistency | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| API-10 | API | AC-11 | Lost-response replay of create/edit/assignment/status; exact stored result; payload/route mismatch safe 409 | `server/tests/lab-04/actions-taken.api.test.ts` | Pass |
+| AUTH-01 | Authorization | AC-06, AC-21 | Missing/password-gated/inactive sessions; owning Requester reads all shared work, own write 403, cross-owner 404, no secret/private fields | `server/tests/lab-04/authorization.api.test.ts` | Partial: Action endpoints pass; Dashboard scope in #70/#71 |
 | AUTH-02 | Authorization | AC-14, AC-15, AC-21 | Requester scope forgery rejected, Staff/Admin-only Dashboard/myActions; session-derived assignment and ownership | `server/tests/lab-04/authorization.api.test.ts` | Planned |
-| CONC-01 | Concurrency | AC-10 | Barrier-controlled Action-create/edit/follow-up vs Resolve and competing owner/priority/status/advisory writes; one valid serialized outcome, no partial commits | `server/tests/lab-04/concurrency.api.test.ts` | Planned |
-| CONC-02 | Concurrency | AC-03 | User deactivate/demote races create/reassign/start/complete; locks/rechecks prevent invalid fresh assignment or authorization | `server/tests/lab-04/concurrency.api.test.ts` | Planned |
-| CONC-03 | Concurrency | AC-11 | Concurrent same mutationId exactly once; cross-Ticket same actor/id reuse cannot commit two commands | `server/tests/lab-04/concurrency.api.test.ts` | Planned |
+| CONC-01 | Concurrency | AC-10 | Barrier-controlled Action-create/edit/follow-up vs Resolve and competing owner/priority/status/advisory writes; one valid serialized outcome, no partial commits | `server/tests/lab-04/concurrency.api.test.ts` | Partial: Action/edit/owner races pass; Resolve race in #69 |
+| CONC-02 | Concurrency | AC-03 | User deactivate/demote races create/reassign/start/complete; locks/rechecks prevent invalid fresh assignment or authorization | `server/tests/lab-04/concurrency.api.test.ts` | Pass |
+| CONC-03 | Concurrency | AC-11 | Concurrent same mutationId exactly once; cross-Ticket same actor/id reuse cannot commit two commands | `server/tests/lab-04/concurrency.api.test.ts` | Pass |
 | DB-01 | Integration | AC-05 | FKs, checks, unique versions/mutation ids, identity guards, projection-without-matching-revision commit rejection and SQL UPDATE/DELETE history rejection | `server/tests/lab-04/data-foundation.test.ts` | Pass |
 | DB-02 | Migration/recovery | AC-12 | Isolated populated Lab 3 upgrade, old row/file/hash/timestamp/sequence preservation, no invented backfill, backup restore and forward repair | `server/tests/lab-04/migration-preservation.test.ts` | Pass |
 | DB-03 | Seed | AC-13 | Required status/priority/ownership/Action/empty fixtures, two reruns, unchanged real credentials/work/timestamps and no duplicate histories | `server/tests/lab-04/seed.test.ts` | Pass |

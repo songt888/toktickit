@@ -1,4 +1,4 @@
-// Prisma schema — Lab 4 Actions Taken and Status History foundation.
+// Prisma schema: Lab 4 Actions Taken and Status History foundation.
 // Your DATABASE_URL lives in server/.env (copy it from .env.example).
 
 generator client {

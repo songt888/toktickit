@@ -21,6 +21,8 @@ type ActionSeed = {
   followUpNote?: string;
   attachmentNotes?: string;
   cancellationReason?: string;
+  // Status after whose event this Action was recorded; default is the first move.
+  after?: TicketStatus;
 };
 
 type TicketSeed = {
@@ -32,6 +34,8 @@ type TicketSeed = {
   // Permitted-transition path after creation (spec section 4 matrix).
   path: TicketStatus[];
   actions: ActionSeed[];
+  // Age of the Ticket at first seed; default 5 days keeps resolutions inside the 7-day window.
+  daysAgo?: number;
 };
 
 const ari = "ari.suksan@example.com";
@@ -77,14 +81,14 @@ export const lab4Tickets: TicketSeed[] = [
     ],
   },
   {
-    number: "TKT-20261020-910007", requester: mali, owner: staff2, summary: "Monitor flicker", priority: "LOW", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"],
+    number: "TKT-20261020-910007", requester: mali, owner: staff2, summary: "Monitor flicker", priority: "LOW", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"], daysAgo: 12,
     actions: [{ status: "COMPLETED", performer: staff2, assignee: staff2, description: "Swap the cable.", result: "Flicker gone." }],
   },
   {
     number: "TKT-20261020-910008", requester: narin, owner: staff3, summary: "Badge reader offline", priority: "URGENT", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "REOPENED"],
     actions: [
       { status: "COMPLETED", performer: staff3, assignee: staff3, description: "Replace the reader power supply.", result: "Reader online." },
-      { status: "PLANNED", performer: staff3, assignee: staff1, description: "Re-check after the failure returned." },
+      { status: "PLANNED", performer: staff3, assignee: staff1, description: "Re-check after the failure returned.", after: "REOPENED" },
     ],
   },
   { number: "TKT-20261020-910009", requester: ari, owner: null, summary: "Duplicate request", priority: "MEDIUM", path: ["CANCELLED"], actions: [] },
@@ -132,19 +136,24 @@ export async function seedLab4Data(database: PrismaClient) {
         return user;
       };
 
-      const base = Date.UTC(2026, 9, 20, 2, 0, 0);
-      const at = (hours: number) => new Date(base + hours * 3_600_000);
+      // Relative to now so recent-resolution dashboards have real data; reruns skip existing Tickets.
+      const now = Date.now();
 
-      for (const [index, t] of lab4Tickets.entries()) {
+      for (const t of lab4Tickets) {
         if (await tx.ticket.findUnique({ where: { ticketNumber: t.number } })) continue;
 
         const requester = need(t.requester);
         const owner = t.owner ? need(t.owner) : null;
         const actor = owner ?? need(staff1);
-        const created = at(index);
+        const start = now - (t.daysAgo ?? 5) * 86_400_000;
+        const created = new Date(start);
         const path: TicketStatus[] = ["NEW", ...t.path];
-        const times = path.map((_, step) => at(index + step + 1));
-        const lastTime = times[times.length - 1];
+        const times = path.map((_, step) => new Date(start + (step + 1) * 3_600_000));
+        // Each Action is stamped just after the status event it follows (BR-13 history).
+        const stamps = t.actions.map(
+          (a, n) => new Date(times[a.after ? path.lastIndexOf(a.after) : 1].getTime() + (n + 1) * 600_000),
+        );
+        const lastTime = new Date(Math.max(times[times.length - 1].getTime(), ...stamps.map((d) => d.getTime())));
         const resolved = path.lastIndexOf("RESOLVED");
 
         const ticket = await tx.ticket.create({
@@ -179,7 +188,7 @@ export async function seedLab4Data(database: PrismaClient) {
         for (const [n, a] of t.actions.entries()) {
           const performer = need(a.performer);
           const assignee = need(a.assignee);
-          const stamp = at(index + n + 1);
+          const stamp = stamps[n];
           const row = {
             ticketId: ticket.id,
             performedById: performer.id,

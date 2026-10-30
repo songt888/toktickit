@@ -26,6 +26,11 @@ describe("Action and status history ordering (API-06)", () => {
     expect(page1.body.pagination).toEqual({ page: 1, pageSize: 10, totalItems: 13, totalPages: 2 });
     expect([...page1.body.items, ...page2.body.items].map((a: { id: number }) => a.id)).toEqual([earlier, ...ids]);
     expect(page1.body.ticketUpdatedAt).toBe(await ticketStamp(ticket.id));
+    for (const pageSize of [25, 50]) {
+      const all = await send("get", `/api/tickets/${ticket.id}/actions-taken?pageSize=${pageSize}`, staff.cookie);
+      expect(all.body.pagination).toEqual({ page: 1, pageSize, totalItems: 13, totalPages: 1 });
+      expect(all.body.items.map((a: { id: number }) => a.id)).toEqual([earlier, ...ids]);
+    }
     const beyond = await send("get", `/api/tickets/${ticket.id}/actions-taken?page=5`, staff.cookie);
     expect(beyond.body.items).toEqual([]);
 
@@ -41,7 +46,7 @@ describe("Action and status history ordering (API-06)", () => {
   it("lists revisions by version with the historical actor name and no internal keys", async () => {
     const ticket = await world.ticket(requester.id);
     const { action } = await createAction(ticket.id, staff.cookie);
-    for (const description of ["First edit", "Second edit"]) {
+    for (const description of ["First edit", "Second edit", ...Array.from({ length: 10 }, (_, i) => `Edit ${i}`)]) {
       const row = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
       await send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}`, staff.cookie, {
         mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: row.version, description,
@@ -49,7 +54,12 @@ describe("Action and status history ordering (API-06)", () => {
     }
     const response = await send("get", `/api/tickets/${ticket.id}/actions-taken/${action.id}/revisions`, requester.cookie);
     expect(response.status).toBe(200);
-    expect(response.body.items.map((r: { version: number; operation: string }) => [r.version, r.operation])).toEqual([[1, "CREATE"], [2, "EDIT"], [3, "EDIT"]]);
+    expect(response.body.pagination).toEqual({ page: 1, pageSize: 10, totalItems: 13, totalPages: 2 });
+    expect(response.body.items.slice(0, 3).map((r: { version: number; operation: string }) => [r.version, r.operation])).toEqual([[1, "CREATE"], [2, "EDIT"], [3, "EDIT"]]);
+    const rest = await send("get", `/api/tickets/${ticket.id}/actions-taken/${action.id}/revisions?page=2&pageSize=10`, requester.cookie);
+    expect(rest.body.items.map((r: { version: number }) => r.version)).toEqual([11, 12, 13]);
+    const max = await send("get", `/api/tickets/${ticket.id}/actions-taken/${action.id}/revisions?pageSize=50`, requester.cookie);
+    expect(max.body.items.map((r: { version: number }) => r.version)).toEqual(Array.from({ length: 13 }, (_, i) => i + 1));
     expect(response.body.items[2].snapshot.description).toBe("Second edit");
     expect(response.body.items[0].actor).toEqual({ id: staff.id, name: expect.any(String) });
     expect(JSON.stringify(response.body)).not.toMatch(/mutationId|requestHash|actorName|email/);

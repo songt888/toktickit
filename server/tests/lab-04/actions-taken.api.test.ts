@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import request from "supertest";
+import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { createAction, createBody, createWorld, iso, send, ticketStamp } from "./actionFixtures.js";
 
@@ -177,6 +179,19 @@ describe("Actions Taken API", () => {
 
     const revisions = await prisma.actionTakenRevision.findMany({ where: { actionId: action.id }, orderBy: { version: "asc" } });
     expect(revisions.map((r) => [r.version, r.operation])).toEqual([[1, "CREATE"], [2, "EDIT"], [3, "EDIT"], [4, "STATUS"], [5, "EDIT"]]);
+
+    // No route can delete or rewrite an Action, its revisions or status history.
+    for (const [method, url] of [
+      ["delete", path(ticket.id, `/${action.id}`)],
+      ["delete", path(ticket.id, `/${action.id}/revisions`)],
+      ["patch", path(ticket.id, `/${action.id}/revisions/1`)],
+      ["delete", path(ticket.id, `/${action.id}/revisions/1`)],
+      ["delete", `/api/tickets/${ticket.id}/status-history`],
+      ["patch", `/api/tickets/${ticket.id}/status-history/1`],
+    ] as const) {
+      expect((await request(app)[method](url).set("Cookie", admin.cookie).send({ description: "x" })).status, `${method} ${url}`).toBe(404);
+    }
+    expect(await prisma.actionTakenRevision.count({ where: { actionId: action.id } })).toBe(5);
     expect(revisions.map((r) => r.actorId)).toEqual([staff.id, staffB.id, staffB.id, staff.id, staffB.id]);
   });
 
@@ -193,6 +208,23 @@ describe("Actions Taken API", () => {
     });
     expect(staleVersion.body.code).toBe("STALE_STATE");
     expect(await counts(ticket.id)).toEqual(before);
+
+    // Inject a failure at the revision insert, after the projection and Ticket timestamp were written.
+    const realTransaction = prisma.$transaction.bind(prisma) as (...args: unknown[]) => Promise<unknown>;
+    vi.spyOn(prisma, "$transaction").mockImplementationOnce(((work: (tx: unknown) => Promise<unknown>, options: unknown) =>
+      realTransaction(async (tx: Record<string, unknown>) => work(new Proxy(tx, {
+        get: (target, key) => key === "actionTakenRevision"
+          ? { ...(target.actionTakenRevision as object), create: async () => { throw new Error("injected failure"); } }
+          : target[key as string],
+      })), options)) as never);
+    const failed = await send("patch", path(ticket.id, `/${first.action.id}`), staff.cookie, {
+      ...(await current(ticket.id, first.action.id)), description: "Never saved",
+    });
+    vi.restoreAllMocks();
+    expect(failed.status).toBe(500);
+    expect(JSON.stringify(failed.body)).not.toMatch(/injected|prisma|stack/i);
+    expect(await counts(ticket.id)).toEqual(before);
+    expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: first.action.id } })).description).not.toBe("Never saved");
 
     const stamps: number[] = [new Date(first.ticketUpdatedAt).getTime()];
     for (let i = 0; i < 3; i++) stamps.push(new Date((await createAction(ticket.id, staff.cookie)).ticketUpdatedAt).getTime());
@@ -214,6 +246,15 @@ describe("Actions Taken API", () => {
     const lateRetry = await send("patch", path(ticket.id, `/${first.body.action.id}`), staff.cookie, editBody);
     expect(lateRetry.status).toBe(200);
     expect(lateRetry.body.action).toEqual(edited.body.action);
+
+    for (const [rest, extra] of [["/assignee", { assigneeId: staffB.id }], ["/status", { status: "IN_PROGRESS" }]] as const) {
+      const command = { ...(await current(ticket.id, first.body.action.id)), ...extra };
+      const done = await send("patch", path(ticket.id, `/${first.body.action.id}${rest}`), staff.cookie, command);
+      const again = await send("patch", path(ticket.id, `/${first.body.action.id}${rest}`), staff.cookie, command);
+      expect([done.status, again.status], rest).toEqual([200, 200]);
+      expect(again.body).toEqual({ ...done.body, replayed: true });
+    }
+    expect(await prisma.actionTakenRevision.count({ where: { actionId: first.body.action.id } })).toBe(5);
 
     const reused = await send("post", path(ticket.id), staff.cookie, { ...body, description: "Different work" });
     expect(reused.status).toBe(409);

@@ -61,29 +61,59 @@ describe("Actions Taken concurrency", () => {
     expect(revisions).toBe(actions + 1);
   });
 
-  it("CONC-02 never commits a fresh assignment to a user deactivated first", async () => {
-    for (let round = 0; round < 4; round++) {
-      const ticket = await world.ticket(requester.id);
-      const target = await world.user(`target-${round}`, "IT_STAFF");
-      const { action } = await createAction(ticket.id, staff.cookie);
-      const body = { mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: 1, assigneeId: target.id };
-      const [assign, deactivate] = await Promise.all([
-        send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}/assignee`, staff.cookie, body),
-        send("patch", `/api/admin/users/${target.id}`, admin.cookie, { isActive: false }),
-      ]);
-      expect(deactivate.status).toBe(200);
-      expect([200, 400]).toContain(assign.status);
-      if (assign.status === 200) {
-        // Prisma stamps updatedAt before the admin UPDATE waits on our row lock, so timestamps
-        // cannot order the two; the snapshot taken under the lock shows the assignee was active.
-        const revision = await prisma.actionTakenRevision.findFirstOrThrow({ where: { actionId: action.id, operation: "ASSIGN" } });
-        expect((revision.snapshot as { assignee: { id: number; isActive: boolean } }).assignee).toMatchObject({ id: target.id, isActive: true });
+  it("CONC-02 never commits a fresh assignment, create or completion for a user deactivated or demoted first", async () => {
+    const eligibility = "Choose an active IT Staff member or Administrator.";
+    type Race = { name: string; userChange: Record<string, unknown> };
+    const races: Race[] = [
+      { name: "assign vs deactivate", userChange: { isActive: false } },
+      { name: "create vs demote", userChange: { role: "REQUESTER" } },
+      { name: "complete vs deactivate", userChange: { isActive: false } },
+    ];
+    for (const race of races) {
+      for (let round = 0; round < 3; round++) {
+        const ticket = await world.ticket(requester.id);
+        const target = await world.user(`target-${races.indexOf(race)}-${round}`, "IT_STAFF");
+        // Complete needs the target already assigned; the other races assign it in the racing write.
+        const seeded = race.name.startsWith("complete") ? (await createAction(ticket.id, staff.cookie, { assigneeId: target.id })).action : null;
+        const write = async () => {
+          const stamp = await ticketStamp(ticket.id);
+          if (race.name.startsWith("create")) {
+            return send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(stamp, { assigneeId: target.id }));
+          }
+          if (seeded) {
+            return send("patch", `/api/tickets/${ticket.id}/actions-taken/${seeded.id}/status`, staff.cookie, {
+              mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1, status: "COMPLETED", result: "Done",
+            });
+          }
+          const { action } = await createAction(ticket.id, staff.cookie);
+          return send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}/assignee`, staff.cookie, {
+            mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: 1, assigneeId: target.id,
+          });
+        };
+        const [result, change] = await Promise.all([write(), send("patch", `/api/admin/users/${target.id}`, admin.cookie, race.userChange)]);
+        expect(change.status, race.name).toBe(200);
+        if (result.status < 300) {
+          // The snapshot is read under the User lock, so it shows the assignee as it was at commit.
+          expect(result.body.action.assignee, race.name).toMatchObject({ id: target.id, isActive: true, role: "IT_STAFF" });
+        } else {
+          expect([result.status, result.body.fieldErrors?.assigneeId], race.name).toEqual([400, eligibility]);
+        }
+        const [actions, revisions] = await Promise.all([
+          prisma.actionTaken.count({ where: { ticketId: ticket.id } }),
+          prisma.actionTakenRevision.count({ where: { action: { ticketId: ticket.id } } }),
+        ]);
+        expect(revisions, race.name).toBeGreaterThanOrEqual(actions);
       }
-      const afterwards = await send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}/assignee`, staff.cookie, {
-        mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id),
-        version: (await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).version, assigneeId: target.id,
-      });
-      expect(afterwards.status).toBe(400);
     }
+
+    // Once the change has committed, a fresh write naming that user fails for eligibility, not a duplicate.
+    const ticket = await world.ticket(requester.id);
+    const gone = await world.user("gone", "IT_STAFF");
+    await send("patch", `/api/admin/users/${gone.id}`, admin.cookie, { isActive: false });
+    const { action } = await createAction(ticket.id, staff.cookie);
+    const late = await send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}/assignee`, staff.cookie, {
+      mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: 1, assigneeId: gone.id,
+    });
+    expect([late.status, late.body.fieldErrors?.assigneeId]).toEqual([400, eligibility]);
   });
 });

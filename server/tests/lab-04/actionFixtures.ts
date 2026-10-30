@@ -62,7 +62,10 @@ export async function createWorld(label: string) {
       .catch(() => undefined);
   }
 
-  return { user, ticket, cleanup };
+  // Tickets created through the API are registered for cleanup here.
+  const track = (ticketId: number) => ticketIds.push(ticketId);
+
+  return { user, ticket, track, cleanup };
 }
 
 export const iso = (date: Date) => date.toISOString();
@@ -92,4 +95,18 @@ export async function createAction(ticketId: number, cookie: string, extra: Reco
   const response = await send("post", `/api/tickets/${ticketId}/actions-taken`, cookie, createBody(await ticketStamp(ticketId), extra));
   if (response.status !== 201) throw new Error(`create failed: ${response.status} ${JSON.stringify(response.body)}`);
   return response.body as { action: { id: number; version: number; status: string }; ticketUpdatedAt: string };
+}
+
+// A completed, settled Action, so the resolution gate passes.
+export async function completedAction(ticketId: number, cookie: string, extra: Record<string, unknown> = {}) {
+  const { action } = await createAction(ticketId, cookie);
+  const response = await send("patch", `/api/tickets/${ticketId}/actions-taken/${action.id}/status`, cookie, {
+    mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticketId), version: action.version, status: "COMPLETED", result: "Work done", ...extra,
+  });
+  if (response.status !== 200) throw new Error(`complete failed: ${response.status} ${JSON.stringify(response.body)}`);
+  return response.body.action as { id: number; version: number };
+}
+
+export function moveTicket(ticketId: number, cookie: string, status: string, updatedAt: string, confirm?: boolean) {
+  return send("patch", `/api/staff/tickets/${ticketId}/status`, cookie, { status, updatedAt, ...(confirm === undefined ? {} : { confirm }) });
 }

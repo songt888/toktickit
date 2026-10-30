@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { TicketPriority, UserRole } from "@prisma/client";
+import { Prisma, TicketPriority, UserRole } from "@prisma/client";
 import type { TicketStatus } from "@prisma/client";
 import multer, { MulterError } from "multer";
 import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from "./password.js";
@@ -24,6 +24,7 @@ import { getPrisma } from "./prisma.js";
 import { wouldRemoveLastActiveAdministrator } from "./adminUserRules.js";
 import { getNextTicketNumber } from "./ticketNumber.js";
 import { registerActionRoutes } from "./actionsTaken.js";
+import { readResolutionGate, type ResolutionGate } from "./resolutionGate.js";
 import {
   isPermittedStatusTransition,
   permittedStatusTransitions,
@@ -562,7 +563,7 @@ app.post("/api/tickets", requireRole("REQUESTER"), async (req: Request, res: Res
       const ticketDate = new Date();
       const ticketNumber = await getNextTicketNumber(transaction, ticketDate);
 
-      return transaction.ticket.create({
+      const created = await transaction.ticket.create({
         data: {
           ticketNumber,
           ticketDate,
@@ -589,6 +590,11 @@ app.post("/api/tickets", requireRole("REQUESTER"), async (req: Request, res: Res
           currentStatus: true,
         },
       });
+      // Lab 4 status history starts with the creation event, written with the Ticket.
+      await transaction.ticketStatusEvent.create({
+        data: { ticketId: created.id, actorId: requesterId, fromStatus: null, toStatus: "NEW", createdAt: ticketDate },
+      });
+      return created;
     });
 
     res.status(201).json(ticket);
@@ -694,6 +700,7 @@ app.get("/api/tickets/:id", requireRole("REQUESTER"), async (req: Request, res: 
         currentStatus: true,
         problemAppearsResolved: true,
         problemAppearsResolvedAt: true,
+        lastResolvedAt: true,
         createdAt: true,
         updatedAt: true,
         requester: { select: { id: true, name: true, email: true } },
@@ -763,6 +770,7 @@ const staffMutationSelect = {
   itPriority: true,
   currentStatus: true,
   problemAppearsResolved: true,
+  lastResolvedAt: true,
   updatedAt: true,
   owner: { select: { id: true, name: true, email: true, role: true } },
 } as const;
@@ -777,7 +785,8 @@ type StaffTicketMutation = {
 
 type StaffTicketMutationResult =
   | { kind: "updated"; ticket: Awaited<ReturnType<typeof readStaffTicketMutation>> }
-  | { kind: "missing" | "stale" | "invalid-owner" | "invalid-transition" };
+  | { kind: "gate-failed"; gate: ResolutionGate }
+  | { kind: "missing" | "stale" | "invalid-owner" | "invalid-transition" | "unauthenticated" | "forbidden" };
 
 async function readStaffTicketMutation(ticketId: number) {
   return getPrisma().ticket.findUnique({
@@ -786,44 +795,52 @@ async function readStaffTicketMutation(ticketId: number) {
   });
 }
 
+// Lab 4 BR-15/BR-16: lock the Ticket, then the involved Users by id, recheck the actor,
+// and append a status event (plus the resolution gate) in the same transaction.
 async function persistStaffTicketMutation(
   ticketId: number,
+  actorId: number,
   expectedUpdatedAt: Date,
   mutation: StaffTicketMutation,
 ): Promise<StaffTicketMutationResult> {
   return getPrisma().$transaction(async (transaction) => {
-    const current = await transaction.ticket.findUnique({
-      where: { id: ticketId },
-      select: { id: true, updatedAt: true, currentStatus: true },
-    });
+    const [current] = await transaction.$queryRaw<Array<{ id: number; updatedAt: Date; currentStatus: TicketStatus }>>`
+      SELECT id, "updatedAt", "currentStatus" FROM "Ticket" WHERE id = ${ticketId} FOR UPDATE`;
     if (!current) return { kind: "missing" };
+
+    const userIds = [...new Set([actorId, ...(typeof mutation.ownerId === "number" ? [mutation.ownerId] : [])])].sort((x, y) => x - y);
+    const users = await transaction.$queryRaw<Array<{ id: number; role: string; isActive: boolean }>>`
+      SELECT id, role::text AS role, "isActive" FROM "User" WHERE id IN (${Prisma.join(userIds)}) ORDER BY id FOR UPDATE`;
+    const operational = (id: number) => {
+      const user = users.find((row) => row.id === id);
+      return Boolean(user?.isActive && (user.role === "IT_STAFF" || user.role === "ADMINISTRATOR"));
+    };
+    const actor = users.find((row) => row.id === actorId);
+    if (!actor?.isActive) return { kind: "unauthenticated" };
+    if (!operational(actorId)) return { kind: "forbidden" };
+
     if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) return { kind: "stale" };
+    if (typeof mutation.ownerId === "number" && !operational(mutation.ownerId)) return { kind: "invalid-owner" };
 
-    if (typeof mutation.ownerId === "number") {
-      const eligibleOwner = await transaction.user.findFirst({
-        where: {
-          id: mutation.ownerId,
-          isActive: true,
-          role: { in: ["IT_STAFF", "ADMINISTRATOR"] },
-        },
-        select: { id: true },
-      });
-      if (!eligibleOwner) return { kind: "invalid-owner" };
-    }
-
-    if (
-      mutation.currentStatus &&
-      !isPermittedStatusTransition(current.currentStatus, mutation.currentStatus)
-    ) {
+    const nextStatus = mutation.currentStatus;
+    if (nextStatus && !isPermittedStatusTransition(current.currentStatus, nextStatus)) {
       return { kind: "invalid-transition" };
+    }
+    if (nextStatus === "RESOLVED") {
+      const gate = await readResolutionGate(transaction, ticketId);
+      if (!gate.canResolve) return { kind: "gate-failed", gate };
     }
 
     const updatedAt = new Date(Math.max(Date.now(), current.updatedAt.getTime() + 1));
-    const update = await transaction.ticket.updateMany({
-      where: { id: ticketId, updatedAt: current.updatedAt },
-      data: { ...mutation, updatedAt },
+    await transaction.ticket.update({
+      where: { id: ticketId },
+      data: { ...mutation, updatedAt, ...(nextStatus === "RESOLVED" ? { lastResolvedAt: updatedAt } : {}) },
     });
-    if (update.count !== 1) return { kind: "stale" };
+    if (nextStatus) {
+      await transaction.ticketStatusEvent.create({
+        data: { ticketId, actorId, fromStatus: current.currentStatus, toStatus: nextStatus, createdAt: updatedAt },
+      });
+    }
 
     const ticket = await transaction.ticket.findUnique({
       where: { id: ticketId },
@@ -837,15 +854,25 @@ async function persistStaffTicketMutation(
 function sendStaffMutationFailure(res: Response, result: Exclude<StaffTicketMutationResult, { kind: "updated" }>): void {
   if (result.kind === "missing") {
     res.status(404).json({ error: "Resource not found" });
+  } else if (result.kind === "unauthenticated") {
+    res.status(401).json({ error: "Authentication required" });
+  } else if (result.kind === "forbidden") {
+    res.status(403).json({ error: "Forbidden" });
   } else if (result.kind === "stale") {
-    res.status(409).json({ error: "Ticket changed since it was loaded. Refresh and try again." });
+    res.status(409).json({ error: "Ticket changed since it was loaded. Refresh and try again.", code: "STALE_STATE" });
   } else if (result.kind === "invalid-owner") {
     res.status(400).json({
       error: "Validation failed",
       fieldErrors: { ownerId: "Choose an active Staff or Administrator." },
     });
+  } else if (result.kind === "gate-failed") {
+    res.status(409).json({
+      error: "Complete the recorded work and settle required follow-up before resolving.",
+      code: "RESOLUTION_GATE_FAILED",
+      resolutionGate: result.gate,
+    });
   } else {
-    res.status(409).json({ error: "The requested status transition is not permitted." });
+    res.status(409).json({ error: "The requested status transition is not permitted.", code: "INVALID_TRANSITION" });
   }
 }
 
@@ -914,6 +941,7 @@ app.get(
           description: true,
           problemAppearsResolved: true,
           problemAppearsResolvedAt: true,
+          lastResolvedAt: true,
           createdAt: true,
           attachments: {
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -943,7 +971,7 @@ app.get(
         return;
       }
 
-      res.status(200).json(ticket);
+      res.status(200).json({ ...ticket, resolutionGate: await readResolutionGate(getPrisma(), ticketId) });
     } catch {
       res.status(500).json({ error: "Unable to load operational ticket detail" });
     }
@@ -987,7 +1015,7 @@ app.patch(
     }
 
     try {
-      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, res.locals.authUser.id as number, expectedUpdatedAt, {
         ownerId: ownerId as number | null,
       });
       if (result.kind !== "updated") {
@@ -1015,7 +1043,7 @@ app.patch(
     }
 
     try {
-      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, res.locals.authUser.id as number, expectedUpdatedAt, {
         itPriority: value as TicketPriority,
       });
       if (result.kind !== "updated") {
@@ -1048,7 +1076,7 @@ app.patch(
     }
 
     try {
-      const result = await persistStaffTicketMutation(res.locals.ticketId as number, expectedUpdatedAt, {
+      const result = await persistStaffTicketMutation(res.locals.ticketId as number, res.locals.authUser.id as number, expectedUpdatedAt, {
         currentStatus: status,
       });
       if (result.kind !== "updated") {
@@ -1247,11 +1275,17 @@ app.post(
         return;
       }
 
-      const updated = await database.ticket.update({
+      // Advisory only: it never changes formal status, but it shares the parent lock and timestamp rule.
+      const updated = await database.$transaction(async (transaction) => {
+        const [locked] = await transaction.$queryRaw<Array<{ updatedAt: Date }>>`
+          SELECT "updatedAt" FROM "Ticket" WHERE id = ${ticketId} FOR UPDATE`;
+        const now = new Date();
+        return transaction.ticket.update({
         where: { id: ticketId },
         data: {
           problemAppearsResolved: appearsResolved,
-          problemAppearsResolvedAt: appearsResolved ? new Date() : null,
+          problemAppearsResolvedAt: appearsResolved ? now : null,
+          updatedAt: new Date(Math.max(now.getTime(), locked.updatedAt.getTime() + 1)),
         },
         select: {
           id: true,
@@ -1260,6 +1294,7 @@ app.post(
           currentStatus: true,
           updatedAt: true,
         },
+        });
       });
       res.status(200).json(updated);
     } catch {

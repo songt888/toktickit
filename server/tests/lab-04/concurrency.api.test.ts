@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getPrisma } from "../../src/prisma.js";
-import { createAction, createBody, createWorld, send, ticketStamp } from "./actionFixtures.js";
+import { completedAction, createAction, createBody, createWorld, moveTicket, send, ticketStamp } from "./actionFixtures.js";
+import { evaluateResolutionGate } from "../../src/resolutionGate.js";
 
 const prisma = getPrisma();
 const world = await createWorld("conc");
@@ -59,6 +60,40 @@ describe("Actions Taken concurrency", () => {
     const actions = await prisma.actionTaken.count({ where: { ticketId: ticket.id } });
     const revisions = await prisma.actionTakenRevision.count({ where: { action: { ticketId: ticket.id } } });
     expect(revisions).toBe(actions + 1);
+  });
+
+  it("CONC-01 never resolves past the gate when Action, owner or advisory writes race the Resolve", async () => {
+    const competitors = ["new pending Action", "reopen follow-up", "owner change", "advisory indication"] as const;
+    for (const competitor of competitors) {
+      for (let round = 0; round < 4; round++) {
+        const ticket = await world.ticket(requester.id, { ownerId: staff.id });
+        const done = await completedAction(ticket.id, staff.cookie);
+        await moveTicket(ticket.id, staff.cookie, "IN_PROGRESS", await ticketStamp(ticket.id));
+        const seen = await ticketStamp(ticket.id);
+        const rival =
+          competitor === "new pending Action" ? send("post", `/api/tickets/${ticket.id}/actions-taken`, staffB.cookie, createBody(seen))
+          : competitor === "reopen follow-up" ? send("patch", `/api/tickets/${ticket.id}/actions-taken/${done.id}`, staffB.cookie, {
+            mutationId: randomUUID(), ticketUpdatedAt: seen, version: done.version, followUpRequired: true, followUpNote: "Not settled yet",
+          })
+          : competitor === "owner change" ? send("patch", `/api/staff/tickets/${ticket.id}/owner`, staffB.cookie, { ownerId: staffB.id, updatedAt: seen })
+          : send("post", `/api/tickets/${ticket.id}/problem-resolution`, requester.cookie, { appearsResolved: true });
+        const [resolve, other] = await Promise.all([moveTicket(ticket.id, staff.cookie, "RESOLVED", seen), rival]);
+
+        const final = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id }, include: { actionsTaken: true } });
+        const label = `${competitor} #${round}: resolve ${resolve.status}, rival ${other.status}`;
+        // One serialized outcome: the stale writer is refused, and Resolved always satisfies the gate.
+        if (competitor === "advisory indication") expect(other.status, label).toBe(200);
+        else expect([resolve.status, other.status].filter((status) => status < 300), label).toHaveLength(1);
+        expect(resolve.status === 200, label).toBe(final.currentStatus === "RESOLVED");
+        if (final.currentStatus === "RESOLVED") expect(evaluateResolutionGate(final.actionsTaken).canResolve, label).toBe(true);
+        const [events, revisions] = await Promise.all([
+          prisma.ticketStatusEvent.count({ where: { ticketId: ticket.id } }),
+          prisma.actionTakenRevision.count({ where: { action: { ticketId: ticket.id } } }),
+        ]);
+        expect(events, label).toBe(1 + (resolve.status === 200 ? 1 : 0));
+        expect(revisions, label).toBe(2 + (competitor.endsWith("Action") || competitor.startsWith("reopen") ? Number(other.status < 300) : 0));
+      }
+    }
   });
 
   it("CONC-02 never commits a fresh assignment, create or completion for a user deactivated or demoted first", async () => {

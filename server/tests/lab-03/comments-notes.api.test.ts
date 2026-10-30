@@ -5,6 +5,7 @@ import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
 import { createTestUser, removeTestUsers, sessionCookieFor } from "./testSession.js";
+import { deleteTestTickets } from "../ticketCleanup.js";
 
 const prisma = getPrisma();
 const createdUserIds: number[] = [];
@@ -74,7 +75,7 @@ describe("Public Comments and Internal Notes API", () => {
     if (createdTicketIds.length > 0) {
       await prisma.publicComment.deleteMany({ where: { ticketId: { in: createdTicketIds } } });
       await prisma.internalNote.deleteMany({ where: { ticketId: { in: createdTicketIds } } });
-      await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
+      await deleteTestTickets({ id: { in: createdTicketIds } });
     }
     await removeTestUsers(createdUserIds);
     await prisma.$disconnect();

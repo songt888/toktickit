@@ -4,12 +4,13 @@ import { seedLab3Data } from "../../prisma/seed.js";
 import {
   emptyRequesterSeed,
   emptyStaffSeed,
+  fixtureMarker,
+  lab4TicketWhere,
   lab4Tickets,
   seedLab4Data,
 } from "../../prisma/seedLab4.js";
 
 const prisma = getPrisma();
-const numbers = lab4Tickets.map(({ number }) => number);
 
 describe("Lab 4 seed (DB-03)", () => {
   beforeAll(async () => {
@@ -24,7 +25,7 @@ describe("Lab 4 seed (DB-03)", () => {
 
   it("DB-03a keeps Lab 3 tickets untouched: no invented history or resolution time", async () => {
     const legacy = await prisma.ticket.findMany({
-      where: { ticketNumber: { notIn: numbers } },
+      where: { NOT: lab4TicketWhere },
       include: { statusEvents: true },
     });
     expect(legacy.length).toBeGreaterThan(0);
@@ -37,12 +38,12 @@ describe("Lab 4 seed (DB-03)", () => {
   it("DB-03b a second run changes nothing: rows, hashes, timestamps, app edits (sequences: DB-02)", async () => {
     const read = async () => ({
       users: await prisma.user.findMany({ where: { email: { in: [emptyRequesterSeed.email, emptyStaffSeed.email] } }, select: { id: true, passwordHash: true, role: true, isActive: true, updatedAt: true }, orderBy: { id: "asc" } }),
-      tickets: await prisma.ticket.findMany({ where: { ticketNumber: { in: numbers } }, orderBy: { id: "asc" } }),
-      actions: await prisma.actionTaken.findMany({ where: { ticket: { ticketNumber: { in: numbers } } }, orderBy: { id: "asc" } }),
-      revisions: await prisma.actionTakenRevision.findMany({ where: { action: { ticket: { ticketNumber: { in: numbers } } } }, orderBy: { id: "asc" } }),
-      events: await prisma.ticketStatusEvent.findMany({ where: { ticket: { ticketNumber: { in: numbers } } }, orderBy: { id: "asc" } }),
+      tickets: await prisma.ticket.findMany({ where: lab4TicketWhere, orderBy: { id: "asc" } }),
+      actions: await prisma.actionTaken.findMany({ where: { ticket: lab4TicketWhere }, orderBy: { id: "asc" } }),
+      revisions: await prisma.actionTakenRevision.findMany({ where: { action: { ticket: lab4TicketWhere } }, orderBy: { id: "asc" } }),
+      events: await prisma.ticketStatusEvent.findMany({ where: { ticket: lab4TicketWhere }, orderBy: { id: "asc" } }),
     });
-    const target = await prisma.ticket.findUniqueOrThrow({ where: { ticketNumber: numbers[1] } });
+    const target = await prisma.ticket.findFirstOrThrow({ where: { description: { contains: fixtureMarker("910002") } } });
     const edited = await prisma.ticket.update({ where: { id: target.id }, data: { summary: "Edited by staff after seeding" } });
     const before = await read();
     const staffUser = before.users.find((u) => u.role === "IT_STAFF")!; // the fresh fixture user: no other suite edits it
@@ -59,7 +60,7 @@ describe("Lab 4 seed (DB-03)", () => {
 
   it("DB-03h Action timestamps follow the status path (BR-13 history)", async () => {
     const tickets = await prisma.ticket.findMany({
-      where: { ticketNumber: { in: numbers } },
+      where: lab4TicketWhere,
       include: { actionsTaken: true, statusEvents: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] } },
     });
     const now = Date.now();
@@ -76,17 +77,19 @@ describe("Lab 4 seed (DB-03)", () => {
     }
   });
 
-  it("DB-03i recently resolved has real data: some resolutions inside 7 days, one outside", async () => {
-    const since = new Date(Date.now() - 7 * 86_400_000);
-    const inside = await prisma.ticket.count({ where: { ticketNumber: { in: numbers }, lastResolvedAt: { gte: since }, currentStatus: { in: ["RESOLVED", "CLOSED"] } } });
-    const outside = await prisma.ticket.count({ where: { ticketNumber: { in: numbers }, lastResolvedAt: { lt: since } } });
-    expect(inside).toBeGreaterThan(0);
-    expect(outside).toBeGreaterThan(0);
+  it("DB-03i fixtures span the 7-day window and Ticket Numbers match their dates", async () => {
+    // Window membership drifts as a reused database ages, so DB-02 checks it on a fresh seed.
+    const resolvedAges = lab4Tickets.filter((t) => t.path.includes("RESOLVED")).map((t) => t.daysAgo ?? 5);
+    expect(resolvedAges.some((d) => d < 7)).toBe(true);
+    expect(resolvedAges.some((d) => d > 7)).toBe(true);
+    for (const t of await prisma.ticket.findMany({ where: lab4TicketWhere })) {
+      expect(t.ticketNumber.slice(4, 12)).toBe(t.ticketDate.toISOString().slice(0, 10).replaceAll("-", ""));
+    }
   });
 
   it("DB-03c seed covers every status, priority, ownership and 0/1/many Actions", async () => {
     const tickets = await prisma.ticket.findMany({
-      where: { ticketNumber: { in: numbers } },
+      where: lab4TicketWhere,
       include: { _count: { select: { actionsTaken: true } } },
     });
     expect(new Set(tickets.map((t) => t.currentStatus)).size).toBe(8);
@@ -104,7 +107,7 @@ describe("Lab 4 seed (DB-03)", () => {
 
   it("DB-03d resolved tickets satisfy the resolution gate and carry lastResolvedAt", async () => {
     const resolved = await prisma.ticket.findMany({
-      where: { ticketNumber: { in: numbers }, currentStatus: { in: ["RESOLVED", "CLOSED"] } },
+      where: { ...lab4TicketWhere, currentStatus: { in: ["RESOLVED", "CLOSED"] } },
       include: { actionsTaken: true },
     });
     expect(resolved).toHaveLength(2);
@@ -128,7 +131,7 @@ describe("Lab 4 seed (DB-03)", () => {
       CANCELLED: ["REOPENED"],
     };
     const tickets = await prisma.ticket.findMany({
-      where: { ticketNumber: { in: numbers } },
+      where: lab4TicketWhere,
       include: { statusEvents: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] } },
     });
     for (const t of tickets) {
@@ -145,7 +148,7 @@ describe("Lab 4 seed (DB-03)", () => {
 
   it("DB-03f every Action has one matching creation revision and a stable mutation id", async () => {
     const actions = await prisma.actionTaken.findMany({
-      where: { ticket: { ticketNumber: { in: numbers } } },
+      where: { ticket: lab4TicketWhere },
       include: { revisions: true },
     });
     for (const a of actions) {

@@ -1,6 +1,7 @@
 # Lab 4 Test DD and Traceability Plan
 
-Status: Issue #65 contract proposal; feature verification is **Planned**.
+Status: DB-01 to DB-03 are **Pass** from Issue #66 (`npm test` in `server`); every other row stays
+**Planned** until its test runs.
 Do not copy Lab 3 totals or claim unimplemented test paths already exist.
 The specification's AC table and this matrix must agree in both directions.
 

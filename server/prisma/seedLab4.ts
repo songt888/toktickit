@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, TicketStatus } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { hashPassword, MIGRATION_PLACEHOLDER_HASH } from "../src/password.js";
+import { formatTicketNumber } from "../src/ticketNumber.js";
 
 // Independent dashboard fixtures: neither owns Tickets or Actions.
 export const emptyRequesterSeed = {
@@ -26,7 +27,8 @@ type ActionSeed = {
 };
 
 type TicketSeed = {
-  number: string;
+  // Stable fixture identity; the Ticket Number is built from it and the first-seed date.
+  key: string;
   requester: string;
   owner: string | null;
   summary: string;
@@ -48,20 +50,20 @@ const staff3 = "korn.infrastructure@example.com";
 const admin = "lab.admin@example.com";
 
 export const lab4Tickets: TicketSeed[] = [
-  { number: "TKT-20261020-910001", requester: ari, owner: null, summary: "New laptop request", priority: "LOW", path: [], actions: [] },
+  { key: "910001", requester: ari, owner: null, summary: "New laptop request", priority: "LOW", path: [], actions: [] },
   {
-    number: "TKT-20261020-910002", requester: ben, owner: staff1, summary: "Shared drive access", priority: "MEDIUM", path: ["OPEN"],
+    key: "910002", requester: ben, owner: staff1, summary: "Shared drive access", priority: "MEDIUM", path: ["OPEN"],
     actions: [{ status: "PLANNED", performer: staff1, assignee: staff1, description: "Ask the file server team to add the group." }],
   },
   {
-    number: "TKT-20261020-910003", requester: mali, owner: staff1, summary: "Slow VPN connection", priority: "HIGH", path: ["OPEN", "IN_PROGRESS"],
+    key: "910003", requester: mali, owner: staff1, summary: "Slow VPN connection", priority: "HIGH", path: ["OPEN", "IN_PROGRESS"],
     actions: [
       { status: "COMPLETED", performer: staff1, assignee: staff1, description: "Check VPN client logs.", result: "Found an outdated client; update packaged." },
       { status: "PLANNED", performer: staff1, assignee: staff2, description: "Roll out the VPN client update.", followUpNote: "Verify speed after the update." },
     ],
   },
   {
-    number: "TKT-20261020-910004", requester: narin, owner: staff2, summary: "Payroll system outage", priority: "URGENT", path: ["OPEN", "IN_PROGRESS"],
+    key: "910004", requester: narin, owner: staff2, summary: "Payroll system outage", priority: "URGENT", path: ["OPEN", "IN_PROGRESS"],
     actions: [
       { status: "IN_PROGRESS", performer: staff2, assignee: admin, description: "Restart the payroll service." },
       { status: "CANCELLED", performer: staff2, assignee: staff2, description: "Reboot the host.", cancellationReason: "Service restart was enough." },
@@ -69,11 +71,11 @@ export const lab4Tickets: TicketSeed[] = [
     ],
   },
   {
-    number: "TKT-20261020-910005", requester: ari, owner: staff3, summary: "Printer driver missing", priority: "MEDIUM", path: ["OPEN", "WAITING_FOR_REQUESTER"],
+    key: "910005", requester: ari, owner: staff3, summary: "Printer driver missing", priority: "MEDIUM", path: ["OPEN", "WAITING_FOR_REQUESTER"],
     actions: [{ status: "COMPLETED", performer: staff3, assignee: staff3, description: "Prepare the driver package.", result: "Package ready; waiting for the requester to confirm the model." }],
   },
   {
-    number: "TKT-20261020-910006", requester: ben, owner: staff1, summary: "Email sync problem", priority: "HIGH", path: ["OPEN", "IN_PROGRESS", "RESOLVED"],
+    key: "910006", requester: ben, owner: staff1, summary: "Email sync problem", priority: "HIGH", path: ["OPEN", "IN_PROGRESS", "RESOLVED"],
     actions: [
       { status: "COMPLETED", performer: staff1, assignee: staff1, description: "Reset the mailbox profile.", result: "Profile rebuilt." },
       { status: "COMPLETED", performer: staff2, assignee: staff2, description: "Confirm sync on the phone.", result: "Sync works." },
@@ -81,20 +83,23 @@ export const lab4Tickets: TicketSeed[] = [
     ],
   },
   {
-    number: "TKT-20261020-910007", requester: mali, owner: staff2, summary: "Monitor flicker", priority: "LOW", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"], daysAgo: 12,
+    key: "910007", requester: mali, owner: staff2, summary: "Monitor flicker", priority: "LOW", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"], daysAgo: 12,
     actions: [{ status: "COMPLETED", performer: staff2, assignee: staff2, description: "Swap the cable.", result: "Flicker gone." }],
   },
   {
-    number: "TKT-20261020-910008", requester: narin, owner: staff3, summary: "Badge reader offline", priority: "URGENT", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "REOPENED"],
+    key: "910008", requester: narin, owner: staff3, summary: "Badge reader offline", priority: "URGENT", path: ["OPEN", "IN_PROGRESS", "RESOLVED", "REOPENED"],
     actions: [
       { status: "COMPLETED", performer: staff3, assignee: staff3, description: "Replace the reader power supply.", result: "Reader online." },
       { status: "PLANNED", performer: staff3, assignee: staff1, description: "Re-check after the failure returned.", after: "REOPENED" },
     ],
   },
-  { number: "TKT-20261020-910009", requester: ari, owner: null, summary: "Duplicate request", priority: "MEDIUM", path: ["CANCELLED"], actions: [] },
-  { number: "TKT-20261020-910010", requester: ben, owner: null, summary: "Account locked out", priority: "HIGH", path: [], actions: [] },
-  { number: "TKT-20261020-910011", requester: mali, owner: null, summary: "Keyboard replacement", priority: "LOW", path: ["OPEN"], actions: [] },
+  { key: "910009", requester: ari, owner: null, summary: "Duplicate request", priority: "MEDIUM", path: ["CANCELLED"], actions: [] },
+  { key: "910010", requester: ben, owner: null, summary: "Account locked out", priority: "HIGH", path: [], actions: [] },
+  { key: "910011", requester: mali, owner: null, summary: "Keyboard replacement", priority: "LOW", path: ["OPEN"], actions: [] },
 ];
+
+export const fixtureMarker = (key: string) => `[lab4-fixture ${key}]`;
+export const lab4TicketWhere = { description: { contains: "[lab4-fixture " } };
 
 function stableUuid(key: string): string {
   const h = createHash("sha1").update(`toktickit-lab4:${key}`).digest("hex");
@@ -140,7 +145,7 @@ export async function seedLab4Data(database: PrismaClient) {
       const now = Date.now();
 
       for (const t of lab4Tickets) {
-        if (await tx.ticket.findUnique({ where: { ticketNumber: t.number } })) continue;
+        if (await tx.ticket.findFirst({ where: { description: { contains: fixtureMarker(t.key) } } })) continue;
 
         const requester = need(t.requester);
         const owner = t.owner ? need(t.owner) : null;
@@ -158,14 +163,14 @@ export async function seedLab4Data(database: PrismaClient) {
 
         const ticket = await tx.ticket.create({
           data: {
-            ticketNumber: t.number,
+            ticketNumber: formatTicketNumber(Number(t.key), created),
             ticketDate: created,
             requesterId: requester.id,
             ownerId: owner?.id ?? null,
             categoryId: category.id,
             relatedSystemId: system.id,
             summary: t.summary,
-            description: `${t.summary}. Seeded Lab 4 fixture.`,
+            description: `${t.summary}. Seeded Lab 4 fixture ${fixtureMarker(t.key)}.`,
             requestedPriority: t.priority,
             itPriority: t.priority,
             currentStatus: path[path.length - 1],
@@ -206,7 +211,7 @@ export async function seedLab4Data(database: PrismaClient) {
             updatedAt: stamp,
           };
           const action = await tx.actionTaken.create({ data: row });
-          const key = `${t.number}#${n}`;
+          const key = `${t.key}#${n}`;
           await tx.actionTakenRevision.create({
             data: {
               actionId: action.id,

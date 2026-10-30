@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,6 +98,16 @@ async function sequences(db: PrismaClient, names?: string[]) {
   return Object.fromEntries(rows.filter((r) => !names || names.includes(r.sequencename)).map((r) => [r.sequencename, String(r.last_value)]));
 }
 
+// Upload files are never touched by the migration; name, size and content hash prove it.
+function uploadManifest() {
+  const dir = path.join(serverDir, "uploads");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).sort().map((name) => {
+    const file = path.join(dir, name);
+    return [name, statSync(file).size, createHash("sha256").update(readFileSync(file)).digest("hex")];
+  });
+}
+
 describe("Lab 4 migration on a populated Lab 3 database (DB-02)", () => {
   afterAll(async () => {
     await Promise.all(clients.map((c) => c.$disconnect()));
@@ -113,16 +124,18 @@ describe("Lab 4 migration on a populated Lab 3 database (DB-02)", () => {
     await populateLab3(lab3);
     const rowsBefore = await lab3Rows(lab3);
     const seqBefore = await sequences(lab3);
+    const filesBefore = uploadManifest();
     expect(rowsBefore.Ticket).toHaveLength(3);
     await lab3.$disconnect();
 
     // Snapshot: a template copy stands in for the verified pre-deploy backup.
     await admin.$executeRawUnsafe(`CREATE DATABASE "${dbB}" TEMPLATE "${dbA}"`);
 
-    // Upgrade: old rows, hashes, timestamps, FKs and sequences are unchanged; nothing is invented.
+    // Upgrade: old rows, hashes, timestamps, FKs, sequences and files are unchanged; nothing is invented.
     deploy(dbA, true);
     const upgraded = clientFor(dbA);
     expect(await lab3Rows(upgraded)).toEqual(rowsBefore);
+    expect(uploadManifest()).toEqual(filesBefore);
     expect(await sequences(upgraded, Object.keys(seqBefore))).toEqual(seqBefore);
     const nulls = await upgraded.$queryRaw<Array<{ n: bigint }>>`SELECT count(*) AS n FROM "Ticket" WHERE "lastResolvedAt" IS NOT NULL`;
     expect(Number(nulls[0].n)).toBe(0);
@@ -150,17 +163,30 @@ describe("Lab 4 migration on a populated Lab 3 database (DB-02)", () => {
     }
     expect(await upgraded.actionTaken.count()).toBeGreaterThan(0);
 
+    // A fresh seed gives the 7-day recent-resolution window real data on both sides.
+    const since = new Date(Date.now() - 7 * 86_400_000);
+    expect(await upgraded.ticket.count({ where: { lastResolvedAt: { gte: since }, currentStatus: { in: ["RESOLVED", "CLOSED"] } } })).toBeGreaterThan(0);
+    expect(await upgraded.ticket.count({ where: { lastResolvedAt: { lt: since } } })).toBeGreaterThan(0);
+
     // Forward repair: redeploying on the upgraded database is a no-op that keeps every row.
     const countBefore = await upgraded.ticket.count();
     expect(deploy(dbA, true)).toMatch(/No pending migrations/);
     expect(await upgraded.ticket.count()).toBe(countBefore);
 
-    // Restore: the snapshot still matches the pre-deploy rows, and upgrading it again works.
-    const restored = clientFor(dbB);
+    // Restore: replace the upgraded, written-to database with the pre-deploy backup.
+    await upgraded.$disconnect();
+    await admin.$executeRawUnsafe(`DROP DATABASE "${dbA}" WITH (FORCE)`);
+    await admin.$executeRawUnsafe(`CREATE DATABASE "${dbA}" TEMPLATE "${dbB}"`);
+    const restored = clientFor(dbA);
     expect(await lab3Rows(restored)).toEqual(rowsBefore);
     expect(await sequences(restored)).toEqual(seqBefore);
+    const lab4Tables = await restored.$queryRaw<Array<{ n: bigint }>>`SELECT count(*) AS n FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('ActionTaken', 'ActionTakenRevision', 'TicketStatusEvent')`;
+    expect(Number(lab4Tables[0].n)).toBe(0);
+    expect(uploadManifest()).toEqual(filesBefore);
     await restored.$disconnect();
-    deploy(dbB, true);
-    expect(await lab3Rows(clientFor(dbB))).toEqual(rowsBefore);
+
+    // Redeploying onto the restored database works and still preserves every old row.
+    expect(deploy(dbA, true)).toMatch(/lab4_actions_status_history/);
+    expect(await lab3Rows(clientFor(dbA))).toEqual(rowsBefore);
   }, 180_000);
 });

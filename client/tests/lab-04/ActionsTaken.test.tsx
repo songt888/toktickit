@@ -78,7 +78,7 @@ describe("Actions Taken for Staff and Administrators (UI-01)", () => {
     const write = vi.spyOn(api, "writeActionTaken").mockResolvedValue(saved({ id: 600, description: "Checked cabling" }));
     await user.click(screen.getByRole("button", { name: "Add Action" }));
     expect(screen.getByRole("combobox", { name: "Assigned to" })).toHaveValue(String(staff.id));
-    expect(screen.getByLabelText("Action Date/Time (Bangkok)")).not.toHaveValue("");
+    expect(screen.getByLabelText(/^Action Date\/Time \(Bangkok\)/)).not.toHaveValue("");
 
     await user.click(screen.getByRole("button", { name: "Save Action" }));
     expect(write).not.toHaveBeenCalled();
@@ -86,8 +86,8 @@ describe("Actions Taken for Staff and Administrators (UI-01)", () => {
 
     await user.type(screen.getByRole("textbox", { name: "Description" }), "Checked cabling");
     await user.selectOptions(screen.getByRole("combobox", { name: "Assigned to" }), String(admin.id));
-    await user.clear(screen.getByLabelText("Action Date/Time (Bangkok)"));
-    await user.type(screen.getByLabelText("Action Date/Time (Bangkok)"), "2026-10-30T08:45:00");
+    await user.clear(screen.getByLabelText(/^Action Date\/Time \(Bangkok\)/));
+    await user.type(screen.getByLabelText(/^Action Date\/Time \(Bangkok\)/), "2026-10-30T08:45:00");
     await user.type(screen.getByRole("textbox", { name: "Attachment Notes" }), "See photo.jpg");
     await user.click(screen.getByRole("button", { name: "Save Action" }));
 
@@ -292,5 +292,87 @@ describe("Actions Taken write safety (UI-04)", () => {
     await user.click(screen.getByRole("button", { name: "Complete Action" }));
     expect(await screen.findByText("Ready to resolve.")).toBeInTheDocument();
     expect(screen.getByText("Completed Actions: 1")).toBeInTheDocument();
+  });
+
+  it("after Load Latest, Edit sends only the user's own change, so another user's newer value survives", async () => {
+    const { user } = renderStaff([action({ result: "" })]);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    await user.type(screen.getByRole("textbox", { name: "Attachment Notes" }), "See cable.jpg");
+    const write = vi.spyOn(api, "writeActionTaken").mockRejectedValueOnce(new api.ApiRequestError("changed", 409, "STALE_STATE"));
+    await user.click(screen.getByRole("button", { name: "Save Action" }));
+    await screen.findByRole("button", { name: "Load Latest" });
+
+    mockList(list([action({ description: "Restarted spooler and cleared queue", result: "Queue empty", version: 2 })]));
+    await user.click(screen.getByRole("button", { name: "Load Latest" }));
+    expect(await screen.findByText("Restarted spooler and cleared queue")).toBeInTheDocument();
+    write.mockResolvedValue(saved({ version: 3 }));
+    await user.click(screen.getByRole("button", { name: "Save Action" }));
+    const body = write.mock.calls[1][2];
+    expect(Object.keys(body).sort()).toEqual(["attachmentNotes", "mutationId", "ticketUpdatedAt", "version"]);
+    expect(body).toMatchObject({ version: 2, attachmentNotes: "See cable.jpg" });
+  });
+
+  it("ignores a write that finishes after the user switched to another Ticket", async () => {
+    const { user, onChanged, props, view } = renderStaff([action()]);
+    const pending = deferred<api.ActionWriteResponse>();
+    vi.spyOn(api, "writeActionTaken").mockReturnValue(pending.promise);
+    await user.click(await screen.findByRole("button", { name: "Start" }));
+    mockList(list([action({ id: 900, ticketId: 802, description: "Second Ticket work" })]));
+    view.rerender(<ActionsTaken key={802} {...props} ticketId={802} />);
+    expect(await screen.findByText("Second Ticket work")).toBeInTheDocument();
+    pending.resolve(saved({ status: "IN_PROGRESS", version: 2 }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(onChanged).not.toHaveBeenCalled();
+    expect(screen.queryByText("Action started.")).not.toBeInTheDocument();
+  });
+
+  it("shows only the history that was asked for last when an earlier history request returns late", async () => {
+    const { user } = renderStaff([action(), action({ id: 502, description: "Replace toner" })]);
+    const late = deferred<{ items: api.ActionRevision[]; pagination: api.Pagination }>();
+    const revision = (description: string) => ({
+      version: 1, operation: "CREATE" as const, actor: { id: admin.id, name: admin.name }, createdAt: stamp, snapshot: action({ description }),
+    });
+    vi.spyOn(api, "getActionRevisions").mockImplementation((_ticketId, actionId) => actionId === 501
+      ? late.promise
+      : Promise.resolve({ items: [revision("Toner history")], pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } }));
+    await user.click(within(await screen.findByRole("listitem", { name: "Action: Restarted the print spooler" })).getByRole("button", { name: "View History" }));
+    await user.click(within(card("Replace toner")).getByRole("button", { name: "View History" }));
+    expect(await screen.findByText(/Toner history/)).toBeInTheDocument();
+    late.resolve({ items: [revision("Spooler history")], pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText(/Spooler history/)).not.toBeInTheDocument();
+    expect(within(card("Replace toner")).getByRole("heading", { name: "History for this Action" })).toBeInTheDocument();
+  });
+
+  it("keeps the newest Ticket timestamp when an older detail refresh lands late", async () => {
+    const base = {
+      id: 801, ticketNumber: "TKT-20261030-000801", ticketDate: "2026-10-30T01:00:00.000Z", requesterId: 41, categoryId: 1, relatedSystemId: 2,
+      ownerId: staff.id, summary: "Printer offline", description: "The printer does not respond.", requestedPriority: "MEDIUM", itPriority: "HIGH",
+      currentStatus: "IN_PROGRESS", updatedAt: stamp, createdAt: "2026-10-30T01:00:00.000Z", problemAppearsResolved: false, problemAppearsResolvedAt: null,
+      lastResolvedAt: null, requester: { id: 41, name: "Ari Suksan", email: "ari@example.com" }, owner: staff,
+      category: { id: 1, name: "Hardware" }, relatedSystem: { id: 2, name: "Printing" }, attachments: [], publicComments: [], internalNotes: [],
+    } satisfies api.StaffTicketDetailData;
+    const first = deferred<api.StaffTicketDetailData>();
+    vi.spyOn(api, "getStaffTicketDetail")
+      .mockResolvedValueOnce(base)
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValue({ ...base, updatedAt: "2026-10-30T05:00:00.000Z" });
+    vi.spyOn(api, "getStaffAssignees").mockResolvedValue([staff]);
+    mockList(list([action()]));
+    const write = vi.spyOn(api, "writeActionTaken")
+      .mockResolvedValueOnce({ ...saved(), ticketUpdatedAt: "2026-10-30T04:00:00.000Z" })
+      .mockResolvedValue({ ...saved(), ticketUpdatedAt: "2026-10-30T05:00:00.000Z" });
+    const user = userEvent.setup();
+    render(<StaffTicketDetail ticketId={801} currentUserId={staff.id} onBack={vi.fn()} />);
+    await user.click(await screen.findByRole("button", { name: "Start" }));
+    await screen.findByText("Action started.");
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(write).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByText("Last Updated").nextElementSibling).toHaveTextContent(new Date("2026-10-30T05:00:00.000Z").toLocaleString()));
+    first.resolve({ ...base, updatedAt: "2026-10-30T04:00:00.000Z" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await user.click(screen.getByRole("button", { name: "Start" }));
+    await waitFor(() => expect(write).toHaveBeenCalledTimes(3));
+    expect(write.mock.calls[2][2].ticketUpdatedAt).toBe("2026-10-30T05:00:00.000Z");
   });
 });

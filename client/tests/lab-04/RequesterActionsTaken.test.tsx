@@ -61,7 +61,7 @@ describe("Requester Actions Taken (UI-02)", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Actions Taken" })).toHaveFocus());
   });
 
-  it("ignores a late list response from the previous Ticket after switching", async () => {
+  it("never shows the previous Ticket's late list after switching Tickets (remount)", async () => {
     const late = deferred<api.ActionListResponse>();
     vi.spyOn(api, "getActionsTaken").mockImplementation((ticketId) =>
       ticketId === 801 ? late.promise : Promise.resolve(list([action({ id: 900, ticketId: 802, description: "Work on the second Ticket" })])));

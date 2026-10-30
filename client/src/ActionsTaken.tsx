@@ -28,7 +28,8 @@ export interface ActionsTakenProps {
 }
 
 type PanelKind = "create" | "edit" | "assign" | "complete" | "cancel";
-type Panel = { kind: PanelKind; action: ActionTaken | null };
+// `opened` is what the user started editing (diff base); `action` follows Load Latest for id and version.
+type Panel = { kind: PanelKind; action: ActionTaken | null; opened: ActionTaken | null };
 type Draft = {
   actionAtIso: string | null; // exact loaded/default instant until the user edits the date
   actionAt: string;
@@ -140,14 +141,15 @@ function commandFor(ticketId: number, ticketUpdatedAt: string, panel: Panel, dra
       body: { ...stamp, status: "COMPLETED", result: draft.result.trim(), followUpRequired: draft.followUpRequired, followUpNote: noteOf(draft) },
     };
   }
-  // Edit sends only what changed, so an untouched field is never rewritten.
+  // Edit sends only what the user changed, so another user's newer value in an untouched field survives.
+  const opened = panel.opened!;
   const changes: Record<string, unknown> = {};
-  if (new Date(actionAtOf(draft)).getTime() !== new Date(action!.actionAt).getTime()) changes.actionAt = actionAtOf(draft);
-  if (draft.description.trim() !== action!.description) changes.description = draft.description.trim();
-  if (draft.result.trim() !== action!.result) changes.result = draft.result.trim();
-  if (draft.followUpRequired !== action!.followUpRequired) changes.followUpRequired = draft.followUpRequired;
-  if (noteOf(draft) !== action!.followUpNote) changes.followUpNote = noteOf(draft);
-  if (attachmentNotesOf(draft) !== action!.attachmentNotes) changes.attachmentNotes = attachmentNotesOf(draft);
+  if (new Date(actionAtOf(draft)).getTime() !== new Date(opened.actionAt).getTime()) changes.actionAt = actionAtOf(draft);
+  if (draft.description.trim() !== opened.description) changes.description = draft.description.trim();
+  if (draft.result.trim() !== opened.result) changes.result = draft.result.trim();
+  if (draft.followUpRequired !== opened.followUpRequired) changes.followUpRequired = draft.followUpRequired;
+  if (noteOf(draft) !== opened.followUpNote) changes.followUpNote = noteOf(draft);
+  if (attachmentNotesOf(draft) !== opened.attachmentNotes) changes.attachmentNotes = attachmentNotesOf(draft);
   if (Object.keys(changes).length === 0) return { body: "Change at least one field before saving." };
   return { method: "PATCH", path, body: { ...stamp, ...changes } };
 }
@@ -179,7 +181,6 @@ function failure(error: unknown): { feedback: Feedback; fieldErrors: Record<stri
 }
 
 export default function ActionsTaken({ ticketId, ticketStatus, editable }: ActionsTakenProps) {
-  const listSequence = useRef(0);
   const alive = useRef(true);
   const saving = useRef(false);
   // Same command (same draft and versions) keeps its request id across retries; any change gets a new one.
@@ -203,11 +204,10 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
     action.assignee.isActive && (editable?.assigneesError ? true : assignees.some((user) => user.id === action.assignee.id));
 
   async function loadPage(target: number, focus?: string) {
-    const sequence = ++listSequence.current;
     setLoadState("loading");
     try {
       const response = await getActionsTaken(ticketId, target);
-      if (sequence !== listSequence.current) return;
+      if (!alive.current) return;
       setItems(response.items);
       setPagination(response.pagination);
       setPage(response.pagination.page);
@@ -220,7 +220,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
       });
       if (focus) setFocusId(focus);
     } catch (error) {
-      if (sequence !== listSequence.current) return;
+      if (!alive.current) return;
       setLoadState("error");
       setLoadError(
         error instanceof ApiRequestError && error.status === 403 ? "You do not have permission to view these Actions."
@@ -235,7 +235,6 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
     void loadPage(1);
     return () => {
       alive.current = false;
-      listSequence.current += 1;
     };
   }, [ticketId]);
 
@@ -247,7 +246,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
 
   function openPanel(kind: PanelKind, action: ActionTaken | null) {
     if (panel && draft && !window.confirm("Discard the Action form you have open?")) return;
-    setPanel({ kind, action });
+    setPanel({ kind, action, opened: action });
     setDraft(draftFor(action, editable!.currentUserId));
     setFieldErrors({});
     setFeedback(null);
@@ -385,7 +384,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         )}
         {describes && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-at">Action Date/Time (Bangkok)</label>
+            <label className="form-label fw-semibold" htmlFor="action-at">Action Date/Time (Bangkok) <span className="text-danger" aria-hidden="true">*</span></label>
             <input id="action-at" type="datetime-local" step={1} className={`form-control ${fieldErrors.actionAt ? "is-invalid" : ""}`}
               value={draft.actionAt} onChange={(event) => edit("actionAt", event.target.value)} {...errorProps("actionAt")} />
             {errorText("actionAt")}
@@ -393,7 +392,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         )}
         {describes && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-description">Description</label>
+            <label className="form-label fw-semibold" htmlFor="action-description">Description <span className="text-danger" aria-hidden="true">*</span></label>
             <textarea id="action-description" className={`form-control ${fieldErrors.description ? "is-invalid" : ""}`} rows={3} maxLength={4000}
               value={draft.description} onChange={(event) => edit("description", event.target.value)} {...errorProps("description")} />
             {errorText("description")}
@@ -401,7 +400,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         )}
         {showResult && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}</label>
+            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}{kind === "complete" || action?.status === "COMPLETED" ? <> <span className="text-danger" aria-hidden="true">*</span></> : null}</label>
             <textarea id="action-result" className={`form-control ${fieldErrors.result ? "is-invalid" : ""}`} rows={2} maxLength={4000}
               value={draft.result} onChange={(event) => edit("result", event.target.value)} {...errorProps("result")} />
             {errorText("result")}
@@ -409,7 +408,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         )}
         {(kind === "create" || kind === "assign") && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-assignee">Assigned to</label>
+            <label className="form-label fw-semibold" htmlFor="action-assignee">Assigned to <span className="text-danger" aria-hidden="true">*</span></label>
             {editable.assigneesError ? (
               <div className="alert alert-warning py-2" role="alert">
                 Eligible assignees could not be loaded, so this form cannot be saved yet.
@@ -434,7 +433,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
             </div>
             {draft.followUpRequired && (
               <>
-                <label className="form-label fw-semibold mt-2" htmlFor="action-follow-up-note">Follow-up Note</label>
+                <label className="form-label fw-semibold mt-2" htmlFor="action-follow-up-note">Follow-up Note <span className="text-danger" aria-hidden="true">*</span></label>
                 <textarea id="action-follow-up-note" className={`form-control ${fieldErrors.followUpNote ? "is-invalid" : ""}`} rows={2} maxLength={2000}
                   value={draft.followUpNote} onChange={(event) => edit("followUpNote", event.target.value)} {...errorProps("followUpNote")} />
               </>
@@ -453,7 +452,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         )}
         {kind === "cancel" && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-cancel-reason">Cancellation Reason</label>
+            <label className="form-label fw-semibold" htmlFor="action-cancel-reason">Cancellation Reason <span className="text-danger" aria-hidden="true">*</span></label>
             <textarea id="action-cancel-reason" className={`form-control ${fieldErrors.cancellationReason ? "is-invalid" : ""}`} rows={2} maxLength={500}
               value={draft.cancellationReason} onChange={(event) => edit("cancellationReason", event.target.value)} {...errorProps("cancellationReason")} />
             {errorText("cancellationReason")}
@@ -536,7 +535,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
           <dt className="col-sm-4">Assigned to</dt>
           <dd className="col-sm-8">
             {action.assignee.name}
-            {editable && !assigneeOk && <span className="badge text-bg-warning text-dark ms-2">Not eligible: reassign first</span>}
+            {canWrite && !assigneeOk && <span className="badge text-bg-warning text-dark ms-2">Not eligible: reassign first</span>}
           </dd>
           <dt className="col-sm-4">Result</dt><dd className="col-sm-8" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.result || "Not recorded"}</dd>
           <dt className="col-sm-4">Follow-Up Required?</dt>

@@ -94,6 +94,7 @@ function errorFeedback(error: unknown): Feedback {
 
 export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: StaffTicketDetailProps) {
   const requestSequence = useRef(0);
+  const refreshSequence = useRef(0);
   const [ticket, setTicket] = useState<StaffTicketDetailData | null>(null);
   const [assignees, setAssignees] = useState<StaffUser[]>([]);
   const [assigneesError, setAssigneesError] = useState("");
@@ -175,9 +176,11 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
   // Quiet reload after an Action write: new Ticket timestamp and gate, without resetting the screen.
   async function refreshTicket() {
     const sequence = requestSequence.current;
+    // Only the newest refresh may land; an older one would roll updatedAt back and make the next write 409.
+    const refresh = ++refreshSequence.current;
     try {
       const fresh = await getStaffTicketDetail(ticketId);
-      if (sequence === requestSequence.current) setTicket(fresh);
+      if (sequence === requestSequence.current && refresh === refreshSequence.current) setTicket(fresh);
     } catch {
       // The next write or Refresh reports the problem; the current values stay visible.
     }

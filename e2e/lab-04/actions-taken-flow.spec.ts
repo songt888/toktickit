@@ -96,6 +96,20 @@ test("E2E-01 records Actions by different staff, runs the lifecycle and shows th
   await expect(second.getByText("Assigned to").locator("+ dd")).toContainText(staff.name);
   await expect(page.getByText("Owner", { exact: true }).locator("+ dd")).toHaveText(admin.name);
 
+  await first.getByRole("button", { name: "Reassign" }).click();
+  await page.getByRole("combobox", { name: "Assigned to" }).selectOption({ label: `${admin.name} (Administrator)` });
+  await page.getByRole("button", { name: "Save Action" }).click();
+  await expect(page.getByText("Action reassigned.")).toBeVisible();
+  await expect(first.getByText("Assigned to").locator("+ dd")).toContainText(admin.name);
+  await expect(first.getByText("Performed by").locator("+ dd")).toHaveText(staff.name);
+
+  await second.getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("textbox", { name: "Attachment Notes" }).fill("See switch-photo.jpg on this Ticket");
+  await page.getByRole("button", { name: "Save Action" }).click();
+  await expect(page.getByText("Action updated.")).toBeVisible();
+  await expect(second.getByText("See switch-photo.jpg on this Ticket")).toBeVisible();
+  await expect(second.getByText("Version 2")).toBeVisible();
+
   // Complete the first Action (result required), cancel the second with a reason.
   await first.getByRole("button", { name: "Complete" }).click();
   await page.getByRole("button", { name: "Complete Action" }).click();
@@ -114,7 +128,8 @@ test("E2E-01 records Actions by different staff, runs the lifecycle and shows th
 
   await first.getByRole("button", { name: "View History" }).click();
   await expect(first.getByText(/Version 1: CREATE by E2E Staff User/)).toBeVisible();
-  await expect(first.getByText(/Version 3: STATUS by E2E Administrator/)).toBeVisible();
+  await expect(first.getByText(/Version 3: ASSIGN by E2E Administrator/)).toBeVisible();
+  await expect(first.getByText(/Version 4: STATUS by E2E Administrator/)).toBeVisible();
   await captureLayouts(page, "staff");
   await signOut(page);
 

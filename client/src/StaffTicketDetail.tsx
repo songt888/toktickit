@@ -214,6 +214,8 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setFeedback(null);
     try {
       const updated = await operation();
+      // A Ticket refresh started before this save would bring back older values.
+      refreshSequence.current += 1;
       setTicket((current) => current ? { ...current, ...updated } : current);
       setSelectedOwnerId(updated.ownerId === null ? "" : String(updated.ownerId));
       setSelectedPriority(updated.itPriority);
@@ -224,6 +226,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       // Keep the selection and show the server's current gate, so the user can see what to fix.
       if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
         const gate = error.body.resolutionGate as ResolutionGate;
+        refreshSequence.current += 1;
         setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
         // Resolved is no longer a valid choice, so return the control to the current status.
         setSelectedStatus(ticket.currentStatus);
@@ -276,6 +279,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setPublicCommentFeedback(null);
     try {
       const comment = await addPublicComment(ticket.id, content);
+      refreshSequence.current += 1;
       setTicket((current) => current
         ? { ...current, publicComments: [...current.publicComments, comment] }
         : current);
@@ -308,6 +312,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setInternalNoteFeedback(null);
     try {
       const note = await addInternalNote(ticket.id, content);
+      refreshSequence.current += 1;
       setTicket((current) => current
         ? { ...current, internalNotes: [...current.internalNotes, note] }
         : current);

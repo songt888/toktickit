@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ActionsTaken from "../../src/ActionsTaken.js";
 import StaffTicketDetail from "../../src/StaffTicketDetail.js";
@@ -338,8 +338,7 @@ describe("Actions Taken write safety (UI-04)", () => {
     await user.click(within(await screen.findByRole("listitem", { name: "Action: Restarted the print spooler" })).getByRole("button", { name: "View History" }));
     await user.click(within(card("Replace toner")).getByRole("button", { name: "View History" }));
     expect(await screen.findByText(/Toner history/)).toBeInTheDocument();
-    late.resolve({ items: [revision("Spooler history")], pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } });
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await act(async () => late.resolve({ items: [revision("Spooler history")], pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } }));
     expect(screen.queryByText(/Spooler history/)).not.toBeInTheDocument();
     expect(within(card("Replace toner")).getByRole("heading", { name: "History for this Action" })).toBeInTheDocument();
   });
@@ -374,5 +373,50 @@ describe("Actions Taken write safety (UI-04)", () => {
     await user.click(screen.getByRole("button", { name: "Start" }));
     await waitFor(() => expect(write).toHaveBeenCalledTimes(3));
     expect(write.mock.calls[2][2].ticketUpdatedAt).toBe("2026-10-30T05:00:00.000Z");
+  });
+
+  it.each(["Ticket save", "public comment"])("drops an Action refresh that started before a %s, so it is not rolled back", async (change) => {
+    const base = {
+      id: 801, ticketNumber: "TKT-20261030-000801", ticketDate: "2026-10-30T01:00:00.000Z", requesterId: 41, categoryId: 1, relatedSystemId: 2,
+      ownerId: staff.id, summary: "Printer offline", description: "The printer does not respond.", requestedPriority: "MEDIUM", itPriority: "HIGH",
+      currentStatus: "IN_PROGRESS", updatedAt: stamp, createdAt: "2026-10-30T01:00:00.000Z", problemAppearsResolved: false, problemAppearsResolvedAt: null,
+      lastResolvedAt: null, requester: { id: 41, name: "Ari Suksan", email: "ari@example.com" }, owner: staff,
+      category: { id: 1, name: "Hardware" }, relatedSystem: { id: 2, name: "Printing" }, attachments: [], publicComments: [], internalNotes: [],
+    } satisfies api.StaffTicketDetailData;
+    const inFlight = deferred<api.StaffTicketDetailData>();
+    vi.spyOn(api, "getStaffTicketDetail").mockResolvedValueOnce(base).mockReturnValueOnce(inFlight.promise);
+    vi.spyOn(api, "getStaffAssignees").mockResolvedValue([staff]);
+    mockList(list([action()]));
+    const write = vi.spyOn(api, "writeActionTaken").mockResolvedValue({ ...saved(), ticketUpdatedAt: "2026-10-30T04:00:00.000Z" });
+    const prioritySavedAt = "2026-10-30T06:00:00.000Z";
+    vi.spyOn(api, "updateStaffTicketPriority").mockResolvedValue({
+      id: 801, ownerId: staff.id, owner: staff, itPriority: "URGENT", currentStatus: "IN_PROGRESS", problemAppearsResolved: false, updatedAt: prioritySavedAt,
+    });
+    vi.spyOn(api, "addPublicComment").mockResolvedValue({ id: 70, content: "On my way", createdAt: prioritySavedAt, author: { id: staff.id, name: staff.name, email: staff.email } });
+    const user = userEvent.setup();
+    render(<StaffTicketDetail ticketId={801} currentUserId={staff.id} onBack={vi.fn()} />);
+
+    await user.click(await screen.findByRole("button", { name: "Start" }));
+    await screen.findByText("Action started.");
+    if (change === "Ticket save") {
+      await user.selectOptions(screen.getByRole("combobox", { name: "IT Priority" }), "URGENT");
+      await user.click(screen.getByRole("button", { name: "Save IT Priority" }));
+      await screen.findByText("IT Priority was updated.");
+    } else {
+      await user.type(screen.getByRole("textbox", { name: "Add a public comment" }), "On my way");
+      await user.click(screen.getByRole("button", { name: "Post Public Comment" }));
+      await screen.findByText("Public comment posted.");
+    }
+
+    inFlight.resolve({ ...base, updatedAt: "2026-10-30T04:00:00.000Z" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    if (change === "Ticket save") {
+      expect(screen.getByText("Last Updated").nextElementSibling).toHaveTextContent(new Date(prioritySavedAt).toLocaleString());
+      await user.click(screen.getByRole("button", { name: "Start" }));
+      await waitFor(() => expect(write).toHaveBeenCalledTimes(2));
+      expect(write.mock.calls[1][2].ticketUpdatedAt).toBe(prioritySavedAt);
+    } else {
+      expect(screen.getByText("On my way")).toBeInTheDocument();
+    }
   });
 });

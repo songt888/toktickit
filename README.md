@@ -87,6 +87,20 @@ and one inactive requester fixture. The active categories are:
 The inactive fixtures are used to test that inactive database records cannot be selected for new
 tickets.
 
+## Lab 4 data migration and recovery
+
+`npx prisma migrate deploy` (in `server/`) applies `20261030140000_lab4_actions_status_history`. It is additive only: new tables for Actions Taken, their revisions and Ticket status events, one nullable `Ticket.lastResolvedAt`, indexes, checks and triggers. No existing row, id, hash or sequence changes, and legacy Tickets get no invented Actions or status history.
+
+Before migrating a database that holds real data, take a backup and keep it with the `server/uploads` files:
+
+```bash
+docker exec toktickit-postgres pg_dump -U toktickit -Fc toktickit > toktickit-backup.dump
+```
+
+If a deploy fails, the transactional DDL rolls back; fix the migration and redeploy. After new Lab 4 data exists, repair forward rather than dropping tables. Rehearse a restore on a disposable database (`createdb drill`, then `pg_restore -d drill`), never on the live one.
+
+Seed: `npm run prisma:seed` also adds the Lab 4 fixtures (create-if-missing, safe to rerun). Application code that writes an Action must insert its revision in the same transaction; call `SET CONSTRAINTS "ActionTaken_revision_check" IMMEDIATE` before returning, because Prisma 5 does not surface an error raised by the final COMMIT.
+
 ## Run the application
 
 Start the backend in one terminal:

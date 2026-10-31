@@ -166,7 +166,19 @@ and writes query plans next to [`perf-01.md`](artifacts/lab-04/performance/perf-
 ```bash
 cd server
 npm run test:perf
-``` To watch the browser during E2E tests:
+```
+
+The database user in `DATABASE_URL` needs the `CREATEDB` privilege (the `toktickit` owner from the
+Docker setup above has it, as the Postgres superuser). Each run makes a `toktickit_perf_<pid>_<time>`
+database and drops it at the end; a run that is killed first leaves its database behind. To list
+and remove leftovers:
+
+```bash
+docker exec toktickit-postgres psql -U toktickit -d toktickit -Atc "SELECT datname FROM pg_database WHERE datname LIKE 'toktickit_perf_%'"
+docker exec toktickit-postgres psql -U toktickit -d toktickit -c 'DROP DATABASE "toktickit_perf_<pid>_<time>" WITH (FORCE)'
+```
+
+To watch the browser during E2E tests:
 
 ```bash
 npm install

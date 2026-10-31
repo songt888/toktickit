@@ -90,9 +90,10 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
 
   afterAll(async () => {
     await perfClient.$disconnect();
-    await dropPerfDatabase().catch(() => undefined);
+    // Say which database was left behind instead of hiding it (README has the cleanup command).
+    await dropPerfDatabase().catch((error) => console.warn(`PERF-01 could not drop ${perfDatabase}: ${error}`));
     await admin.$disconnect();
-  });
+  }, 60_000);
 
   // One untimed warm-up, then five sequential timed requests; statements counted per request.
   const plans: string[] = [];

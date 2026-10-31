@@ -45,6 +45,7 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | `requester-dashboard/zero-state.png` | Zero state for a new Requester | `dashboards.spec.ts` |
 | `requester-dashboard/refresh-failure.png` | A failed refresh keeping older data | `dashboards.spec.ts` |
 | `requester-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` |
+| `responsive/requester-my-tickets-*.png` | Requester My Tickets with a long unbroken summary wrapping in the table and cards | `responsive.spec.ts` |
 | `actions-taken/requester-*.png`, `responsive/requester-detail-actions-*.png` | Requester Ticket Detail with read-only Actions | `actions-taken-flow.spec.ts`, `responsive.spec.ts` |
 | `../../lab-03/screenshots/`, `../../lab-02/screenshots/` | Labs 2-3 screens still produced by their own specs in the same run | `e2e/lab-02/`, `e2e/lab-03/` |
 
@@ -54,7 +55,7 @@ Labs 1-3 behaviour (auth, password change, logout, Tickets, attachments, comment
 
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
-| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 11 Lab 4 screens at 1280/820/390 px; each fails the run on page overflow or a control cut off at the edge | `responsive.spec.ts` (RESP-01) |
+| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 12 Lab 4 screens at 1280/820/390 px; each fails the run on page overflow, a control cut off at the edge, or text wider than its box | `responsive.spec.ts` (RESP-01) |
 | `accessibility/cancel-panel-errors.png` | Keyboard-opened form with focus moved in and errors tied to fields | `accessibility.spec.ts` (A11Y-01) |
 
 Performance evidence (no screenshot): `../performance/perf-01.md`.

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { formatBangkok } from "./ActionsTaken.js";
+import { actionStatusClass, formatBangkok } from "./ActionsTaken.js";
+import { statusBadgeClass } from "./statusBadge.js";
 import { ApiRequestError, getStaffDashboard, type DashboardTicket, type StaffDashboardData, type TicketPriority, type TicketStatus } from "./api.js";
 import type { QueueScope } from "./StaffTicketQueue.js";
 
@@ -78,9 +79,9 @@ export default function StaffDashboard({ userId, visible, onViewQueue, onOpenTic
               <li key={ticket.id} className="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
                   <strong>{ticket.ticketNumber}</strong>{" "}
-                  <span className="badge text-bg-secondary">{statusLabels[ticket.currentStatus]}</span>{" "}
+                  <span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{statusLabels[ticket.currentStatus]}</span>{" "}
                   <span className="badge text-bg-light border">IT priority: {priorityLabels[ticket.itPriority]}</span>
-                  <div>{ticket.summary}</div>
+                  <div className="text-break">{ticket.summary}</div>
                   <div className="small text-secondary">Owner: {ticket.owner?.name ?? "Unassigned"} · Updated {formatBangkok(ticket.updatedAt)}</div>
                 </div>
                 <button type="button" className="btn btn-sm btn-outline-success" aria-label={`Open Detail for ${ticket.ticketNumber}`} onClick={() => onOpenTicket(ticket.id)}>
@@ -182,8 +183,8 @@ export default function StaffDashboard({ userId, visible, onViewQueue, onOpenTic
                     {data.myActions.map((action) => (
                       <li key={action.id} className="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                          <strong>{action.ticketNumber}</strong> <span className="badge text-bg-secondary">{action.status === "PLANNED" ? "Planned" : "In Progress"}</span>
-                          <div>{action.description}</div>
+                          <strong>{action.ticketNumber}</strong> <span className={`badge ${actionStatusClass[action.status]}`}>{action.status === "PLANNED" ? "Planned" : "In Progress"}</span>
+                          <div className="text-break">{action.description}</div>
                           <div className="small text-secondary">Updated {formatBangkok(action.updatedAt)}</div>
                         </div>
                         <button type="button" className="btn btn-sm btn-outline-success" aria-label={`Open Action on ${action.ticketNumber}`} onClick={() => onOpenAction(action.ticketId, action.id)}>

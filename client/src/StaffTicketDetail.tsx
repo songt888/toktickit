@@ -402,9 +402,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                 <dt className="col-sm-4">Last Resolved</dt>
                 <dd className="col-sm-8">{ticket.lastResolvedAt ? formatDate(ticket.lastResolvedAt) : "Not recorded"}</dd>
                 <dt className="col-sm-4">Summary</dt>
-                <dd className="col-sm-8">{ticket.summary}</dd>
+                <dd className="col-sm-8 text-break">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
-                <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
+                <dd className="col-sm-8 text-break" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
                 <dt className="col-sm-4">Last Updated</dt>
                 <dd className="col-sm-8">{formatDate(ticket.updatedAt)}</dd>
               </dl>
@@ -541,7 +541,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                       <li className="list-group-item" key={comment.id}>
                         <strong>{comment.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={comment.createdAt}>{formatDate(comment.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                       </li>
                     ))}
                   </ol>
@@ -580,7 +580,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                       <li className="list-group-item" key={note.id}>
                         <strong>{note.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={note.createdAt}>{formatDate(note.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
                       </li>
                     ))}
                   </ol>

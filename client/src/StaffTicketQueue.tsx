@@ -453,7 +453,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <tr key={ticket.id}>
                       <th scope="row">{ticket.ticketNumber}</th>
                       <td>{formatDate(ticket.ticketDate)}</td>
-                      <td>{ticket.summary}</td>
+                      <td className="text-break">{ticket.summary}</td>
                       <td>{ticket.category.name}</td>
                       <td>{ticket.requester.name}</td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>

@@ -29,7 +29,7 @@ Every run writes `EXPLAIN` for each measured request's `SELECT`s, using the valu
 
 - Requester counts and the recent list, My Actions and the IT-priority counts use indexes (`Ticket_requesterId_…`, `ActionTaken_assigneeId_status_updatedAt_id_idx`, `Ticket_currentStatus_itPriority_updatedAt_idx`).
 - The all-status count reads every Ticket by design, because it counts all 8 statuses.
-- The Staff "recently updated" list (`updatedAt` window, no owner) is a sequential scan plus top-5 sort, because no index starts with `updatedAt`. At 10,000 Tickets this is ~13 ms. An index on `("updatedAt" DESC, id DESC)` would remove the scan; it is not added here, since it needs a migration and the budget is met.
+- The Staff "recently updated" list (`updatedAt` window, no owner) is a sequential scan plus top-5 sort (planner estimate: all 10,000 Tickets scanned to find about 1,155 in the window, total cost about 1,293), because no index starts with `updatedAt`. Plans are plain `EXPLAIN`, so they give estimates, not timings; the whole Staff Dashboard request, this query included, has the 12 ms median above. An index on `("updatedAt" DESC, id DESC)` would remove the scan; it is not added here, since it needs a migration and the budget is met.
 - Seq scans on `User` and `AuthSession` are on tables of a few rows.
 
 Raw log line:

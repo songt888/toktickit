@@ -17,7 +17,7 @@ async function signIn(page: Page, user: { email: string; password: string }) {
 async function checkLayouts(page: Page, name: string, anchor: string) {
   for (const { label, width, height } of widths) {
     await page.setViewportSize({ width, height });
-    const { scrollWidth, clientWidth, clipped } = await page.evaluate(() => {
+    const { scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const controls = [...document.querySelectorAll<HTMLElement>("main button, main a, main input, main select, main textarea, main .badge")];
       return {
@@ -27,10 +27,16 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
           const box = control.getBoundingClientRect();
           return box.width > 0 && (box.left < -1 || box.right > viewport + 1);
         }).map((control) => control.outerHTML.slice(0, 120)),
+        // Text wider than its own box: a long word that does not wrap, even if a parent hides it.
+        spilled: [...document.querySelectorAll<HTMLElement>("main p, main dd, main td, main li, main div")]
+          .filter((el) => [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim()))
+          .filter((el) => el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1 && !el.closest(".table-responsive"))
+          .map((el) => el.outerHTML.slice(0, 120)),
       };
     });
     expect(scrollWidth, `${name} ${label} overflow`).toBeLessThanOrEqual(clientWidth + 1);
     expect(clipped, `${name} ${label} clipped controls`).toEqual([]);
+    expect(spilled, `${name} ${label} text wider than its box`).toEqual([]);
     await page.getByText(anchor, { exact: true }).first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/responsive/${name}-${label}.png`), fullPage: true });
   }
@@ -41,19 +47,30 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   page.on("dialog", (dialog) => void dialog.accept());
   const staff = await freshUser("resp-staff", "IT_STAFF");
   const requesterA = await freshUser("resp-requester", "REQUESTER");
-  // A long unbroken word in the summary and Action checks wrapping, not just short demo text.
+  // A long unbroken word in every free-text field checks wrapping, not just short demo text.
+  const longWord = "SupercalifragilisticexpialidociousNetworkPrinterQueueFailure";
   const summary = `E2E Lab 4 responsive ${Date.now()} SupercalifragilisticexpialidociousNetworkPrinterQueueFailure`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
   expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];
-  expect((await requesterApi.post("/api/tickets", {
-    data: { categoryId: category.id, relatedSystemId: system.id, summary, description: "Printer queue is stuck.", requestedPriority: "HIGH" },
-  })).status()).toBe(201);
+  const created = await requesterApi.post("/api/tickets", {
+    data: { categoryId: category.id, relatedSystemId: system.id, summary, description: `Printer queue is stuck: ${longWord}`, requestedPriority: "HIGH" },
+  });
+  expect(created.status()).toBe(201);
+  const ticketId = (await created.json()).id as number;
+  expect((await requesterApi.post(`/api/tickets/${ticketId}/comments`, { data: { content: `Still stuck ${longWord}` } })).status()).toBe(201);
+  const staffApi = await request.newContext({ baseURL: apiURL });
+  expect((await staffApi.post("/api/auth/login", { data: { email: staff.email, password: staff.password } })).ok()).toBe(true);
+  expect((await staffApi.post(`/api/tickets/${ticketId}/internal-notes`, { data: { content: `Spooler log ${longWord}` } })).status()).toBe(201);
+  await staffApi.dispose();
 
   await signIn(page, requesterA);
   await expect(page.getByRole("heading", { name: "Open Tickets", exact: true })).toBeVisible();
   await checkLayouts(page, "requester-dashboard", "Open Tickets");
+  await page.getByRole("link", { name: "My Tickets" }).click();
+  await expect(page.getByText(summary).first()).toBeVisible();
+  await checkLayouts(page, "requester-my-tickets", "My Tickets");
   await page.getByRole("button", { name: "Logout" }).click();
 
   await signIn(page, staff);

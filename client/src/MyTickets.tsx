@@ -200,7 +200,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
   const renderRow = (ticket: TicketListItem) => (
     <tr key={ticket.id}>
       <th scope="row">{ticket.ticketNumber}</th>
-      <td>{ticket.summary}</td>
+      <td className="text-break">{ticket.summary}</td>
       <td>{ticket.category.name}</td>
       <td>{ticket.relatedSystem.name}</td>
       <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
@@ -398,7 +398,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               {items.map((ticket) => (
                 <article key={ticket.id} className="border rounded p-3">
                   <h3 className="h6">{ticket.ticketNumber}</h3>
-                  <p className="mb-2">{ticket.summary}</p>
+                  <p className="mb-2 text-break">{ticket.summary}</p>
                   <dl className="row small mb-0">
                     <dt className="col-5">Category</dt><dd className="col-7">{ticket.category.name}</dd>
                     <dt className="col-5">Related System</dt><dd className="col-7">{ticket.relatedSystem.name}</dd>

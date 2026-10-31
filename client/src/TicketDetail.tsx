@@ -212,9 +212,9 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                 <dt className="col-sm-4">Current Status</dt>
                 <dd className="col-sm-8"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Summary</dt>
-                <dd className="col-sm-8">{ticket.summary}</dd>
+                <dd className="col-sm-8 text-break">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
-                <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
+                <dd className="col-sm-8 text-break" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
                 <dt className="col-sm-4">Created</dt>
                 <dd className="col-sm-8">{formatDateTime(ticket.createdAt)}</dd>
                 <dt className="col-sm-4">Last Updated</dt>
@@ -274,7 +274,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                           {formatDateTime(comment.createdAt)}
                         </time>
                       </div>
-                      <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
+                      <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                     </li>
                   ))}
                 </ol>

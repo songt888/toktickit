@@ -51,7 +51,7 @@ const lockedStatuses: TicketStatus[] = ["RESOLVED", "CLOSED", "CANCELLED"];
 const statusLabel: Record<ActionStatus, string> = {
   PLANNED: "Planned", IN_PROGRESS: "In progress", COMPLETED: "Completed", CANCELLED: "Cancelled",
 };
-const statusClass: Record<ActionStatus, string> = {
+export const actionStatusClass: Record<ActionStatus, string> = {
   PLANNED: "text-bg-secondary", IN_PROGRESS: "text-bg-warning text-dark", COMPLETED: "text-bg-success", CANCELLED: "text-bg-light border text-dark",
 };
 const panelTitle: Record<PanelKind, string> = {
@@ -511,7 +511,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
             {history.items.map((revision) => (
               <li key={revision.version} className="border rounded p-2 mb-2">
                 <strong>Version {revision.version}: {revision.operation}</strong> by {revision.actor.name} on {formatBangkok(revision.createdAt)}
-                <div className="text-secondary" style={{ whiteSpace: "pre-wrap" }}>
+                <div className="text-secondary text-break" style={{ whiteSpace: "pre-wrap" }}>
                   Status {statusLabel[revision.snapshot.status]} · assigned to {revision.snapshot.assignee.name} · {revision.snapshot.description}
                   {revision.snapshot.result ? ` · result: ${revision.snapshot.result}` : ""}
                   {revision.snapshot.followUpRequired ? ` · follow-up: ${revision.snapshot.followUpNote}` : ""}
@@ -541,7 +541,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
     return (
       <li key={action.id} id={`action-${action.id}`} tabIndex={-1} className="list-group-item" aria-label={`Action: ${action.description.slice(0, 80)}`}>
         <div className="d-flex flex-wrap justify-content-between gap-2">
-          <span className={`badge ${statusClass[action.status]}`}>{statusLabel[action.status]}</span>
+          <span className={`badge ${actionStatusClass[action.status]}`}>{statusLabel[action.status]}</span>
           <span className="small text-secondary">Version {action.version}</span>
         </div>
         <p className="mt-2 mb-2" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.description}</p>
@@ -557,7 +557,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
           <dt className="col-sm-4">Follow-Up Required?</dt>
           <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.followUpRequired ? `Yes: ${action.followUpNote}` : "No"}</dd>
           <dt className="col-sm-4">Attachment Notes</dt><dd className="col-sm-8" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.attachmentNotes ?? "None"}</dd>
-          {action.cancellationReason && (<><dt className="col-sm-4">Cancellation Reason</dt><dd className="col-sm-8">{action.cancellationReason}</dd></>)}
+          {action.cancellationReason && (<><dt className="col-sm-4">Cancellation Reason</dt><dd className="col-sm-8 text-break">{action.cancellationReason}</dd></>)}
           <dt className="col-sm-4">Created / Updated</dt><dd className="col-sm-8">{formatBangkok(action.createdAt)} / {formatBangkok(action.updatedAt)}</dd>
         </dl>
         <div className="d-flex flex-wrap gap-2 mt-2">

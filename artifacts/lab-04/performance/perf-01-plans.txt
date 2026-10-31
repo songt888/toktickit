@@ -2,7 +2,7 @@
 SELECT "public"."AuthSession"."id", "public"."AuthSession"."userId", "public"."AuthSession"."tokenHash", "public"."AuthSession"."expiresAt", "public"."AuthSession"."revokedAt", "public"."AuthSession"."createdAt" FROM "public"."AuthSession" WHERE ("public"."AuthSession"."tokenHash" = $1 AND 1=1) LIMIT $2 OFFSET $3
 Limit  (cost=0.00..1.05 rows=1 width=97)
   ->  Seq Scan on "AuthSession"  (cost=0.00..1.05 rows=1 width=97)
-        Filter: ("tokenHash" = 'ac30c2d23f01bee6040cc99e2edbe9f980a4e8ae6ac3344ee5d1a7c4a1c29c37'::text)
+        Filter: ("tokenHash" = '49f2b09da0a32e707bedd52010abd44c9df3ff15f7eb51d17159232491faec21'::text)
 
 -- /api/dashboard/requester
 SELECT "public"."User"."id", "public"."User"."name", "public"."User"."email", "public"."User"."role"::text, "public"."User"."isActive", "public"."User"."mustChangePassword" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -33,10 +33,10 @@ Aggregate  (cost=709.82..709.83 rows=1 width=8)
 SELECT COUNT(*) FROM (SELECT "public"."Ticket"."id" FROM "public"."Ticket" WHERE ("public"."Ticket"."requesterId" = $1 AND "public"."Ticket"."currentStatus" IN (CAST($2::text AS "public"."TicketStatus"),CAST($3::text AS "public"."TicketStatus")) AND "public"."Ticket"."lastResolvedAt" >= $4 AND "public"."Ticket"."lastResolvedAt" <= $5) OFFSET $6) AS "sub"
 Aggregate  (cost=252.44..252.45 rows=1 width=8)
   ->  Bitmap Heap Scan on "Ticket"  (cost=149.26..252.08 rows=29 width=4)
-        Recheck Cond: (("lastResolvedAt" >= '2026-10-24 16:07:48.448'::timestamp without time zone) AND ("lastResolvedAt" <= '2026-10-31 16:07:48.448'::timestamp without time zone) AND ("currentStatus" = ANY (ARRAY[('RESOLVED'::cstring)::"TicketStatus", ('CLOSED'::cstring)::"TicketStatus"])) AND ("requesterId" = 6))
+        Recheck Cond: (("lastResolvedAt" >= '2026-10-24 16:42:16.609'::timestamp without time zone) AND ("lastResolvedAt" <= '2026-10-31 16:42:16.609'::timestamp without time zone) AND ("currentStatus" = ANY (ARRAY[('RESOLVED'::cstring)::"TicketStatus", ('CLOSED'::cstring)::"TicketStatus"])) AND ("requesterId" = 6))
         ->  BitmapAnd  (cost=149.26..149.26 rows=29 width=0)
               ->  Bitmap Index Scan on "Ticket_lastResolvedAt_id_idx"  (cost=0.00..18.12 rows=584 width=0)
-                    Index Cond: (("lastResolvedAt" >= '2026-10-24 16:07:48.448'::timestamp without time zone) AND ("lastResolvedAt" <= '2026-10-31 16:07:48.448'::timestamp without time zone))
+                    Index Cond: (("lastResolvedAt" >= '2026-10-24 16:42:16.609'::timestamp without time zone) AND ("lastResolvedAt" <= '2026-10-31 16:42:16.609'::timestamp without time zone))
               ->  Bitmap Index Scan on "Ticket_currentStatus_itPriority_updatedAt_idx"  (cost=0.00..55.33 rows=2500 width=0)
                     Index Cond: ("currentStatus" = ANY (ARRAY[('RESOLVED'::cstring)::"TicketStatus", ('CLOSED'::cstring)::"TicketStatus"]))
               ->  Bitmap Index Scan on "Ticket_requesterId_updatedAt_id_idx"  (cost=0.00..75.28 rows=2000 width=0)
@@ -46,7 +46,7 @@ Aggregate  (cost=252.44..252.45 rows=1 width=8)
 SELECT "public"."Ticket"."id", "public"."Ticket"."ticketNumber", "public"."Ticket"."summary", "public"."Ticket"."currentStatus"::text, "public"."Ticket"."itPriority"::text, "public"."Ticket"."ownerId", "public"."Ticket"."updatedAt", "public"."Ticket"."lastResolvedAt" FROM "public"."Ticket" WHERE ("public"."Ticket"."requesterId" = $1 AND "public"."Ticket"."updatedAt" >= $2 AND "public"."Ticket"."updatedAt" <= $3) ORDER BY "public"."Ticket"."updatedAt" DESC, "public"."Ticket"."id" DESC LIMIT $4 OFFSET $5
 Limit  (cost=0.29..14.24 rows=5 width=329)
   ->  Index Scan Backward using "Ticket_requesterId_updatedAt_id_idx" on "Ticket"  (cost=0.29..645.00 rows=231 width=329)
-        Index Cond: (("requesterId" = 6) AND ("updatedAt" >= '2026-10-24 16:07:48.448'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:07:48.448'::timestamp without time zone))
+        Index Cond: (("requesterId" = 6) AND ("updatedAt" >= '2026-10-24 16:42:16.609'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:42:16.609'::timestamp without time zone))
 
 -- /api/dashboard/requester
 SELECT "public"."User"."id", "public"."User"."name" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -57,7 +57,7 @@ Seq Scan on "User"  (cost=0.00..1.12 rows=1 width=23)
 SELECT "public"."AuthSession"."id", "public"."AuthSession"."userId", "public"."AuthSession"."tokenHash", "public"."AuthSession"."expiresAt", "public"."AuthSession"."revokedAt", "public"."AuthSession"."createdAt" FROM "public"."AuthSession" WHERE ("public"."AuthSession"."tokenHash" = $1 AND 1=1) LIMIT $2 OFFSET $3
 Limit  (cost=0.00..1.05 rows=1 width=97)
   ->  Seq Scan on "AuthSession"  (cost=0.00..1.05 rows=1 width=97)
-        Filter: ("tokenHash" = '4011705465166bdaa7d573aa4216ddad7e8488fe41ad2b784a20ce22276de310'::text)
+        Filter: ("tokenHash" = '327d8d32d588c9311a334fb3ccdaf57914519950b6c29e43ce80640cb766ec66'::text)
 
 -- /api/dashboard/staff
 SELECT "public"."User"."id", "public"."User"."name", "public"."User"."email", "public"."User"."role"::text, "public"."User"."isActive", "public"."User"."mustChangePassword" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -144,7 +144,7 @@ Limit  (cost=1292.73..1292.75 rows=5 width=329)
   ->  Sort  (cost=1292.73..1295.62 rows=1155 width=329)
         Sort Key: "updatedAt" DESC, id DESC
         ->  Seq Scan on "Ticket"  (cost=0.00..1273.55 rows=1155 width=329)
-              Filter: (("updatedAt" >= '2026-10-24 16:07:48.521'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:07:48.521'::timestamp without time zone))
+              Filter: (("updatedAt" >= '2026-10-24 16:42:16.691'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:42:16.691'::timestamp without time zone))
 
 -- /api/dashboard/staff
 SELECT "public"."User"."id", "public"."User"."name" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -170,7 +170,7 @@ Seq Scan on "User"  (cost=0.00..1.12 rows=1 width=23)
 SELECT "public"."AuthSession"."id", "public"."AuthSession"."userId", "public"."AuthSession"."tokenHash", "public"."AuthSession"."expiresAt", "public"."AuthSession"."revokedAt", "public"."AuthSession"."createdAt" FROM "public"."AuthSession" WHERE ("public"."AuthSession"."tokenHash" = $1 AND 1=1) LIMIT $2 OFFSET $3
 Limit  (cost=0.00..1.05 rows=1 width=97)
   ->  Seq Scan on "AuthSession"  (cost=0.00..1.05 rows=1 width=97)
-        Filter: ("tokenHash" = '3db2ce97ff00ebe54d8c2314a1d611dba70bafa687e1f35d8e8bc3c1c2256157'::text)
+        Filter: ("tokenHash" = '7ea05328d09745d4b7e7e81c73f08845f04670ff586fb18596c1a11dd9e0940f'::text)
 
 -- /api/dashboard/staff
 SELECT "public"."User"."id", "public"."User"."name", "public"."User"."email", "public"."User"."role"::text, "public"."User"."isActive", "public"."User"."mustChangePassword" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -257,7 +257,7 @@ Limit  (cost=1292.73..1292.75 rows=5 width=329)
   ->  Sort  (cost=1292.73..1295.62 rows=1155 width=329)
         Sort Key: "updatedAt" DESC, id DESC
         ->  Seq Scan on "Ticket"  (cost=0.00..1273.55 rows=1155 width=329)
-              Filter: (("updatedAt" >= '2026-10-24 16:07:48.594'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:07:48.594'::timestamp without time zone))
+              Filter: (("updatedAt" >= '2026-10-24 16:42:16.766'::timestamp without time zone) AND ("updatedAt" <= '2026-10-31 16:42:16.766'::timestamp without time zone))
 
 -- /api/dashboard/staff
 SELECT "public"."User"."id", "public"."User"."name" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2
@@ -283,7 +283,7 @@ Seq Scan on "User"  (cost=0.00..1.12 rows=1 width=23)
 SELECT "public"."AuthSession"."id", "public"."AuthSession"."userId", "public"."AuthSession"."tokenHash", "public"."AuthSession"."expiresAt", "public"."AuthSession"."revokedAt", "public"."AuthSession"."createdAt" FROM "public"."AuthSession" WHERE ("public"."AuthSession"."tokenHash" = $1 AND 1=1) LIMIT $2 OFFSET $3
 Limit  (cost=0.00..1.05 rows=1 width=97)
   ->  Seq Scan on "AuthSession"  (cost=0.00..1.05 rows=1 width=97)
-        Filter: ("tokenHash" = '4011705465166bdaa7d573aa4216ddad7e8488fe41ad2b784a20ce22276de310'::text)
+        Filter: ("tokenHash" = '327d8d32d588c9311a334fb3ccdaf57914519950b6c29e43ce80640cb766ec66'::text)
 
 -- /api/staff/actions-taken?pageSize=50
 SELECT "public"."User"."id", "public"."User"."name", "public"."User"."email", "public"."User"."role"::text, "public"."User"."isActive", "public"."User"."mustChangePassword" FROM "public"."User" WHERE "public"."User"."id" IN ($1) OFFSET $2

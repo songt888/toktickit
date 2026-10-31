@@ -4,12 +4,13 @@ import ChangePassword from "./ChangePassword.js";
 import CreateTicket from "./CreateTicket.js";
 import Login from "./Login.js";
 import MyTickets from "./MyTickets.js";
+import RequesterDashboard, { type TicketScope } from "./RequesterDashboard.js";
 import StaffTicketDetail from "./StaffTicketDetail.js";
 import StaffTicketQueue from "./StaffTicketQueue.js";
 import TicketDetail from "./TicketDetail.js";
 import UserManagement from "./UserManagement.js";
 
-type ActivePage = "tickets" | "create" | "detail" | "queue" | "staff-detail" | "users";
+type ActivePage = "dashboard" | "tickets" | "create" | "detail" | "queue" | "staff-detail" | "users";
 type AuthMode = "checking" | "login" | "change-password" | "authenticated";
 
 function requesterFromUser(user: AuthUser): Requester {
@@ -22,7 +23,7 @@ function isOperationalRole(user: AuthUser | null): boolean {
 
 function defaultPageForUser(user: AuthUser): ActivePage {
   if (user.role === "ADMINISTRATOR") return "users";
-  return isOperationalRole(user) ? "queue" : "tickets";
+  return isOperationalRole(user) ? "queue" : "dashboard";
 }
 
 export default function App() {
@@ -30,6 +31,10 @@ export default function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [activePage, setActivePage] = useState<ActivePage>("tickets");
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  // Where a Requester opened Ticket Detail from; Back and the active nav link return there.
+  const [detailOrigin, setDetailOrigin] = useState<"tickets" | "dashboard">("tickets");
+  // A new key remounts My Tickets with the Dashboard's exact filter.
+  const [ticketScope, setTicketScope] = useState<{ key: number; scope: TicketScope | null }>({ key: 0, scope: null });
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +66,7 @@ export default function App() {
   function handleLogin(user: AuthUser) {
     setAuthUser(user);
     setSelectedTicketId(null);
+    setTicketScope((current) => ({ key: current.key + 1, scope: null }));
     setActivePage(defaultPageForUser(user));
     setAuthMode(user.mustChangePassword ? "change-password" : "authenticated");
   }
@@ -79,13 +85,20 @@ export default function App() {
     }
     setAuthUser(null);
     setSelectedTicketId(null);
+    setTicketScope((current) => ({ key: current.key + 1, scope: null }));
     setActivePage("tickets");
     setAuthMode("login");
   }
 
-  function handleOpenTicket(ticketId: number) {
+  function handleOpenTicket(ticketId: number, origin: "tickets" | "dashboard" = "tickets") {
     setSelectedTicketId(ticketId);
+    setDetailOrigin(origin);
     setActivePage("detail");
+  }
+
+  function handleViewTickets(scope: TicketScope) {
+    setTicketScope((current) => ({ key: current.key + 1, scope }));
+    setActivePage("tickets");
   }
 
   function handleOpenOperationalTicket(ticketId: number) {
@@ -94,6 +107,8 @@ export default function App() {
   }
 
   const operationalUser = isOperationalRole(authUser);
+  const dashboardActive = activePage === "dashboard" || (activePage === "detail" && detailOrigin === "dashboard");
+  const myTicketsActive = activePage === "tickets" || (activePage === "detail" && detailOrigin === "tickets");
 
   return (
     <div className="container py-4" style={{ maxWidth: operationalUser ? 1200 : 760 }}>
@@ -119,9 +134,20 @@ export default function App() {
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
             {currentRequester && <a
-              className={`nav-link${activePage === "tickets" || activePage === "detail" ? " active fw-semibold" : ""}`}
+              className={`nav-link${dashboardActive ? " active fw-semibold" : ""}`}
+              href="#dashboard"
+              aria-current={dashboardActive ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActivePage("dashboard");
+              }}
+            >
+              Dashboard
+            </a>}
+            {currentRequester && <a
+              className={`nav-link${myTicketsActive ? " active fw-semibold" : ""}`}
               href="#my-tickets"
-              aria-current={activePage === "tickets" || activePage === "detail" ? "page" : undefined}
+              aria-current={myTicketsActive ? "page" : undefined}
               onClick={(event) => {
                 event.preventDefault();
                 setActivePage("tickets");
@@ -191,7 +217,21 @@ export default function App() {
         )}
 
         {authMode === "authenticated" && currentRequester && (
+          <RequesterDashboard
+            key={currentRequester.id}
+            requesterId={currentRequester.id}
+            visible={activePage === "dashboard"}
+            onViewTickets={handleViewTickets}
+            onOpenTicket={(ticketId) => handleOpenTicket(ticketId, "dashboard")}
+            onCreateTicket={() => setActivePage("create")}
+            onSessionExpired={() => void handleLogout()}
+          />
+        )}
+
+        {authMode === "authenticated" && currentRequester && (
           <MyTickets
+            key={`${currentRequester.id}-${ticketScope.key}`}
+            initialScope={ticketScope.scope}
             requester={currentRequester}
             onCreateTicket={() => setActivePage("create")}
             onOpenTicket={handleOpenTicket}
@@ -206,7 +246,8 @@ export default function App() {
         {authMode === "authenticated" && currentRequester && activePage === "detail" && selectedTicketId !== null && (
           <TicketDetail
             ticketId={selectedTicketId}
-            onBack={() => setActivePage("tickets")}
+            onBack={() => setActivePage(detailOrigin)}
+            backLabel={detailOrigin === "dashboard" ? "Back to Dashboard" : "Back to My Tickets"}
           />
         )}
 

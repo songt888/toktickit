@@ -8,3 +8,10 @@ beforeEach(() => {
     items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 }, ticketUpdatedAt: "2026-10-30T00:00:00.000Z",
   });
 });
+
+beforeEach(() => {
+  vi.spyOn(api, "getRequesterDashboard").mockResolvedValue({
+    asOf: "2026-10-30T00:00:00.000Z", recentFrom: "2026-10-23T00:00:00.000Z", displayTimeZone: "Asia/Bangkok",
+    metrics: { openTickets: 0, waitingForRequester: 0, recentlyResolved: 0 }, recentTickets: [],
+  });
+});

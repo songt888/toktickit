@@ -18,6 +18,7 @@ type CommentState = "loading" | "success" | "error";
 export interface TicketDetailProps {
   ticketId: number;
   onBack: () => void;
+  backLabel?: string;
 }
 
 function formatDateTime(value: string): string {
@@ -37,7 +38,7 @@ function commentAuthorLabel(comment: PublicComment): string {
   return `${comment.author.name} (${comment.author.email})`;
 }
 
-export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
+export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My Tickets" }: TicketDetailProps) {
   const [ticket, setTicket] = useState<TicketDetailData | null>(null);
   const [state, setState] = useState<DetailState>("loading");
   const [errorMessage, setErrorMessage] = useState("");
@@ -162,7 +163,7 @@ export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
     <section id="ticket-detail" className="card border-0 shadow-sm mb-4" aria-labelledby="ticket-detail-title">
       <div className="card-body">
         <button className="btn btn-outline-secondary mb-3" type="button" onClick={onBack}>
-          Back to My Tickets
+          {backLabel}
         </button>
 
         <h2 id="ticket-detail-title" className="h4 mb-3">Ticket Detail</h2>

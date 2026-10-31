@@ -10,6 +10,7 @@ async function signIn(page: Page) {
   await page.getByLabel("Email").fill(requesterEmail);
   await page.getByLabel("Password").fill(requesterPassword);
   await page.getByRole("button", { name: "Sign In" }).click();
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
 }
 
@@ -57,6 +58,7 @@ test("keeps the authenticated requester shell usable and free of horizontal over
 
   await expect(page.getByLabel("Current user")).toContainText("E2E Requester A");
   await page.reload();
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await expect(page.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
   const visibleTicketList = page.locator(
@@ -82,6 +84,7 @@ test("keeps the authenticated requester shell usable and free of horizontal over
   });
 
   await page.getByRole("button", { name: "Back to My Tickets" }).click();
+  await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expect(page.getByRole("heading", { name: "Create Ticket" })).toBeVisible();

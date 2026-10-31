@@ -67,6 +67,7 @@ test("requires an initial password change and revokes the session on logout", as
     );
     await page.getByRole("button", { name: "Continue" }).click();
     expect((await passwordResponsePromise).status()).toBe(200);
+    await page.getByRole("link", { name: "My Tickets" }).click();
     await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
 
     const session = (await page.context().cookies()).find(({ name }) => name === "toktickit_session");
@@ -84,8 +85,8 @@ test("requires an initial password change and revokes the session on logout", as
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(nextPassword);
     await page.getByRole("button", { name: "Sign In" }).click();
-    await expect(page.getByRole("heading", { name: "My Tickets" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   } finally {
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (user) {

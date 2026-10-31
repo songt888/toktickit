@@ -39,11 +39,13 @@ test("keyboard navigation, labels, active navigation, and feedback are accessibl
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
 
-  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "My Tickets");
+  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "Dashboard");
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expectLabeledFields(page);
+  // The form stays disabled until reference data loads; Tab would skip a disabled Category.
+  await expect(page.locator("#ticket-category")).toBeEnabled();
   await page.locator("#ticket-requester").focus();
   await page.keyboard.press("Tab");
   await expect(page.locator("#ticket-category")).toBeFocused();

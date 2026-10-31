@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { openMyTickets } from "../openMyTickets.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -62,6 +63,7 @@ describe("Requester authenticated-session regression", () => {
     mockSessionWorkflow();
 
     render(<App />);
+    await openMyTickets();
 
     expect(await screen.findByText("Tickets created by Ari Suksan.")).toBeInTheDocument();
     expect(screen.queryByLabelText(/Choose a Development Requester/)).not.toBeInTheDocument();
@@ -80,6 +82,7 @@ describe("Requester authenticated-session regression", () => {
     const user = userEvent.setup();
 
     render(<App />);
+    await openMyTickets();
     await user.click((await screen.findAllByRole("button", { name: "View details" }))[0]);
 
     expect(await screen.findByRole("heading", { name: "Ticket Detail" })).toBeInTheDocument();
@@ -110,6 +113,7 @@ describe("Requester authenticated-session regression", () => {
     const user = userEvent.setup();
 
     render(<App />);
+    await openMyTickets();
     await user.click((await screen.findAllByRole("button", { name: "View details" }))[0]);
     await screen.findByRole("heading", { name: "Public Comments" });
 

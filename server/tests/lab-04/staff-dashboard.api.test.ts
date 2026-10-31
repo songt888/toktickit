@@ -164,6 +164,30 @@ describe("Staff and Administrator Dashboard API (API-12)", () => {
     expect(items[0]).toEqual({ id: ids[0], ticketId: ticket.id, ticketNumber: ticket.ticketNumber, description: "y".repeat(160), status: "PLANNED", updatedAt: at(1).toISOString() });
   });
 
+  it("reads every metric from one snapshot while Tickets move in and out of the active set", async () => {
+    const moving = [];
+    for (let index = 0; index < 40; index += 1) moving.push((await ticketAt({ status: "OPEN", itPriority: "HIGH" })).id);
+    // Each UPDATE moves all 40 at once, so statements that read different moments disagree by 40.
+    let writing = true;
+    const writer = (async () => {
+      for (let flip = 0; writing; flip += 1) {
+        const status = flip % 2 ? "OPEN" : "CANCELLED";
+        await prisma.$executeRaw`UPDATE "Ticket" SET "currentStatus" = ${status}::"TicketStatus" WHERE id = ANY(${moving})`;
+      }
+    })();
+    try {
+      for (let read = 0; read < 40; read += 1) {
+        const { byStatus, byItPriority } = (await send("get", "/api/dashboard/staff", staff.cookie)).body.metrics;
+        const activeByStatus = active.reduce((sum, status) => sum + byStatus[status], 0);
+        const activeByPriority = Object.values(byItPriority as Record<string, number>).reduce((sum, count) => sum + count, 0);
+        expect(activeByStatus, `read ${read}`).toBe(activeByPriority);
+      }
+    } finally {
+      writing = false;
+      await writer;
+    }
+  });
+
   it("is for Staff and Administrators only, needs a session and takes no query parameters", async () => {
     expect((await send("get", "/api/dashboard/staff", requester.cookie)).status).toBe(403);
     expect((await send("get", "/api/dashboard/staff", "")).status).toBe(401);

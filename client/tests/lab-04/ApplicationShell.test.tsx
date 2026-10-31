@@ -144,7 +144,9 @@ describe("Staff and Administrator application shell with the Dashboard (UI-07 St
 
   it("opens an Action from the Dashboard or My Pending Actions and goes back to where it came from", async () => {
     mockStaffApp();
-    vi.spyOn(api, "getMyPendingActions").mockResolvedValue({ items: staffSnapshot().myActions, pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } });
+    const pending = vi.spyOn(api, "getMyPendingActions").mockImplementation(async (page = 1) => ({
+      items: staffSnapshot().myActions, pagination: { page, pageSize: 10, totalItems: 11, totalPages: 2 },
+    }));
     const user = userEvent.setup();
     render(<App />);
     await user.click(await screen.findByRole("button", { name: "Open Action on TKT-20260924-900701" }));
@@ -156,9 +158,13 @@ describe("Staff and Administrator application shell with the Dashboard (UI-07 St
 
     await user.click(await screen.findByRole("button", { name: "View all My Pending Actions" }));
     expect(await screen.findByRole("heading", { name: "My Pending Actions", level: 2 })).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Next" }));
+    expect(await screen.findByText("Page 2 of 2 (11 Actions)")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Open Action on TKT-20260924-900701" }));
     await user.click(await screen.findByRole("button", { name: "Back to My Pending Actions" }));
-    expect(await screen.findByRole("heading", { name: "My Pending Actions", level: 2 })).toBeInTheDocument();
+    // Back returns to the page the user was on, not page 1.
+    expect(await screen.findByText("Page 2 of 2 (11 Actions)")).toBeInTheDocument();
+    expect(pending).toHaveBeenLastCalledWith(2);
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   });
 

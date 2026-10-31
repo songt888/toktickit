@@ -3,25 +3,32 @@ import { formatBangkok } from "./ActionsTaken.js";
 import { ApiRequestError, getMyPendingActions, type ActionSummary, type Pagination } from "./api.js";
 
 export interface MyPendingActionsProps {
+  // Held by the App, so returning from a Ticket opens the same page.
+  page: number;
+  onPageChange: (page: number) => void;
   onBack: () => void;
   onOpenAction: (ticketId: number, actionId: number) => void;
   onSessionExpired: () => void;
 }
 
 // The exact myActions drill-down: Actions assigned to the session user, pending, on active Tickets.
-export default function MyPendingActions({ onBack, onOpenAction, onSessionExpired }: MyPendingActionsProps) {
+export default function MyPendingActions({ page, onPageChange, onBack, onOpenAction, onSessionExpired }: MyPendingActionsProps) {
   const sequence = useRef(0);
   const [result, setResult] = useState<{ items: ActionSummary[]; pagination: Pagination } | null>(null);
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  // The page last asked for, so Retry repeats that request rather than page 1.
+  const [requested, setRequested] = useState(page);
 
-  async function load(page: number) {
+  async function load(target: number) {
     const current = ++sequence.current;
+    setRequested(target);
     setState("loading");
     try {
-      const loaded = await getMyPendingActions(page);
+      const loaded = await getMyPendingActions(target);
       if (current !== sequence.current) return;
       setResult(loaded);
       setState("success");
+      onPageChange(loaded.pagination.page);
     } catch (error) {
       if (current !== sequence.current) return;
       if (error instanceof ApiRequestError && error.status === 401) return onSessionExpired();
@@ -30,7 +37,7 @@ export default function MyPendingActions({ onBack, onOpenAction, onSessionExpire
   }
 
   useEffect(() => {
-    void load(1);
+    void load(page);
     return () => {
       sequence.current += 1;
     };
@@ -48,7 +55,7 @@ export default function MyPendingActions({ onBack, onOpenAction, onSessionExpire
         {state === "error" && (
           <div className="alert alert-danger" role="alert">
             Your pending Actions could not be loaded.
-            <button type="button" className="btn btn-sm btn-outline-danger ms-2" onClick={() => void load(pagination?.page ?? 1)}>Retry</button>
+            <button type="button" className="btn btn-sm btn-outline-danger ms-2" onClick={() => void load(requested)}>Retry</button>
           </div>
         )}
         {state === "success" && result && result.items.length === 0 && <p className="alert alert-info" role="status">No pending Actions assigned to you.</p>}

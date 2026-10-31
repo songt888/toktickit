@@ -163,7 +163,9 @@ async function staffReference(userId: number) {
 }
 
 async function staffDashboardMatchesDatabase(page: Page, userId: number) {
-  for (let attempt = 0; attempt < 10; attempt += 1) {
+  // Other workers write Tickets; wait between attempts so a quiet moment can come round.
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (attempt) await page.waitForTimeout(500);
     const before = await staffReference(userId);
     const reloaded = page.waitForResponse((response) => response.url().endsWith("/api/dashboard/staff") && response.status() === 200);
     await page.getByRole("button", { name: "Refresh" }).click();
@@ -186,6 +188,14 @@ async function queueDrillDown(page: Page, button: string | RegExp) {
   await expect(page.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
   const body = await response.json();
   return { query: Object.fromEntries(new URL(response.url()).searchParams), total: body.pagination.totalItems as number, numbers: body.items.map((item: { ticketNumber: string }) => item.ticketNumber) };
+}
+
+// Whether a Ticket matches a drill-down query: the same query narrowed to that Ticket's number,
+// so other workers' newer Tickets cannot push it off the first page.
+async function queryIncludes(page: Page, query: Record<string, string>, ticketNumber: string) {
+  const response = await page.request.get(`${apiURL}/api/staff/tickets?${new URLSearchParams({ ...query, page: "1", search: ticketNumber })}`);
+  expect(response.status()).toBe(200);
+  return ((await response.json()).items as Array<{ ticketNumber: string }>).some((item) => item.ticketNumber === ticketNumber);
 }
 
 test("E2E-03 Staff and Administrator Dashboards match the database, drill down exactly and open assigned Actions", async ({ page }) => {
@@ -252,14 +262,28 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   // Each card and bucket opens the Queue with its exact filter; owner-scoped totals are exact.
   const unassigned = await queueDrillDown(page, "View Unassigned Tickets in the Ticket Queue");
   expect(unassigned.query).toMatchObject({ statusGroup: "active", ownerId: "unassigned" });
-  expect(unassigned.numbers).toContain(tickets[1].ticketNumber);
+  expect(await queryIncludes(page, unassigned.query, tickets[1].ticketNumber)).toBe(true);
+  expect(await queryIncludes(page, unassigned.query, tickets[0].ticketNumber)).toBe(false);
   const mine = await queueDrillDown(page, "View My Tickets in the Ticket Queue");
   expect([mine.query.statusGroup, mine.query.ownerId, mine.numbers]).toEqual(["active", String(staff.id), [tickets[0].ticketNumber]]);
   const urgent = await queueDrillDown(page, "View all urgent");
   expect(urgent.query).toMatchObject({ statusGroup: "active", itPriority: "URGENT" });
-  expect(urgent.numbers).toContain(tickets[0].ticketNumber);
-  const closed = await queueDrillDown(page, /^Closed: \d+ Tickets/);
-  expect(closed.query).toMatchObject({ currentStatus: "CLOSED" });
+  expect(await queryIncludes(page, urgent.query, tickets[0].ticketNumber)).toBe(true);
+  // Every status bucket (all Tickets) and every IT-priority bucket (active only).
+  const labels: Record<string, string> = {
+    NEW: "New", OPEN: "Open", IN_PROGRESS: "In Progress", WAITING_FOR_REQUESTER: "Waiting for Requester",
+    RESOLVED: "Resolved", CLOSED: "Closed", REOPENED: "Reopened", CANCELLED: "Cancelled",
+  };
+  for (const [status, label] of Object.entries(labels)) {
+    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ Tickets`));
+    expect(bucket.query, status).toMatchObject({ currentStatus: status });
+    expect(bucket.query, status).not.toHaveProperty("statusGroup");
+  }
+  for (const [priority, label] of [["LOW", "Low"], ["MEDIUM", "Medium"], ["HIGH", "High"], ["URGENT", "Urgent"]]) {
+    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ active Tickets`));
+    expect(bucket.query, priority).toMatchObject({ statusGroup: "active", itPriority: priority });
+  }
+  expect(await queryIncludes(page, { currentStatus: "OPEN" }, tickets[0].ticketNumber)).toBe(true);
   const recent = await queueDrillDown(page, "View all recently updated");
   expect(Object.keys(recent.query)).toEqual(expect.arrayContaining(["updatedFrom", "updatedTo"]));
   await page.getByRole("button", { name: "Clear Dashboard filter" }).click();

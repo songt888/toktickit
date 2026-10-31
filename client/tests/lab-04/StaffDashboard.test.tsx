@@ -136,25 +136,41 @@ describe("Staff and Administrator Dashboard (UI-06)", () => {
 });
 
 describe("My Pending Actions list (UI-06 paging)", () => {
-  it("pages through the session user's pending Actions and opens one", async () => {
-    const item = (id: number): api.ActionSummary => ({ id, ticketId: 900 + id, ticketNumber: `TKT-${id}`, description: `Action ${id}`, status: "PLANNED", updatedAt: "2026-10-30T03:00:00.000Z" });
-    const load = vi.spyOn(api, "getMyPendingActions")
-      .mockResolvedValueOnce({ items: [item(1)], pagination: { page: 1, pageSize: 10, totalItems: 11, totalPages: 2 } })
-      .mockResolvedValueOnce({ items: [item(11)], pagination: { page: 2, pageSize: 10, totalItems: 11, totalPages: 2 } });
+  const item = (id: number): api.ActionSummary => ({ id, ticketId: 900 + id, ticketNumber: `TKT-${id}`, description: `Action ${id}`, status: "PLANNED", updatedAt: "2026-10-30T03:00:00.000Z" });
+  const pageOf = (page: number) => ({ items: [item(page * 10 - 9)], pagination: { page, pageSize: 10, totalItems: 11, totalPages: 2 } });
+
+  it("pages through the session user's pending Actions, reports the page, and opens one", async () => {
+    const load = vi.spyOn(api, "getMyPendingActions").mockResolvedValueOnce(pageOf(1)).mockResolvedValueOnce(pageOf(2));
     const onOpenAction = vi.fn();
+    const onPageChange = vi.fn();
     const user = userEvent.setup();
-    render(<MyPendingActions onBack={vi.fn()} onOpenAction={onOpenAction} onSessionExpired={vi.fn()} />);
+    render(<MyPendingActions page={1} onPageChange={onPageChange} onBack={vi.fn()} onOpenAction={onOpenAction} onSessionExpired={vi.fn()} />);
     expect(await screen.findByText("Page 1 of 2 (11 Actions)")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Next" }));
     expect(await screen.findByText("Action 11")).toBeInTheDocument();
     expect(load).toHaveBeenLastCalledWith(2);
+    expect(onPageChange).toHaveBeenLastCalledWith(2);
     await user.click(screen.getByRole("button", { name: "Open Action on TKT-11" }));
     expect(onOpenAction).toHaveBeenCalledWith(911, 11);
   });
 
+  it("opens on the page it is given, and Retry repeats the page that failed", async () => {
+    const load = vi.spyOn(api, "getMyPendingActions").mockResolvedValueOnce(pageOf(1)).mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce(pageOf(2));
+    const user = userEvent.setup();
+    render(<MyPendingActions page={1} onPageChange={vi.fn()} onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);
+    await user.click(await screen.findByRole("button", { name: "Next" }));
+    await user.click(await screen.findByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("Action 11")).toBeInTheDocument();
+    expect(load.mock.calls.map(([page]) => page)).toEqual([1, 2, 2]);
+
+    vi.spyOn(api, "getMyPendingActions").mockResolvedValue(pageOf(2));
+    render(<MyPendingActions page={2} onPageChange={vi.fn()} onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);
+    await waitFor(() => expect(api.getMyPendingActions).toHaveBeenLastCalledWith(2));
+  });
+
   it("shows the empty message", async () => {
     vi.spyOn(api, "getMyPendingActions").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
-    render(<MyPendingActions onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);
+    render(<MyPendingActions page={1} onPageChange={vi.fn()} onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);
     expect(await screen.findByText("No pending Actions assigned to you.")).toBeInTheDocument();
   });
 });

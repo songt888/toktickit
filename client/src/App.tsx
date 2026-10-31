@@ -42,6 +42,7 @@ export default function App() {
   // Where Staff/Admin opened Ticket Detail from, and the Action to focus when opened from one.
   const [staffDetailOrigin, setStaffDetailOrigin] = useState<StaffDetailOrigin>("queue");
   const [focusActionId, setFocusActionId] = useState<number | undefined>(undefined);
+  const [myActionsPage, setMyActionsPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +76,7 @@ export default function App() {
     setSelectedTicketId(null);
     setTicketScope((current) => ({ key: current.key + 1, scope: null }));
     setQueueScope((current) => ({ key: current.key + 1, scope: null }));
+    setMyActionsPage(1);
     setActivePage(defaultPageForUser(user));
     setAuthMode(user.mustChangePassword ? "change-password" : "authenticated");
   }
@@ -95,6 +97,7 @@ export default function App() {
     setSelectedTicketId(null);
     setTicketScope((current) => ({ key: current.key + 1, scope: null }));
     setQueueScope((current) => ({ key: current.key + 1, scope: null }));
+    setMyActionsPage(1);
     setActivePage("tickets");
     setAuthMode("login");
   }
@@ -278,13 +281,18 @@ export default function App() {
             onViewQueue={handleViewQueue}
             onOpenTicket={(ticketId) => handleOpenOperationalTicket(ticketId, "dashboard")}
             onOpenAction={(ticketId, actionId) => handleOpenOperationalTicket(ticketId, "dashboard", actionId)}
-            onViewMyActions={() => setActivePage("my-actions")}
+            onViewMyActions={() => {
+              setMyActionsPage(1);
+              setActivePage("my-actions");
+            }}
             onSessionExpired={() => void handleLogout()}
           />
         )}
 
         {authMode === "authenticated" && operationalUser && activePage === "my-actions" && (
           <MyPendingActions
+            page={myActionsPage}
+            onPageChange={setMyActionsPage}
             onBack={() => setActivePage("dashboard")}
             onOpenAction={(ticketId, actionId) => handleOpenOperationalTicket(ticketId, "my-actions", actionId)}
             onSessionExpired={() => void handleLogout()}

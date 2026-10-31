@@ -719,6 +719,20 @@ export async function getActionRevisions(
   return (await response.json()) as { items: ActionRevision[]; pagination: Pagination };
 }
 
+export interface TicketStatusEvent {
+  id: number;
+  fromStatus: TicketStatus | null;
+  toStatus: TicketStatus;
+  createdAt: string;
+  actor: { id: number; name: string };
+}
+
+export async function getTicketStatusHistory(ticketId: number, page = 1): Promise<{ items: TicketStatusEvent[]; pagination: Pagination }> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/status-history?page=${page}&pageSize=10`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Ticket Status History.");
+  return (await response.json()) as { items: TicketStatusEvent[]; pagination: Pagination };
+}
+
 // One request body per command; the caller keeps mutationId stable across retries of the same draft.
 export async function writeActionTaken(
   method: "POST" | "PATCH",

@@ -43,16 +43,17 @@ test("E2E-04 auth, password and logout still work", async ({ page }) => {
   await signIn(page, user);
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
 
+  // Logout ends the browser's own session: it read data before, and gets 401 after.
+  expect((await page.request.get(`${apiURL}/api/tickets`)).status()).toBe(200);
+  await page.getByRole("button", { name: "Logout" }).click();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  expect((await page.request.get(`${apiURL}/api/tickets`)).status()).toBe(401);
+
   // Changing the password: the old one stops working, the new one signs in.
   const api = await apiAs(user);
   const newPassword = "E2ERegressionChanged456";
   expect((await api.post("/api/auth/change-password", { data: { currentPassword: password, newPassword, confirmPassword: newPassword } })).ok()).toBe(true);
   expect((await anonymous.post("/api/auth/login", { data: { email: user.email, password } })).status()).toBe(401);
-
-  await page.getByRole("button", { name: "Logout" }).click();
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-  // Logged out in the browser means the browser's session no longer reads data.
-  expect((await page.request.get(`${apiURL}/api/tickets`)).status()).toBe(401);
   await signIn(page, { email: user.email, password: newPassword });
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   await Promise.all([anonymous.dispose(), api.dispose()]);

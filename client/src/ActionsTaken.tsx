@@ -369,7 +369,9 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
   }
 
   // Fields marked with the visual * are also announced as required.
-  const requiredKeys = ["actionAt", "description", "assigneeId", "followUpNote", "cancellationReason", ...(panel?.kind === "complete" ? ["result"] : [])];
+  // Result is required to complete, and stays required when editing an already completed Action.
+  const resultRequired = panel?.kind === "complete" || (panel?.kind === "edit" && panel.action?.status === "COMPLETED");
+  const requiredKeys = ["actionAt", "description", "assigneeId", "followUpNote", "cancellationReason", "confirm", ...(resultRequired ? ["result"] : [])];
   const errorProps = (key: string, help?: string) => ({
     "aria-required": requiredKeys.includes(key) || undefined,
     "aria-invalid": fieldErrors[key] ? true : undefined,
@@ -414,7 +416,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
         )}
         {showResult && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}{kind === "complete" || action?.status === "COMPLETED" ? <> <span className="text-danger" aria-hidden="true">*</span></> : null}</label>
+            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}{resultRequired ? <> <span className="text-danger" aria-hidden="true">*</span></> : null}</label>
             <textarea id="action-result" className={`form-control ${fieldErrors.result ? "is-invalid" : ""}`} rows={2} maxLength={4000}
               value={draft.result} onChange={(event) => edit("result", event.target.value)} {...errorProps("result")} />
             {errorText("result")}
@@ -474,7 +476,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
               <input id="action-cancel-confirm" type="checkbox" className={`form-check-input ${fieldErrors.confirm ? "is-invalid" : ""}`} checked={draft.confirmCancel}
                 onChange={(event) => edit("confirmCancel", event.target.checked)} {...errorProps("confirm")} />
               <label className="form-check-label" htmlFor="action-cancel-confirm">
-                I confirm cancelling this Action. This cancels the Action only, not the Ticket.
+                I confirm cancelling this Action. This cancels the Action only, not the Ticket. <span className="text-danger" aria-hidden="true">*</span>
               </label>
             </div>
             {errorText("confirm")}

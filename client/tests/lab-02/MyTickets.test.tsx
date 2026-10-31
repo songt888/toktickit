@@ -102,7 +102,7 @@ describe("My Tickets UI", () => {
     expect((await screen.findAllByText("Hardware")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("Campus Wi-Fi")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("HIGH", { selector: "span.badge.text-bg-warning" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("NEW", { selector: "span.badge.text-bg-primary" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("NEW", { selector: "span.badge.bg-success-subtle" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Create Ticket" })).toBeInTheDocument();
 
     await user.click(screen.getAllByRole("button", { name: "View details" })[0]);

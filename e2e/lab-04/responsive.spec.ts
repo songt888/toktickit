@@ -1,9 +1,8 @@
 import { expect, request, test, type Page } from "@playwright/test";
 import path from "node:path";
+import { freshUser } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
-const staff = { email: "e2e.staff@example.com", password: "E2EStaffPassword123" };
-const requesterA = { email: "e2e.requester.a@example.com", password: "E2ERequesterPassword123" };
 const widths = [{ label: "desktop", width: 1280, height: 900 }, { label: "tablet", width: 820, height: 1000 }, { label: "mobile", width: 390, height: 844 }];
 
 async function signIn(page: Page, user: { email: string; password: string }) {
@@ -40,10 +39,12 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
 
 test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page }) => {
   page.on("dialog", (dialog) => void dialog.accept());
+  const staff = await freshUser("resp-staff", "IT_STAFF");
+  const requesterA = await freshUser("resp-requester", "REQUESTER");
   // A long unbroken word in the summary and Action checks wrapping, not just short demo text.
   const summary = `E2E Lab 4 responsive ${Date.now()} Supercalifragilisticexpialidocious-network`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
-  expect((await requesterApi.post("/api/auth/login", { data: requesterA })).ok()).toBe(true);
+  expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];
   expect((await requesterApi.post("/api/tickets", {

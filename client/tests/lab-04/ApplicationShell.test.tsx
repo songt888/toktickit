@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../src/App.js";
+import StaffDashboard from "../../src/StaffDashboard.js";
 import * as api from "../../src/api.js";
 import { action, deferred, list, mockList } from "./actionFixtures.js";
 
@@ -208,8 +209,6 @@ describe("Logout clears one user's drafts and data before the next user (UI-07 l
   });
 
   it("never shows a late Dashboard response for the previous user", async () => {
-    const staffA: api.AuthUser = { id: 31, name: "Nattakit Support", email: "a@example.com", role: "IT_STAFF", isActive: true, mustChangePassword: false };
-    const staffB: api.AuthUser = { id: 33, name: "Mali Ops", email: "b@example.com", role: "IT_STAFF", isActive: true, mustChangePassword: false };
     const zero = { NEW: 0, OPEN: 0, IN_PROGRESS: 0, WAITING_FOR_REQUESTER: 0, RESOLVED: 0, CLOSED: 0, REOPENED: 0, CANCELLED: 0 };
     const snapshotFor = (myTickets: number): api.StaffDashboardData => ({
       asOf, recentFrom, displayTimeZone: "Asia/Bangkok",
@@ -217,25 +216,16 @@ describe("Logout clears one user's drafts and data before the next user (UI-07 l
       myActions: [], recentTickets: [], urgentTickets: [],
     });
     const late = deferred<api.StaffDashboardData>();
-    vi.spyOn(api, "getCurrentUser").mockResolvedValue({ user: staffA, requiresPasswordChange: false });
     vi.spyOn(api, "getStaffDashboard").mockReturnValueOnce(late.promise).mockResolvedValueOnce(snapshotFor(5));
-    vi.spyOn(api, "getCategories").mockResolvedValue([]);
-    vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
-    vi.spyOn(api, "getStaffTickets").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
-    vi.spyOn(api, "logout").mockResolvedValue();
-    vi.spyOn(api, "login").mockResolvedValue({ user: staffB, requiresPasswordChange: false });
-    const user = userEvent.setup();
-    render(<App />);
+    const props = { visible: true, onViewQueue: vi.fn(), onOpenTicket: vi.fn(), onOpenAction: vi.fn(), onViewMyActions: vi.fn(), onSessionExpired: vi.fn() };
+    // Same component instance, so only the request guard (not an unmount) can stop the late answer.
+    const { rerender } = render(<StaffDashboard userId={31} {...props} />);
     expect(await screen.findByText("Loading your Dashboard…")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Logout" }));
-    await user.type(await screen.findByLabelText("Email"), staffB.email);
-    await user.type(screen.getByLabelText("Password"), "Password123!");
-    await user.click(screen.getByRole("button", { name: "Sign In" }));
+    rerender(<StaffDashboard userId={33} {...props} />);
     const myTicketsCard = () => screen.getAllByRole("heading", { name: "My Tickets" })[0].closest("section")!;
     await waitFor(() => expect(myTicketsCard()).toHaveTextContent("5"));
 
-    // User A's request finally answers; B's screen must not change.
+    // User 31's request finally answers; user 33's screen must not change.
     await act(async () => late.resolve(snapshotFor(99)));
     expect(myTicketsCard()).toHaveTextContent("5");
     expect(screen.queryByText("99")).not.toBeInTheDocument();

@@ -161,18 +161,20 @@ accessible metric/action names and standard keyboard activation.
 
 ### Planned visual and accessibility checklist
 
-- [ ] All roles preserve identity, active Dashboard navigation and earlier screens.
-- [ ] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.
-- [ ] Dashboard labels, counts, scope captions and drill-downs match the API.
-- [ ] My Actions means current assignee; zero/loading/forbidden/failure states work.
+- [x] All roles preserve identity, active Dashboard navigation and earlier screens.
+- [x] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.
+- [x] Dashboard labels, counts, scope captions and drill-downs match the API.
+- [x] My Actions means current assignee; zero/loading/forbidden/failure states work.
 - [x] Actions list/create/reassign/edit/start/complete/cancel/history are usable.
 - [x] Performed by, Ticket Owner and Assigned to are clearly distinguished.
 - [x] Requester Action view is read-only and never exposes Internal Notes.
-- [ ] Required fields, errors, inactive assignee and gate failure are clear.
-- [ ] Conflict/retry preserves draft and clears stale confirmations.
-- [ ] Keyboard order, focus restoration, labels and announcements are verified.
-- [ ] Every major screen at 1280/820/390px has no clipping/overlap/page overflow.
+- [x] Required fields, errors, inactive assignee and gate failure are clear.
+- [x] Conflict/retry preserves draft and clears stale confirmations.
+- [x] Keyboard order, focus restoration, labels and announcements are verified.
+- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow.
 - [ ] No unintended console errors, broken links, placeholder or unfinished controls.
+
+Checked as built in #72 (evidence: `docs/lab-04/tests.md` UI-07, STYLE-01, RESP-01, A11Y-01, E2E-01 to E2E-03 and `artifacts/lab-04/screenshots/README.md`). The last item has no automated check yet, so it stays open.
 
 Keep unchecked until verified. Screenshot root is
 `artifacts/lab-04/screenshots/{staff-dashboard,requester-dashboard,actions-taken}/`.

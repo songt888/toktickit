@@ -8,7 +8,9 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
 | `staff-dashboard/staff-desktop.png`, `-tablet`, `-mobile` | Metric cards, 8 status and 4 IT-priority buckets, My Pending Actions, Urgent and Recently Updated lists; values checked against SQL | `dashboards.spec.ts` (E2E-03) |
-| `staff-dashboard/refresh-failure.png` | Zero state for a new Staff user, then a failed refresh keeping older data with Retry | `dashboards.spec.ts` (E2E-03 failure injection) |
+| `staff-dashboard/zero-state.png` | Zero state for a new Staff user after Retry | `dashboards.spec.ts` (E2E-03 failure injection) |
+| `staff-dashboard/refresh-failure.png` | A failed refresh keeping older data, labelled with its time | `dashboards.spec.ts` (E2E-03 failure injection) |
+| `staff-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` (E2E-03 failure injection) |
 | `responsive/queue-scoped-*.png` | Drill-down: a card opens the Ticket Queue with its exact scope banner | `responsive.spec.ts` (RESP-01) |
 | `responsive/my-pending-actions-*.png` | The My Pending Actions drill-down page | `responsive.spec.ts` |
 | `responsive/staff-dashboard-*.png` | Staff Dashboard at all three widths with overflow and clipping checks | `responsive.spec.ts` |
@@ -30,8 +32,8 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
 | `ticket-resolution/gate-failed.png` | Resolved disabled: 1 completed, 1 pending, 1 unsettled follow-up, with the reason | `ticket-resolution.spec.ts` (E2E-02) |
-| `ticket-resolution/staff-cancelled.png` | After resolve, close, reopen and cancel: Actions locked | `ticket-resolution.spec.ts` |
-| `ticket-resolution/requester-shared-history.png` | The Requester sees the same Actions, results and revision history, read-only | `ticket-resolution.spec.ts` |
+| `ticket-resolution/staff-cancelled.png` | After resolve, close, reopen and cancel: Actions locked, Ticket Status History lists each transition | `ticket-resolution.spec.ts` |
+| `ticket-resolution/requester-shared-history.png` | The Requester sees the same Actions, results, revision history and Ticket Status History, read-only | `ticket-resolution.spec.ts` |
 | `responsive/action-history-*.png` | Revision history in version order | `responsive.spec.ts` |
 
 ## Answer Part 8: Requester Dashboard and regression
@@ -39,7 +41,10 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
 | `requester-dashboard/requester-desktop.png`, `-tablet`, `-mobile` | Owned metrics, needs-attention and recent lists; values checked against SQL | `dashboards.spec.ts` (E2E-03) |
-| `requester-dashboard/refresh-failure.png` | Zero state for a new Requester, then a failed refresh keeping older data with Retry | `dashboards.spec.ts` |
+| `requester-dashboard/drill-down-resolved.png` | Requester drill-down: Recently Resolved opens My Tickets with its exact scope | `dashboards.spec.ts` (E2E-03) |
+| `requester-dashboard/zero-state.png` | Zero state for a new Requester | `dashboards.spec.ts` |
+| `requester-dashboard/refresh-failure.png` | A failed refresh keeping older data | `dashboards.spec.ts` |
+| `requester-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` |
 | `actions-taken/requester-*.png`, `responsive/requester-detail-actions-*.png` | Requester Ticket Detail with read-only Actions | `actions-taken-flow.spec.ts`, `responsive.spec.ts` |
 | `../../lab-03/screenshots/`, `../../lab-02/screenshots/` | Labs 2-3 screens still produced by their own specs in the same run | `e2e/lab-02/`, `e2e/lab-03/` |
 

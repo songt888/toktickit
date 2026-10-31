@@ -1,9 +1,8 @@
 import { expect, request, test, type Page } from "@playwright/test";
 import path from "node:path";
+import { freshUser } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
-const staff = { email: "e2e.staff@example.com", password: "E2EStaffPassword123" };
-const requesterA = { email: "e2e.requester.a@example.com", password: "E2ERequesterPassword123" };
 
 async function expectLabeledFields(page: Page) {
   const unlabeled = await page.locator("main input:not([type=hidden]), main select, main textarea").evaluateAll((controls) =>
@@ -22,9 +21,11 @@ async function expectVisibleFocus(page: Page) {
 
 test("A11Y-01 Lab 4 screens work by keyboard with labels, focus, skip link, active nav and announced errors", async ({ page }) => {
   page.on("dialog", (dialog) => void dialog.accept());
+  const staff = await freshUser("a11y-staff", "IT_STAFF");
+  const requesterA = await freshUser("a11y-requester", "REQUESTER");
   const summary = `E2E Lab 4 a11y ${Date.now()}`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
-  expect((await requesterApi.post("/api/auth/login", { data: requesterA })).ok()).toBe(true);
+  expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];
   expect((await requesterApi.post("/api/tickets", {

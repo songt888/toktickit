@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import { dashboardWindow } from "../../src/dashboard.js";
 import { drillDownWhere, parseDrillDown } from "../../src/ticketQuery.js";
@@ -27,5 +28,22 @@ describe("Dashboard date rules (UNIT-05)", () => {
     expect(parseDrillDown({ updatedFrom: "2026-10-30T07:30:00+07:00" })).toEqual({ updatedFrom: new Date("2026-10-30T00:30:00.000Z") });
     for (const value of ["2026-10-30", "2026-10-30T07:30:00", "yesterday"]) expect(parseDrillDown({ updatedFrom: value }), value).toBeNull();
     expect(parseDrillDown({ resolvedFrom: "2026-10-30T00:00:00Z", resolvedTo: "2026-10-29T00:00:00Z" })).toBeNull();
+  });
+
+  it("includes both exact bounds and excludes 1 ms either side, evaluated by PostgreSQL's own comparison", async () => {
+    const { getPrisma } = await import("../../src/prisma.js");
+    const { asOf, recentFrom } = dashboardWindow(new Date("2026-10-30T17:30:00.000Z"));
+    const where = drillDownWhere(parseDrillDown({ updatedFrom: recentFrom.toISOString(), updatedTo: asOf.toISOString() })!);
+    const { gte, lte } = where.updatedAt as { gte: Date; lte: Date };
+    const probes = { beforeFrom: recentFrom.getTime() - 1, atFrom: recentFrom.getTime(), atTo: asOf.getTime(), afterTo: asOf.getTime() + 1 };
+    const result: Record<string, boolean> = {};
+    for (const [name, ms] of Object.entries(probes)) {
+      // timestamp(3) is the column type Prisma uses for DateTime, so this is the same millisecond comparison.
+      const [row] = await getPrisma().$queryRaw<Array<{ inside: boolean }>>(
+        Prisma.sql`SELECT (${new Date(ms)}::timestamp(3) >= ${gte}::timestamp(3) AND ${new Date(ms)}::timestamp(3) <= ${lte}::timestamp(3)) AS inside`,
+      );
+      result[name] = row.inside;
+    }
+    expect(result).toEqual({ beforeFrom: false, atFrom: true, atTo: true, afterTo: false });
   });
 });

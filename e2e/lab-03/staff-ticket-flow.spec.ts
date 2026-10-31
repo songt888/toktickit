@@ -149,14 +149,14 @@ test("claims, reassigns, unassigns, reprioritizes, and changes status with confi
     result.url().includes("/api/staff/tickets/") && result.url().endsWith("/status"),
   );
   let statusUpdate = statusResponse();
-  await detail.getByLabel("Status").selectOption("OPEN");
+  await detail.getByLabel("Status", { exact: true }).selectOption("OPEN");
   await detail.getByRole("button", { name: "Update Status" }).click();
   expect((await statusUpdate).status()).toBe(200);
   await expect(page.getByText("Ticket status was updated to OPEN.")).toBeVisible();
 
   statusUpdate = statusResponse();
   const confirmDialog = page.waitForEvent("dialog");
-  await detail.getByLabel("Status").selectOption("CANCELLED");
+  await detail.getByLabel("Status", { exact: true }).selectOption("CANCELLED");
   const clickStatusUpdate = detail.getByRole("button", { name: "Update Status" }).click();
   const dialog = await confirmDialog;
   expect(dialog.message()).toContain("CANCELLED");

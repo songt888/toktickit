@@ -1,6 +1,6 @@
 # PERF-01 Dashboard performance smoke
 
-Command: `cd server && npx vitest run tests/lab-04/dashboard-performance.test.ts` (run 2026-10-31).
+Command: `cd server && npm run test:perf` (sets `PERF=1`; plain `npm test` skips this file; each run creates and drops its own `toktickit_perf_<pid>_<time>` database) (run 2026-10-31).
 
 ## Conditions
 

@@ -2,14 +2,13 @@ import { expect, request, test, type APIRequestContext, type Page } from "@playw
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
 import { hashPassword } from "../../server/src/password.js";
+import { freshUser } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
-const staff = { email: "e2e.staff@example.com", password: "E2EStaffPassword123" };
-const requesterA = { email: "e2e.requester.a@example.com", password: "E2ERequesterPassword123" };
 
 async function apiAs(user: { email: string; password: string }): Promise<APIRequestContext> {
   const context = await request.newContext({ baseURL: apiURL });
-  expect((await context.post("/api/auth/login", { data: user })).ok()).toBe(true);
+  expect((await context.post("/api/auth/login", { data: { email: user.email, password: user.password } })).ok()).toBe(true);
   return context;
 }
 
@@ -39,6 +38,15 @@ async function changeStatus(page: Page, status: string, confirm = false) {
   await expect(page.getByText("Current Status").locator("+ dd")).toHaveText(status);
 }
 
+// Ticket Status History ends with these transitions, in order, each by the given actor.
+async function expectStatusHistory(page: Page, transitions: string[], actor: string) {
+  const list = page.getByRole("list", { name: "Ticket status changes" });
+  await expect(list.getByRole("listitem").last()).toContainText(transitions.at(-1)!);
+  const rows = await list.getByRole("listitem").allInnerTexts();
+  expect(rows.slice(-transitions.length).map((row) => row.split("\n")[0])).toEqual(transitions);
+  for (const row of rows.slice(-transitions.length)) expect(row).toContain(`by ${actor}`);
+}
+
 async function gate(page: Page, completed: number, pending: number, unsettled: number) {
   await expect(page.getByText(`Completed Actions: ${completed}`)).toBeVisible();
   await expect(page.getByText(`Pending Actions: ${pending}`)).toBeVisible();
@@ -46,6 +54,8 @@ async function gate(page: Page, completed: number, pending: number, unsettled: n
 }
 
 test("E2E-02 records ordered work, blocks resolving until work and follow-up settle, then resolves, closes, reopens and cancels", async ({ page }) => {
+  const staff = await freshUser("resolution-staff", "IT_STAFF");
+  const requesterA = await freshUser("resolution-requester", "REQUESTER");
   const summary = `E2E Lab 4 resolution ${Date.now()}`;
   const requesterApi = await apiAs(requesterA);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
@@ -123,6 +133,8 @@ test("E2E-02 records ordered work, blocks resolving until work and follow-up set
   await expect(page.getByRole("button", { name: "Add Action" })).toBeVisible();
   await changeStatus(page, "CANCELLED", true);
   await expect(page.getByRole("button", { name: "Add Action" })).toHaveCount(0);
+  const transitions = ["NEW → IN_PROGRESS", "IN_PROGRESS → RESOLVED", "RESOLVED → CLOSED", "CLOSED → REOPENED", "REOPENED → CANCELLED"];
+  await expectStatusHistory(page, transitions, staff.name);
   await page.screenshot({ path: path.resolve("artifacts/lab-04/screenshots/ticket-resolution/staff-cancelled.png"), fullPage: true });
   await page.getByRole("button", { name: "Logout" }).click();
 
@@ -135,14 +147,18 @@ test("E2E-02 records ordered work, blocks resolving until work and follow-up set
   await expect(actionCard(page, "Re-test the VPN for one hour").getByText("Stable for one hour")).toBeVisible();
   const shared = actionCard(page, "Replaced the VPN client profile");
   await shared.getByRole("button", { name: "View History" }).click();
-  await expect(shared.getByText(/Version 1: CREATE by E2E Staff User/)).toBeVisible();
+  await expect(shared.getByText(new RegExp(`Version 1: CREATE by ${staff.name}`))).toBeVisible();
   await expect(shared.getByText(/follow-up: Confirm with the Requester after one day/)).toBeVisible();
   await expect(page.getByRole("button", { name: /^(Add Action|Edit|Reassign|Start|Complete|Cancel Action)$/ })).toHaveCount(0);
+  // The Requester sees the same Ticket Status History as Staff.
+  await expectStatusHistory(page, transitions, staff.name);
   await page.screenshot({ path: path.resolve("artifacts/lab-04/screenshots/ticket-resolution/requester-shared-history.png"), fullPage: true });
   await Promise.all([requesterApi.dispose(), staffApi.dispose()]);
 });
 
 test("E2E-02 an Action whose assignee was deactivated is flagged and cannot be worked until reassigned", async ({ page }) => {
+  const staff = await freshUser("assignee-staff", "IT_STAFF");
+  const requesterA = await freshUser("assignee-requester", "REQUESTER");
   const prisma = getPrisma();
   const helper = await prisma.user.create({
     data: { name: `E2E Leaving Staff ${Date.now()}`, email: `e2e.leaving.${Date.now()}@example.com`, role: "IT_STAFF", isActive: true,

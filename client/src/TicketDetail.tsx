@@ -10,6 +10,7 @@ import {
 } from "./api.js";
 import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
 import ActionsTaken from "./ActionsTaken.js";
+import TicketStatusHistory from "./TicketStatusHistory.js";
 import AttachmentSection from "./AttachmentSection.js";
 
 type DetailState = "loading" | "success" | "error";
@@ -208,7 +209,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                   </span>
                 </dd>
                 <dt className="col-sm-4">Current Status</dt>
-                <dd className="col-sm-8"><span className="badge text-bg-primary">{ticket.currentStatus}</span></dd>
+                <dd className="col-sm-8"><span className="badge text-bg-success">{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Summary</dt>
                 <dd className="col-sm-8">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
@@ -310,6 +311,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
             </section>
 
             <ActionsTaken key={ticket.id} ticketId={ticket.id} ticketStatus={ticket.currentStatus} />
+            <TicketStatusHistory key={`status-${ticket.id}`} ticketId={ticket.id} refreshKey={ticket.updatedAt} />
 
             <AttachmentSection
               ticketId={ticket.id}

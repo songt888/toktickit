@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ActionsTaken from "./ActionsTaken.js";
+import TicketStatusHistory from "./TicketStatusHistory.js";
 import {
   addInternalNote,
   addPublicComment,
@@ -56,7 +57,7 @@ function priorityBadgeClass(priority: TicketPriority): string {
 
 function statusBadgeClass(status: TicketStatus): string {
   switch (status) {
-    case "NEW": return "text-bg-primary";
+    case "NEW": return "bg-success-subtle text-success-emphasis border border-success-subtle";
     case "IN_PROGRESS": return "text-bg-warning text-dark";
     case "RESOLVED": return "text-bg-success";
     case "CLOSED": return "text-bg-dark";
@@ -536,7 +537,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
               }}
             />
 
-            <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
+            <TicketStatusHistory key={`status-${ticket.id}`} ticketId={ticket.id} refreshKey={ticket.updatedAt} />
+
+            <section className="border border-success rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>
               <p className="text-secondary">Visible to the requester and support staff.</p>
               {ticket.publicComments.length === 0
@@ -564,7 +567,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   disabled={publicCommentSaving}
                   onChange={(event) => setPublicCommentDraft(event.target.value)}
                 />
-                <button className="btn btn-outline-primary mt-2" type="submit" disabled={publicCommentSaving}>
+                <button className="btn btn-outline-success mt-2" type="submit" disabled={publicCommentSaving}>
                   {publicCommentSaving ? "Posting comment…" : "Post Public Comment"}
                 </button>
                 {publicCommentFeedback && (
@@ -627,7 +630,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                           {attachment.removedAt ? "Removed" : "Active"} · {attachment.sizeBytes} bytes
                         </span>
                         {!attachment.removedAt && (
-                          <button type="button" className="btn btn-outline-primary btn-sm"
+                          <button type="button" className="btn btn-outline-success btn-sm"
                             disabled={downloadingId !== null}
                             aria-label={`Download ${attachment.originalName}`}
                             onClick={() => void handleDownload(attachment)}>

@@ -120,6 +120,7 @@ test("E2E-03 Requester Dashboard matches the database, drills down exactly and s
   const resolved = await drillDown(page, "View Recently Resolved in My Tickets");
   expect([resolved.query.get("statusGroup"), resolved.query.get("resolvedFrom"), resolved.query.get("resolvedTo"), resolved.total])
     .toEqual(["resolved", resolved.snapshot.recentFrom, resolved.snapshot.asOf, 2]);
+  await page.screenshot({ path: path.resolve("artifacts/lab-04/screenshots/requester-dashboard/drill-down-resolved.png"), fullPage: true });
   const recent = await drillDown(page, "View all recently updated");
   expect([recent.query.get("updatedFrom"), recent.query.get("updatedTo")]).toEqual([recent.snapshot.recentFrom, recent.snapshot.asOf]);
   expect(recent.total).toBe((await databaseSnapshot(owner.id, recent.snapshot.recentFrom, recent.snapshot.asOf)).recent);
@@ -185,13 +186,16 @@ async function staffDashboardMatchesDatabase(page: Page, userId: number) {
   throw new Error("Staff Dashboard never matched the database");
 }
 
-async function queueDrillDown(page: Page, button: string | RegExp) {
-  // Let any plain Queue load finish first, so it cannot be mistaken for the drill-down's response below.
-  await page.getByRole("link", { name: "Ticket Queue" }).click();
-  await page.waitForLoadState("networkidle");
+// `scope` is the query this drill-down must send (true = present with any value), so a plain or earlier
+// Queue load can never be taken for its response.
+async function queueDrillDown(page: Page, button: string | RegExp, scope: Record<string, string | true>) {
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("button", { name: "Refresh" })).toBeEnabled();
-  const list = page.waitForResponse((response) => response.url().includes("/api/staff/tickets?") && response.status() === 200);
+  const list = page.waitForResponse((response) => {
+    if (!response.url().includes("/api/staff/tickets?") || response.status() !== 200) return false;
+    const params = new URL(response.url()).searchParams;
+    return Object.entries(scope).every(([key, value]) => (value === true ? params.has(key) : params.get(key) === value));
+  });
   await page.getByRole("button", { name: button }).click();
   const response = await list;
   await expect(page.getByText("Showing Dashboard filter:")).toBeVisible();
@@ -272,13 +276,13 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   expect(await unassignedButton.evaluate((el) => { const style = getComputedStyle(el); return style.outlineStyle !== "none" || style.boxShadow !== "none"; })).toBe(true);
 
   // Each card and bucket opens the Queue with its exact filter; owner-scoped totals are exact.
-  const unassigned = await queueDrillDown(page, "View Unassigned Tickets in the Ticket Queue");
+  const unassigned = await queueDrillDown(page, "View Unassigned Tickets in the Ticket Queue", { ownerId: "unassigned" });
   expect(unassigned.query).toMatchObject({ statusGroup: "active", ownerId: "unassigned" });
   expect(await queryIncludes(page, unassigned.query, tickets[1].ticketNumber)).toBe(true);
   expect(await queryIncludes(page, unassigned.query, tickets[0].ticketNumber)).toBe(false);
-  const mine = await queueDrillDown(page, "View My Tickets in the Ticket Queue");
+  const mine = await queueDrillDown(page, "View My Tickets in the Ticket Queue", { ownerId: String(staff.id) });
   expect([mine.query.statusGroup, mine.query.ownerId, mine.numbers]).toEqual(["active", String(staff.id), [tickets[0].ticketNumber]]);
-  const urgent = await queueDrillDown(page, "View all urgent");
+  const urgent = await queueDrillDown(page, "View all urgent", { itPriority: "URGENT" });
   expect(urgent.query).toMatchObject({ statusGroup: "active", itPriority: "URGENT" });
   expect(await queryIncludes(page, urgent.query, tickets[0].ticketNumber)).toBe(true);
   // Every status bucket (all Tickets) and every IT-priority bucket (active only).
@@ -287,16 +291,16 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
     RESOLVED: "Resolved", CLOSED: "Closed", REOPENED: "Reopened", CANCELLED: "Cancelled",
   };
   for (const [status, label] of Object.entries(labels)) {
-    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ Tickets`));
+    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ Tickets`), { currentStatus: status });
     expect(bucket.query, status).toMatchObject({ currentStatus: status });
     expect(bucket.query, status).not.toHaveProperty("statusGroup");
   }
   for (const [priority, label] of [["LOW", "Low"], ["MEDIUM", "Medium"], ["HIGH", "High"], ["URGENT", "Urgent"]]) {
-    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ active Tickets`));
+    const bucket = await queueDrillDown(page, new RegExp(`^${label}: \\d+ active Tickets`), { itPriority: priority });
     expect(bucket.query, priority).toMatchObject({ statusGroup: "active", itPriority: priority });
   }
   expect(await queryIncludes(page, { currentStatus: "OPEN" }, tickets[0].ticketNumber)).toBe(true);
-  const recent = await queueDrillDown(page, "View all recently updated");
+  const recent = await queueDrillDown(page, "View all recently updated", { updatedFrom: true });
   expect(Object.keys(recent.query)).toEqual(expect.arrayContaining(["updatedFrom", "updatedTo"]));
   await page.getByRole("button", { name: "Clear Dashboard filter" }).click();
   await expect(page.getByText("Showing Dashboard filter:")).toHaveCount(0);
@@ -342,6 +346,7 @@ test("E2E-03 failure injection: a failed Dashboard load shows an error with Retr
     await page.getByRole("button", { name: "Retry" }).click();
     await expect(cardValue(page, card)).toHaveText("0");
     await expect(page.getByRole("alert")).toHaveCount(0);
+    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/zero-state.png`), fullPage: true });
 
     // A later refresh fails: the last good numbers stay, labelled as older data.
     await page.route(url, (route) => route.fulfill({ status: 500, body: "{}" }));
@@ -349,6 +354,14 @@ test("E2E-03 failure injection: a failed Dashboard load shows an error with Retr
     await expect(page.getByRole("alert")).toContainText("The Dashboard could not be refreshed. Showing older data from");
     await expect(cardValue(page, card)).toHaveText("0");
     await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/refresh-failure.png`), fullPage: true });
+    await page.unroute(url);
+
+    // A 403 (role changed mid-session) shows the forbidden state and drops the old numbers.
+    await page.route(url, (route) => route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "Forbidden" }) }));
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await expect(page.getByRole("alert")).toContainText(kind === "staff" ? "only available to IT Staff and Administrators" : "only available to Requesters");
+    await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
+    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/forbidden.png`), fullPage: true });
     await page.unroute(url);
     await page.getByRole("button", { name: "Logout" }).click();
   }

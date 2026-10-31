@@ -162,6 +162,17 @@ describe("Session-derived scope cannot be forged (AUTH-02)", () => {
     }
   });
 
+  it("Staff and Administrators cannot read another user's Dashboard or My Actions by sending their id", async () => {
+    const admin = await world.user("forge-admin", "ADMINISTRATOR");
+    for (const user of [staff, admin]) {
+      for (const key of ["userId", "ownerId", "assigneeId", "requesterId"]) {
+        for (const url of [`/api/dashboard/staff?${key}=${other.id}`, `/api/staff/actions-taken?${key}=${other.id}`]) {
+          expect((await send("get", url, user.cookie)).status, url).toBe(400);
+        }
+      }
+    }
+  });
+
   it("a new Ticket belongs to the session Requester whatever requesterId the body carries", async () => {
     const category = await prisma.category.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });
     const system = await prisma.relatedSystem.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });

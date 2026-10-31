@@ -197,7 +197,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
   }
 
   function statusBadgeClass(status: TicketListItem["currentStatus"]): string {
-    return status === "NEW" ? "text-bg-primary" : "text-bg-secondary";
+    return status === "NEW" ? "bg-success-subtle text-success-emphasis border border-success-subtle" : "text-bg-secondary";
   }
 
   const renderRow = (ticket: TicketListItem) => (

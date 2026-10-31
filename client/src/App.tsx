@@ -4,13 +4,16 @@ import ChangePassword from "./ChangePassword.js";
 import CreateTicket from "./CreateTicket.js";
 import Login from "./Login.js";
 import MyTickets from "./MyTickets.js";
+import MyPendingActions from "./MyPendingActions.js";
 import RequesterDashboard, { type TicketScope } from "./RequesterDashboard.js";
+import StaffDashboard from "./StaffDashboard.js";
 import StaffTicketDetail from "./StaffTicketDetail.js";
-import StaffTicketQueue from "./StaffTicketQueue.js";
+import StaffTicketQueue, { type QueueScope } from "./StaffTicketQueue.js";
 import TicketDetail from "./TicketDetail.js";
 import UserManagement from "./UserManagement.js";
 
-type ActivePage = "dashboard" | "tickets" | "create" | "detail" | "queue" | "staff-detail" | "users";
+type ActivePage = "dashboard" | "tickets" | "create" | "detail" | "queue" | "staff-detail" | "my-actions" | "users";
+type StaffDetailOrigin = "queue" | "dashboard" | "my-actions";
 type AuthMode = "checking" | "login" | "change-password" | "authenticated";
 
 function requesterFromUser(user: AuthUser): Requester {
@@ -21,9 +24,9 @@ function isOperationalRole(user: AuthUser | null): boolean {
   return user?.role === "IT_STAFF" || user?.role === "ADMINISTRATOR";
 }
 
-function defaultPageForUser(user: AuthUser): ActivePage {
-  if (user.role === "ADMINISTRATOR") return "users";
-  return isOperationalRole(user) ? "queue" : "dashboard";
+// Every role starts on its Dashboard (ui-spec section 1).
+function defaultPageForUser(_user: AuthUser): ActivePage {
+  return "dashboard";
 }
 
 export default function App() {
@@ -35,6 +38,11 @@ export default function App() {
   const [detailOrigin, setDetailOrigin] = useState<"tickets" | "dashboard">("tickets");
   // A new key remounts My Tickets with the Dashboard's exact filter.
   const [ticketScope, setTicketScope] = useState<{ key: number; scope: TicketScope | null }>({ key: 0, scope: null });
+  const [queueScope, setQueueScope] = useState<{ key: number; scope: QueueScope | null }>({ key: 0, scope: null });
+  // Where Staff/Admin opened Ticket Detail from, and the Action to focus when opened from one.
+  const [staffDetailOrigin, setStaffDetailOrigin] = useState<StaffDetailOrigin>("queue");
+  const [focusActionId, setFocusActionId] = useState<number | undefined>(undefined);
+  const [myActionsPage, setMyActionsPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,6 +75,8 @@ export default function App() {
     setAuthUser(user);
     setSelectedTicketId(null);
     setTicketScope((current) => ({ key: current.key + 1, scope: null }));
+    setQueueScope((current) => ({ key: current.key + 1, scope: null }));
+    setMyActionsPage(1);
     setActivePage(defaultPageForUser(user));
     setAuthMode(user.mustChangePassword ? "change-password" : "authenticated");
   }
@@ -86,6 +96,8 @@ export default function App() {
     setAuthUser(null);
     setSelectedTicketId(null);
     setTicketScope((current) => ({ key: current.key + 1, scope: null }));
+    setQueueScope((current) => ({ key: current.key + 1, scope: null }));
+    setMyActionsPage(1);
     setActivePage("tickets");
     setAuthMode("login");
   }
@@ -101,13 +113,23 @@ export default function App() {
     setActivePage("tickets");
   }
 
-  function handleOpenOperationalTicket(ticketId: number) {
+  function handleOpenOperationalTicket(ticketId: number, origin: StaffDetailOrigin = "queue", actionId?: number) {
     setSelectedTicketId(ticketId);
+    setStaffDetailOrigin(origin);
+    setFocusActionId(actionId);
     setActivePage("staff-detail");
   }
 
+  function handleViewQueue(scope: QueueScope) {
+    setQueueScope((current) => ({ key: current.key + 1, scope }));
+    setActivePage("queue");
+  }
+
   const operationalUser = isOperationalRole(authUser);
-  const dashboardActive = activePage === "dashboard" || (activePage === "detail" && detailOrigin === "dashboard");
+  const staffFromDashboard = activePage === "staff-detail" && staffDetailOrigin !== "queue";
+  const dashboardActive = activePage === "dashboard" || activePage === "my-actions" || staffFromDashboard
+    || (activePage === "detail" && detailOrigin === "dashboard");
+  const queueActive = activePage === "queue" || (activePage === "staff-detail" && !staffFromDashboard);
   const myTicketsActive = activePage === "tickets" || (activePage === "detail" && detailOrigin === "tickets");
 
   return (
@@ -133,7 +155,7 @@ export default function App() {
       {authUser && authMode === "authenticated" && (currentRequester || operationalUser) && (
         <nav className="navbar navbar-expand-sm bg-success-subtle rounded px-3 mb-4" aria-label="Main navigation">
           <div className="navbar-nav gap-2">
-            {currentRequester && <a
+            {(currentRequester || operationalUser) && <a
               className={`nav-link${dashboardActive ? " active fw-semibold" : ""}`}
               href="#dashboard"
               aria-current={dashboardActive ? "page" : undefined}
@@ -167,9 +189,9 @@ export default function App() {
               Create Ticket
             </a>}
             {operationalUser && <a
-              className={`nav-link${activePage === "queue" || activePage === "staff-detail" ? " active fw-semibold" : ""}`}
+              className={`nav-link${queueActive ? " active fw-semibold" : ""}`}
               href="#staff-ticket-queue"
-              aria-current={activePage === "queue" || activePage === "staff-detail" ? "page" : undefined}
+              aria-current={queueActive ? "page" : undefined}
               onClick={(event) => {
                 event.preventDefault();
                 setActivePage("queue");
@@ -251,8 +273,36 @@ export default function App() {
           />
         )}
 
-        {authMode === "authenticated" && operationalUser && (
+        {authMode === "authenticated" && authUser && operationalUser && (
+          <StaffDashboard
+            key={authUser.id}
+            userId={authUser.id}
+            visible={activePage === "dashboard"}
+            onViewQueue={handleViewQueue}
+            onOpenTicket={(ticketId) => handleOpenOperationalTicket(ticketId, "dashboard")}
+            onOpenAction={(ticketId, actionId) => handleOpenOperationalTicket(ticketId, "dashboard", actionId)}
+            onViewMyActions={() => {
+              setMyActionsPage(1);
+              setActivePage("my-actions");
+            }}
+            onSessionExpired={() => void handleLogout()}
+          />
+        )}
+
+        {authMode === "authenticated" && operationalUser && activePage === "my-actions" && (
+          <MyPendingActions
+            page={myActionsPage}
+            onPageChange={setMyActionsPage}
+            onBack={() => setActivePage("dashboard")}
+            onOpenAction={(ticketId, actionId) => handleOpenOperationalTicket(ticketId, "my-actions", actionId)}
+            onSessionExpired={() => void handleLogout()}
+          />
+        )}
+
+        {authMode === "authenticated" && authUser && operationalUser && (
           <StaffTicketQueue
+            key={`${authUser.id}-${queueScope.key}`}
+            initialScope={queueScope.scope}
             onOpenTicket={handleOpenOperationalTicket}
             visible={activePage === "queue"}
           />
@@ -266,7 +316,9 @@ export default function App() {
           <StaffTicketDetail
             ticketId={selectedTicketId}
             currentUserId={authUser.id}
-            onBack={() => setActivePage("queue")}
+            onBack={() => setActivePage(staffDetailOrigin)}
+            backLabel={{ queue: "Back to Ticket Queue", dashboard: "Back to Dashboard", "my-actions": "Back to My Pending Actions" }[staffDetailOrigin]}
+            focusActionId={focusActionId}
           />
         )}
       </main>

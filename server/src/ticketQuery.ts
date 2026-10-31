@@ -13,7 +13,7 @@ export type TicketPageSize = (typeof ticketPageSizes)[number];
 
 const MAX_SIGNED_INT32 = 2_147_483_647;
 
-// Lab 4 drill-down filters (api-spec section 6); shared by the Requester list and, later, the Staff Queue.
+// Lab 4 drill-down filters (api-spec section 6); shared by the Requester list and the Staff Queue.
 export type DrillDownQuery = {
   currentStatus?: TicketStatus;
   statusGroup?: "active" | "resolved";
@@ -201,13 +201,12 @@ export const staffTicketSortFields = [
 ] as const;
 export type StaffTicketSortField = (typeof staffTicketSortFields)[number];
 
-export type StaffTicketListQuery = {
+export type StaffTicketListQuery = DrillDownQuery & {
   search?: string;
   categoryId?: number;
   relatedSystemId?: number;
   requestedPriority?: TicketPriority;
   itPriority?: TicketPriority;
-  currentStatus?: TicketStatus;
   ownerId?: number | null;
   sort: StaffTicketSortField;
   order: "asc" | "desc";
@@ -215,8 +214,8 @@ export type StaffTicketListQuery = {
   pageSize: TicketPageSize;
 };
 
-const ticketPriorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
-const ticketStatuses: TicketStatus[] = [
+export const ticketPriorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+export const ticketStatuses: TicketStatus[] = [
   "NEW",
   "OPEN",
   "IN_PROGRESS",
@@ -237,8 +236,8 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
   const order = readString(query, "order");
   const requestedPriority = readString(query, "requestedPriority");
   const itPriority = readString(query, "itPriority");
-  const currentStatus = readString(query, "currentStatus");
   const ownerId = readString(query, "ownerId");
+  const drillDown = parseDrillDown(query);
 
   if (
     search === null ||
@@ -250,8 +249,8 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
     order === null ||
     requestedPriority === null ||
     itPriority === null ||
-    currentStatus === null ||
-    ownerId === null
+    ownerId === null ||
+    drillDown === null
   ) {
     return { error: "Invalid query parameters" };
   }
@@ -267,8 +266,7 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
   }
   if (
     (requestedPriority !== undefined && !ticketPriorities.includes(requestedPriority as TicketPriority)) ||
-    (itPriority !== undefined && !ticketPriorities.includes(itPriority as TicketPriority)) ||
-    (currentStatus !== undefined && !ticketStatuses.includes(currentStatus as TicketStatus))
+    (itPriority !== undefined && !ticketPriorities.includes(itPriority as TicketPriority))
   ) {
     return { error: "Invalid query parameters" };
   }
@@ -298,7 +296,7 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
         ? { requestedPriority: requestedPriority as TicketPriority }
         : {}),
       ...(itPriority !== undefined ? { itPriority: itPriority as TicketPriority } : {}),
-      ...(currentStatus !== undefined ? { currentStatus: currentStatus as TicketStatus } : {}),
+      ...drillDown,
       ...(parsedOwnerId !== undefined ? { ownerId: parsedOwnerId } : {}),
       sort: (sort ?? "updatedAt") as StaffTicketSortField,
       order: (order ?? "desc") as "asc" | "desc",
@@ -318,7 +316,7 @@ export function buildStaffTicketWhere(
     ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
     ...(options.requestedPriority ? { requestedPriority: options.requestedPriority } : {}),
     ...(options.itPriority ? { itPriority: options.itPriority } : {}),
-    ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
+    ...drillDownWhere(options),
     ...(options.ownerId !== undefined ? { ownerId: options.ownerId } : {}),
     ...(search
       ? {

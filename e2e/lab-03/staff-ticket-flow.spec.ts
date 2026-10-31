@@ -28,6 +28,9 @@ test("covers the staff queue, operational detail, and responsive layouts", async
   await page.getByLabel("Password").fill(staffPassword);
   await page.getByRole("button", { name: "Sign In" }).click();
 
+  // Lab 4: Staff land on the Dashboard; the Ticket Queue is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "Ticket Queue" }).click();
   await expect(page.getByRole("heading", { name: "Ticket Queue" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
   const initialQueue = await visibleQueueContent(page);
@@ -87,6 +90,9 @@ test("claims, reassigns, unassigns, reprioritizes, and changes status with confi
   await page.getByLabel("Email").fill(staffEmail);
   await page.getByLabel("Password").fill(staffPassword);
   await page.getByRole("button", { name: "Sign In" }).click();
+  // Lab 4: Staff land on the Dashboard; the Ticket Queue is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "Ticket Queue" }).click();
   await expect(page.getByRole("heading", { name: "Ticket Queue" })).toBeVisible();
 
   await page.getByLabel("Search Queue").fill(workflowSummary);

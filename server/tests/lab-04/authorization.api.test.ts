@@ -112,3 +112,36 @@ describe("Requester Dashboard authorization (AUTH-01, Requester Dashboard)", () 
     expect((await send("get", "/api/dashboard/requester", requester.cookie)).status).toBe(401);
   });
 });
+
+describe("Staff Dashboard authorization (AUTH-01, Staff Dashboard)", () => {
+  const endpoints = ["/api/dashboard/staff", "/api/staff/actions-taken"];
+
+  it("needs a session, a completed password change and a Staff or Administrator role", async () => {
+    const fresh = await world.user("dash-staff-gate", "IT_STAFF");
+    for (const url of endpoints) {
+      expect((await request(app).get(url)).status, url).toBe(401);
+      expect((await send("get", url, owner.cookie)).status, url).toBe(403);
+    }
+    await prisma.user.update({ where: { id: fresh.id }, data: { mustChangePassword: true } });
+    for (const url of endpoints) expect((await send("get", url, fresh.cookie)).status, url).toBe(403);
+    await prisma.user.update({ where: { id: fresh.id }, data: { isActive: false } });
+    for (const url of endpoints) expect((await send("get", url, fresh.cookie)).status, url).toBe(401);
+  });
+
+  it("shows only the session user's Actions, rejects another user's id, and leaks no private fields", async () => {
+    const admin = await world.user("dash-admin", "ADMINISTRATOR");
+    const ticket = await world.ticket(owner.id);
+    await createAction(ticket.id, staff.cookie, { description: "Staff task", assigneeId: staff.id });
+    await prisma.internalNote.create({ data: { ticketId: ticket.id, authorId: staff.id, content: "PRIVATE-STAFF-NOTE" } });
+
+    const adminView = await send("get", "/api/dashboard/staff", admin.cookie);
+    expect([adminView.body.metrics.myActions, adminView.body.myActions]).toEqual([0, []]);
+    expect((await send("get", "/api/staff/actions-taken", admin.cookie)).body.items).toEqual([]);
+    expect((await send("get", `/api/staff/actions-taken?assigneeId=${staff.id}`, admin.cookie)).status).toBe(400);
+    expect((await send("get", `/api/dashboard/staff?assigneeId=${staff.id}`, admin.cookie)).status).toBe(400);
+
+    const staffView = await send("get", "/api/dashboard/staff", staff.cookie);
+    expect(staffView.body.myActions.map((item: { ticketId: number }) => item.ticketId)).toContain(ticket.id);
+    expect(JSON.stringify(staffView.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|storedName/);
+  });
+});

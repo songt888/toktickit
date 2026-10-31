@@ -37,6 +37,9 @@ test("Administrator can manage users, reset an initial password, and use the res
   await page.getByLabel("Password").fill(adminPassword);
   await page.getByRole("button", { name: "Sign In" }).click();
 
+  // Lab 4: Administrators land on the Dashboard; User Management is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "User Management" }).click();
   await expect(page.getByRole("heading", { name: "User Management" })).toBeVisible();
   await expect(page.getByRole("link", { name: "User Management" })).toHaveAttribute("aria-current", "page");
   await expectNoHorizontalOverflow(page);

@@ -25,6 +25,8 @@ export interface ActionsTakenProps {
     // Called after every saved write with the Ticket's new timestamp, so the parent can refresh the gate.
     onChanged: (ticketUpdatedAt: string) => void;
   };
+  // Opened from a Dashboard Action: show the page holding it and focus it.
+  focusActionId?: number;
 }
 
 type PanelKind = "create" | "edit" | "assign" | "complete" | "cancel";
@@ -180,7 +182,7 @@ function failure(error: unknown): { feedback: Feedback; fieldErrors: Record<stri
   };
 }
 
-export default function ActionsTaken({ ticketId, ticketStatus, editable }: ActionsTakenProps) {
+export default function ActionsTaken({ ticketId, ticketStatus, editable, focusActionId }: ActionsTakenProps) {
   const alive = useRef(true);
   const saving = useRef(false);
   // Same command (same draft and versions) keeps its request id across retries; any change gets a new one.
@@ -219,6 +221,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
         return fresh ? { ...current, action: fresh } : current;
       });
       if (focus) setFocusId(focus);
+      return response;
     } catch (error) {
       if (!alive.current) return;
       setLoadState("error");
@@ -232,7 +235,15 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable }: Actio
 
   useEffect(() => {
     alive.current = true;
-    void loadPage(1);
+    void (async () => {
+      // Walk the pages until the requested Action appears; stop on the last page or a failure.
+      for (let target = 1; ; target += 1) {
+        const response = await loadPage(target);
+        if (!response || focusActionId === undefined) return;
+        if (response.items.some((item) => item.id === focusActionId)) return setFocusId(`action-${focusActionId}`);
+        if (target >= response.pagination.totalPages) return;
+      }
+    })();
     return () => {
       alive.current = false;
     };

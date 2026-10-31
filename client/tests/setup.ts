@@ -15,3 +15,12 @@ beforeEach(() => {
     metrics: { openTickets: 0, waitingForRequester: 0, recentlyResolved: 0 }, recentTickets: [],
   });
 });
+
+beforeEach(() => {
+  const zero = { NEW: 0, OPEN: 0, IN_PROGRESS: 0, WAITING_FOR_REQUESTER: 0, RESOLVED: 0, CLOSED: 0, REOPENED: 0, CANCELLED: 0 };
+  vi.spyOn(api, "getStaffDashboard").mockResolvedValue({
+    asOf: "2026-10-30T00:00:00.000Z", recentFrom: "2026-10-23T00:00:00.000Z", displayTimeZone: "Asia/Bangkok",
+    metrics: { unassignedTickets: 0, myTickets: 0, myActions: 0, byStatus: zero, byItPriority: { LOW: 0, MEDIUM: 0, HIGH: 0, URGENT: 0 } },
+    myActions: [], recentTickets: [], urgentTickets: [],
+  });
+});

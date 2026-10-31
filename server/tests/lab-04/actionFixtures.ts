@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { UserRole } from "@prisma/client";
+import type { ActionStatus, UserRole } from "@prisma/client";
 import request from "supertest";
 import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
@@ -109,4 +109,17 @@ export async function completedAction(ticketId: number, cookie: string, extra: R
 
 export function moveTicket(ticketId: number, cookie: string, status: string, updatedAt: string, confirm?: boolean) {
   return send("patch", `/api/staff/tickets/${ticketId}/status`, cookie, { status, updatedAt, ...(confirm === undefined ? {} : { confirm }) });
+}
+
+// An Action row written directly with an exact updatedAt. The database requires an initial
+// revision whose snapshot matches the whole row, so the saved row is copied into it.
+export function actionRow(ticketId: number, assigneeId: number, performedById: number, status: ActionStatus = "PLANNED", updatedAt = new Date(Date.now() - 86_400_000), description = "Check the switch") {
+  return prisma.$transaction(async (tx) => {
+    const action = await tx.actionTaken.create({ data: { ticketId, assigneeId, performedById, status, actionAt: new Date(updatedAt.getTime() - 86_400_000), description, updatedAt,
+      ...(status === "COMPLETED" ? { result: "Done" } : {}), ...(status === "CANCELLED" ? { cancellationReason: "Not needed" } : {}) } });
+    await tx.actionTakenRevision.create({
+      data: { actionId: action.id, version: 1, actorId: performedById, operation: "CREATE", mutationId: randomUUID(), requestHash: "0".repeat(64), snapshot: JSON.parse(JSON.stringify(action)), ticketUpdatedAt: new Date() },
+    });
+    return action.id;
+  });
 }

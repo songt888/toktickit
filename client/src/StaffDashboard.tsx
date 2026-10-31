@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { actionStatusClass, formatBangkok } from "./ActionsTaken.js";
-import { statusBadgeClass } from "./statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { ApiRequestError, getStaffDashboard, type DashboardTicket, type StaffDashboardData, type TicketPriority, type TicketStatus } from "./api.js";
 import type { QueueScope } from "./StaffTicketQueue.js";
 
@@ -80,7 +80,7 @@ export default function StaffDashboard({ userId, visible, onViewQueue, onOpenTic
                 <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
                   <strong>{ticket.ticketNumber}</strong>{" "}
                   <span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{statusLabels[ticket.currentStatus]}</span>{" "}
-                  <span className="badge text-bg-light border">IT priority: {priorityLabels[ticket.itPriority]}</span>
+                  <span className={`badge ${priorityBadgeClass(ticket.itPriority)}`}>IT priority: {priorityLabels[ticket.itPriority]}</span>
                   <div className="text-break">{ticket.summary}</div>
                   <div className="small text-secondary">Owner: {ticket.owner?.name ?? "Unassigned"} · Updated {formatBangkok(ticket.updatedAt)}</div>
                 </div>

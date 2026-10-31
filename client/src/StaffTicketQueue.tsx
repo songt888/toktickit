@@ -1,4 +1,4 @@
-import { statusBadgeClass } from "./statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
@@ -74,14 +74,6 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
 
 // A Dashboard drill-down: the exact Queue filter plus a visible label.
@@ -479,7 +471,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <h3 className="h6 mb-0">{ticket.ticketNumber}</h3>
                     <span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span>
                   </div>
-                  <div className="small d-grid gap-1">{renderTicketFields(ticket)}</div>
+                  <div className="small d-grid gap-1 text-break">{renderTicketFields(ticket)}</div>
                   <button className="btn btn-outline-success btn-sm mt-3" type="button" onClick={() => onOpenTicket(ticket.id)}>
                     Open Detail
                   </button>

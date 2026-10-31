@@ -17,6 +17,8 @@
 
 body {
   background-color: var(--tt-page);
+  /* Long unbroken user text (names, summaries) wraps instead of widening the page, as Bootstrap's .card already does. */
+  overflow-wrap: break-word;
 }
 
 .btn-success {

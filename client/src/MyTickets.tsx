@@ -1,4 +1,4 @@
-import { statusBadgeClass } from "./statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Category,
@@ -188,14 +188,6 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
     ? "No tickets match your search or filters."
     : "No tickets yet. Create your first ticket.";
 
-  function priorityBadgeClass(priority: TicketPriority): string {
-    switch (priority) {
-      case "LOW": return "text-bg-secondary";
-      case "MEDIUM": return "text-bg-info";
-      case "HIGH": return "text-bg-warning text-dark";
-      case "URGENT": return "text-bg-danger";
-    }
-  }
 
   const renderRow = (ticket: TicketListItem) => (
     <tr key={ticket.id}>
@@ -223,7 +215,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
     >
       <div className="card-body">
         <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
-          <div>
+          <div className="text-break" style={{ minWidth: 0 }}>
             <h2 id="my-tickets-title" className="h4 mb-1">My Tickets</h2>
             <p className="text-secondary mb-0">Tickets created by {requester.name}.</p>
           </div>

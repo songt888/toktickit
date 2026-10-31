@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { readdirSync } from "node:fs";
 import ActionsTaken from "../../src/ActionsTaken.js";
 import CreateTicket from "../../src/CreateTicket.js";
-import { statusBadgeClass } from "../../src/statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "../../src/statusBadge.js";
 import RequesterDashboard from "../../src/RequesterDashboard.js";
 import TicketDetail from "../../src/TicketDetail.js";
 import StaffDashboard from "../../src/StaffDashboard.js";
@@ -70,8 +70,9 @@ describe("Zen Green style contract (STYLE-01)", () => {
   it("gives each Ticket status its own badge on every screen, and greens Bootstrap's focus and checked colours", () => {
     const statuses = ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "RESOLVED", "CLOSED", "REOPENED", "CANCELLED"] as const;
     expect(statusBadgeClass("CANCELLED")).not.toBe(statusBadgeClass("RESOLVED"));
-    expect(new Set(statuses.map(statusBadgeClass)).size).toBeGreaterThanOrEqual(5);
-    for (const file of ["TicketDetail.tsx", "MyTickets.tsx", "StaffTicketDetail.tsx", "StaffTicketQueue.tsx"]) {
+    expect(new Set(statuses.map(statusBadgeClass)).size).toBe(8);
+    expect(new Set((["LOW", "MEDIUM", "HIGH", "URGENT"] as const).map(priorityBadgeClass)).size).toBe(4);
+    for (const file of ["TicketDetail.tsx", "MyTickets.tsx", "StaffTicketDetail.tsx", "StaffTicketQueue.tsx", "RequesterDashboard.tsx", "StaffDashboard.tsx"]) {
       expect(source(file), file).toMatch(/badge \$\{statusBadgeClass\(ticket\.currentStatus\)\}/);
     }
     const theme = source("theme.css");
@@ -109,6 +110,8 @@ describe("Zen Green style contract (STYLE-01)", () => {
     await screen.findByText("Ticket 3");
     expect(badgeOf("In Progress")).toHaveClass(...classesOf("IN_PROGRESS"));
     expect(badgeOf("New")).toHaveClass(...classesOf("NEW"));
+    // IT priority uses the same colours as the Queue and Detail.
+    expect(screen.getAllByText("IT priority: Urgent")[0]).toHaveClass(...priorityBadgeClass("URGENT").split(" "));
     staffView.unmount();
 
     vi.spyOn(api, "getTicketDetail").mockResolvedValue({

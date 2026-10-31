@@ -141,8 +141,8 @@ export default function App() {
         </h1>
 
         {authUser && authMode !== "login" && authMode !== "checking" && (
-          <div className="d-flex align-items-center gap-2" aria-label="Current user">
-            <span className="small text-secondary">
+          <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }} aria-label="Current user">
+            <span className="small text-secondary text-break" style={{ minWidth: 0 }}>
               {authUser.name} <span className="badge text-bg-success">{authUser.role}</span>
             </span>
             <button className="btn btn-outline-success btn-sm" onClick={() => void handleLogout()}>
@@ -230,7 +230,7 @@ export default function App() {
         {authMode === "authenticated" && authUser && !currentRequester && !operationalUser && (
           <section className="card border-0 shadow-sm" aria-labelledby="role-workspace-title">
             <div className="card-body">
-              <h2 id="role-workspace-title" className="h4">Welcome, {authUser.name}</h2>
+              <h2 id="role-workspace-title" className="h4 text-break">Welcome, {authUser.name}</h2>
               <p className="mb-0">
                 Your {authUser.role.replace("_", " ")} workspace will be available in the next Lab 3 issue.
               </p>

@@ -1,4 +1,5 @@
 import { expect, request, test, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { freshUser } from "./freshUser.js";
 
@@ -17,10 +18,14 @@ async function signIn(page: Page, user: { email: string; password: string }) {
 async function checkLayouts(page: Page, name: string, anchor: string) {
   for (const { label, width, height } of widths) {
     await page.setViewportSize({ width, height });
-    const { scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
+    const { offenders, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const controls = [...document.querySelectorAll<HTMLElement>("main button, main a, main input, main select, main textarea, main .badge")];
       return {
+        // Leaf elements reaching past the right edge, so an overflow failure names its cause.
+        offenders: [...document.body.querySelectorAll<HTMLElement>("*")]
+          .filter((el) => el.children.length === 0 && el.getBoundingClientRect().right > viewport + 1)
+          .map((el) => el.outerHTML.slice(0, 120)).slice(0, 5),
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: viewport,
         clipped: controls.filter((control) => {
@@ -34,7 +39,7 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
           .map((el) => el.outerHTML.slice(0, 120)),
       };
     });
-    expect(scrollWidth, `${name} ${label} overflow`).toBeLessThanOrEqual(clientWidth + 1);
+    expect(scrollWidth, `${name} ${label} overflow: ${offenders.join(" | ")}`).toBeLessThanOrEqual(clientWidth + 1);
     expect(clipped, `${name} ${label} clipped controls`).toEqual([]);
     expect(spilled, `${name} ${label} text wider than its box`).toEqual([]);
     await page.getByText(anchor, { exact: true }).first().scrollIntoViewIfNeeded();
@@ -45,8 +50,9 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
 
 test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page }) => {
   page.on("dialog", (dialog) => void dialog.accept());
-  const staff = await freshUser("resp-staff", "IT_STAFF");
-  const requesterA = await freshUser("resp-requester", "REQUESTER");
+  // Long unbroken names too, since author names sit in flex rows next to dates.
+  const staff = await freshUser("resp-staff", "IT_STAFF", `Staff ${"Supercalifragilisticexpialidocious".repeat(2)}`);
+  const requesterA = await freshUser("resp-requester", "REQUESTER", `Requester ${"Supercalifragilisticexpialidocious".repeat(2)}`);
   // A long unbroken word in every free-text field checks wrapping, not just short demo text.
   const longWord = "SupercalifragilisticexpialidociousNetworkPrinterQueueFailure";
   const summary = `E2E Lab 4 responsive ${Date.now()} SupercalifragilisticexpialidociousNetworkPrinterQueueFailure`;
@@ -60,6 +66,10 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   expect(created.status()).toBe(201);
   const ticketId = (await created.json()).id as number;
   expect((await requesterApi.post(`/api/tickets/${ticketId}/comments`, { data: { content: `Still stuck ${longWord}` } })).status()).toBe(201);
+  const upload = await requesterApi.post(`/api/tickets/${ticketId}/attachments`, {
+    multipart: { file: { name: `${longWord}${longWord}.png`, mimeType: "image/png", buffer: readFileSync(path.resolve("docs/lab-01/screenshots/01-health.png")) } },
+  });
+  expect(upload.status()).toBe(201);
   const staffApi = await request.newContext({ baseURL: apiURL });
   expect((await staffApi.post("/api/auth/login", { data: { email: staff.email, password: staff.password } })).ok()).toBe(true);
   expect((await staffApi.post(`/api/tickets/${ticketId}/internal-notes`, { data: { content: `Spooler log ${longWord}` } })).status()).toBe(201);

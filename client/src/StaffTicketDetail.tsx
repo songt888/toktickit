@@ -1,4 +1,4 @@
-import { statusBadgeClass } from "./statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ActionsTaken from "./ActionsTaken.js";
 import TicketStatusHistory from "./TicketStatusHistory.js";
@@ -47,14 +47,6 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
 
 // What is still needed before Resolved is allowed (specification BR-13).
@@ -539,7 +531,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ol className="list-group list-group-numbered">
                     {ticket.publicComments.map((comment) => (
                       <li className="list-group-item" key={comment.id}>
-                        <strong>{comment.author.name}</strong>
+                        <strong className="text-break">{comment.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={comment.createdAt}>{formatDate(comment.createdAt)}</time>
                         <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                       </li>
@@ -578,7 +570,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ol className="list-group list-group-numbered">
                     {ticket.internalNotes.map((note) => (
                       <li className="list-group-item" key={note.id}>
-                        <strong>{note.author.name}</strong>
+                        <strong className="text-break">{note.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={note.createdAt}>{formatDate(note.createdAt)}</time>
                         <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
                       </li>
@@ -616,7 +608,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ul className="list-group">
                     {ticket.attachments.map((attachment) => (
                       <li className="list-group-item d-flex flex-wrap justify-content-between gap-2" key={attachment.id}>
-                        <span>{attachment.originalName}</span>
+                        <span className="text-break">{attachment.originalName}</span>
                         <span className="small text-secondary">
                           {attachment.removedAt ? "Removed" : "Active"} · {attachment.sizeBytes} bytes
                         </span>

@@ -1,4 +1,4 @@
-import { statusBadgeClass } from "./statusBadge.js";
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -27,14 +27,6 @@ function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
 function commentAuthorLabel(comment: PublicComment): string {
   return `${comment.author.name} (${comment.author.email})`;
@@ -269,7 +261,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                   {comments.map((comment) => (
                     <li key={comment.id} className="list-group-item">
                       <div className="d-flex flex-wrap justify-content-between gap-2">
-                        <strong>{commentAuthorLabel(comment)}</strong>
+                        <strong className="text-break">{commentAuthorLabel(comment)}</strong>
                         <time className="small text-secondary" dateTime={comment.createdAt}>
                           {formatDateTime(comment.createdAt)}
                         </time>

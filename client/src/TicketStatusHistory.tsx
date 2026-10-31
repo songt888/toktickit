@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { formatBangkok } from "./ActionsTaken.js";
-import { getTicketStatusHistory, type Pagination, type TicketStatusEvent } from "./api.js";
+import { ApiRequestError, getTicketStatusHistory, type Pagination, type TicketStatusEvent } from "./api.js";
 
 // Shared by Requester and Staff detail: ordered from/to status events only, never Internal Notes.
 export default function TicketStatusHistory({ ticketId, refreshKey }: { ticketId: number; refreshKey: string }) {
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<TicketStatusEvent[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [state, setState] = useState<"loading" | "success" | "error" | "ended">("loading");
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -20,7 +20,8 @@ export default function TicketStatusHistory({ ticketId, refreshKey }: { ticketId
         setPagination(response.pagination);
         setState("success");
       },
-      () => alive && setState("error"),
+      // An ended session cannot be fixed by retrying, so say so instead of offering Retry.
+      (error) => alive && setState(error instanceof ApiRequestError && error.status === 401 ? "ended" : "error"),
     );
     return () => {
       alive = false;
@@ -38,6 +39,7 @@ export default function TicketStatusHistory({ ticketId, refreshKey }: { ticketId
           <button type="button" className="btn btn-sm btn-outline-danger ms-2" onClick={() => setAttempt((n) => n + 1)}>Retry</button>
         </div>
       )}
+      {state === "ended" && <p className="alert alert-warning py-2 mb-0" role="alert">Your session has ended. Sign in again to see the status history.</p>}
       {state === "success" && items.length === 0 && <p className="small mb-0">No status changes recorded yet.</p>}
       {state === "success" && items.length > 0 && (
         <ol className="list-unstyled mb-0" aria-label="Ticket status changes">

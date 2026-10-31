@@ -42,7 +42,7 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   const staff = await freshUser("resp-staff", "IT_STAFF");
   const requesterA = await freshUser("resp-requester", "REQUESTER");
   // A long unbroken word in the summary and Action checks wrapping, not just short demo text.
-  const summary = `E2E Lab 4 responsive ${Date.now()} Supercalifragilisticexpialidocious-network`;
+  const summary = `E2E Lab 4 responsive ${Date.now()} SupercalifragilisticexpialidociousNetworkPrinterQueueFailure`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
   expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
@@ -69,7 +69,7 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await expect(page.getByRole("heading", { name: "Actions Taken" })).toBeVisible();
   await checkLayouts(page, "staff-detail-actions", "Actions Taken");
 
-  const description = "Cleared the spooler Supercalifragilisticexpialidocious-print-queue";
+  const description = "Cleared the spooler SupercalifragilisticexpialidociousPrintSpoolerQueueRestart";
   await page.getByRole("button", { name: "Add Action" }).click();
   await page.getByRole("textbox", { name: "Description" }).fill(description);
   await checkLayouts(page, "action-create", "Add Action");

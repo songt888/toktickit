@@ -1,3 +1,4 @@
+import { statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -209,7 +210,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                   </span>
                 </dd>
                 <dt className="col-sm-4">Current Status</dt>
-                <dd className="col-sm-8"><span className="badge text-bg-success">{ticket.currentStatus}</span></dd>
+                <dd className="col-sm-8"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Summary</dt>
                 <dd className="col-sm-8">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>

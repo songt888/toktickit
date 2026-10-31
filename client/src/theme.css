@@ -40,3 +40,32 @@ body {
   --bs-btn-disabled-color: var(--tt-primary);
   --bs-btn-disabled-border-color: var(--tt-primary);
 }
+
+/* Bootstrap hard-codes its blue for focus rings and checked inputs; give them the green instead. */
+:root {
+  --bs-primary: var(--tt-primary);
+  --bs-primary-rgb: 0, 107, 60;
+  --bs-focus-ring-color: rgba(0, 107, 60, 0.25);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: #7FBF9C;
+  box-shadow: 0 0 0 0.25rem rgba(0, 107, 60, 0.25);
+}
+
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate {
+  background-color: var(--tt-primary);
+  border-color: var(--tt-primary);
+}
+
+.nav-link:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(0, 107, 60, 0.25);
+}
+
+.btn-success,
+.btn-outline-success {
+  --bs-btn-focus-shadow-rgb: 0, 107, 60;
+}

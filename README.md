@@ -157,7 +157,16 @@ npm run test:e2e
 ```
 
 Vitest and Supertest cover server APIs; Playwright covers authenticated role workflows and
-responsive layouts. To watch the browser during E2E tests:
+responsive layouts.
+
+The Lab 4 Dashboard performance smoke (PERF-01, 10,000 Tickets and 30,000 Actions, about
+30 seconds) is skipped by `npm test`. Run it on its own; it creates and drops its own database
+and writes query plans next to [`perf-01.md`](artifacts/lab-04/performance/perf-01.md):
+
+```bash
+cd server
+npm run test:perf
+``` To watch the browser during E2E tests:
 
 ```bash
 npm install

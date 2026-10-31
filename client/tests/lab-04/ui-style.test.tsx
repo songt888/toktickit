@@ -6,6 +6,7 @@ import { readdirSync } from "node:fs";
 import ActionsTaken from "../../src/ActionsTaken.js";
 import CreateTicket from "../../src/CreateTicket.js";
 import TicketStatusHistory from "../../src/TicketStatusHistory.js";
+import { statusBadgeClass } from "../../src/statusBadge.js";
 import StaffDashboard from "../../src/StaffDashboard.js";
 import * as api from "../../src/api.js";
 import { action, admin, list, mockList, staff, stamp } from "./actionFixtures.js";
@@ -65,6 +66,20 @@ describe("Zen Green style contract (STYLE-01)", () => {
     }
   });
 
+  it("gives each Ticket status its own badge on every screen, and greens Bootstrap's focus and checked colours", () => {
+    const statuses = ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "RESOLVED", "CLOSED", "REOPENED", "CANCELLED"] as const;
+    expect(statusBadgeClass("CANCELLED")).not.toBe(statusBadgeClass("RESOLVED"));
+    expect(new Set(statuses.map(statusBadgeClass)).size).toBeGreaterThanOrEqual(5);
+    for (const file of ["TicketDetail.tsx", "MyTickets.tsx", "StaffTicketDetail.tsx", "StaffTicketQueue.tsx"]) {
+      expect(source(file), file).toMatch(/badge \$\{statusBadgeClass\(ticket\.currentStatus\)\}/);
+    }
+    const theme = source("theme.css");
+    for (const selector of [".form-control:focus", ".form-select:focus", ".form-check-input:focus", ".form-check-input:checked", ".nav-link:focus-visible"]) {
+      expect(theme, selector).toContain(selector);
+    }
+    expect(theme).toContain("--bs-focus-ring-color: rgba(0, 107, 60, 0.25)");
+  });
+
   it("announces Result as required when editing a completed Action, and the cancel confirmation as required", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     mockList(list([action({ status: "COMPLETED", result: "Spooler restarted" }), action({ id: 502, description: "Second", version: 1 })]));
@@ -110,5 +125,46 @@ describe("Ticket Status History (shared Requester/Staff area)", () => {
     expect(rows.map((row) => row.querySelector("strong")!.textContent)).toEqual(["Created → NEW", "NEW → IN_PROGRESS"]);
     expect(rows[1]).toHaveTextContent(`by ${staff.name}`);
     expect(history).toHaveBeenCalledTimes(2);
+  });
+
+  const event = (id: number, fromStatus: api.TicketStatus | null, toStatus: api.TicketStatus): api.TicketStatusEvent =>
+    ({ id, fromStatus, toStatus, createdAt: stamp, actor: staff });
+
+  it("retries after a failed load", async () => {
+    const history = vi.spyOn(api, "getTicketStatusHistory")
+      .mockRejectedValueOnce(new api.ApiRequestError("Down", 500))
+      .mockResolvedValueOnce({ items: [event(1, "NEW", "OPEN")], pagination: { page: 1, pageSize: 10, totalItems: 1, totalPages: 1 } });
+    const user = userEvent.setup();
+    render(<TicketStatusHistory ticketId={801} refreshKey="a" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("The status history could not be loaded.");
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("NEW → OPEN")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(history).toHaveBeenCalledTimes(2);
+  });
+
+  it("pages through earlier and later changes, disabling the end buttons", async () => {
+    const history = vi.spyOn(api, "getTicketStatusHistory").mockImplementation(async (_ticketId, page = 1) => ({
+      items: page === 1 ? [event(1, "NEW", "OPEN")] : [event(11, "OPEN", "IN_PROGRESS")],
+      pagination: { page, pageSize: 10, totalItems: 11, totalPages: 2 },
+    }));
+    const user = userEvent.setup();
+    render(<TicketStatusHistory ticketId={801} refreshKey="a" />);
+    expect(await screen.findByText("NEW → OPEN")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Earlier changes" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Later changes" }));
+    expect(await screen.findByText("OPEN → IN_PROGRESS")).toBeInTheDocument();
+    expect(history).toHaveBeenLastCalledWith(801, 2);
+    expect(screen.getByRole("button", { name: "Later changes" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Earlier changes" }));
+    expect(await screen.findByText("NEW → OPEN")).toBeInTheDocument();
+    expect(history).toHaveBeenLastCalledWith(801, 1);
+  });
+
+  it("tells the user to sign in again on 401 instead of offering Retry", async () => {
+    vi.spyOn(api, "getTicketStatusHistory").mockRejectedValue(new api.ApiRequestError("Expired", 401));
+    render(<TicketStatusHistory ticketId={801} refreshKey="a" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your session has ended. Sign in again");
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 });

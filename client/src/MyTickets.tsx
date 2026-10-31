@@ -1,3 +1,4 @@
+import { statusBadgeClass } from "./statusBadge.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Category,
@@ -194,10 +195,6 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
       case "HIGH": return "text-bg-warning text-dark";
       case "URGENT": return "text-bg-danger";
     }
-  }
-
-  function statusBadgeClass(status: TicketListItem["currentStatus"]): string {
-    return status === "NEW" ? "bg-success-subtle text-success-emphasis border border-success-subtle" : "text-bg-secondary";
   }
 
   const renderRow = (ticket: TicketListItem) => (

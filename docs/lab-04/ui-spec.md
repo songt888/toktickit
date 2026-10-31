@@ -1,6 +1,6 @@
 # Lab 4 Zen Green UI Specification
 
-Status: Proposed for Issue #65 review. All screens/checks here are planned.
+Status: Implemented in Lab 4 (reviewed in Issue #65, finished in #72). The checklist in section 7 records what was verified and where.
 Use [specification.md](specification.md) and [api-spec.md](api-spec.md) for
 rules and shapes; preserve [Lab 3 conventions](../lab-03/ui-spec.md).
 
@@ -159,7 +159,7 @@ horizontal overflow, clipped badges, hidden buttons or inaccessible dialogs.
 Use visible keyboard focus, semantic headings/labels, non-color status text,
 accessible metric/action names and standard keyboard activation.
 
-### Planned visual and accessibility checklist
+### Visual and accessibility checklist
 
 - [x] All roles preserve identity, active Dashboard navigation and earlier screens.
 - [x] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.

@@ -75,6 +75,15 @@ test("A11Y-01 Lab 4 screens work by keyboard with labels, focus, skip link, acti
   await expect(descriptionField).toHaveAttribute("aria-required", "true");
   await expect(descriptionField).toHaveAccessibleDescription(/Describe the action\./);
   await descriptionField.fill("Checked the keyboard flow");
+  // Focus glow and checked boxes use the Zen Green, not Bootstrap blue (fields that are not in error).
+  const notesField = page.getByRole("textbox", { name: "Attachment Notes" });
+  await notesField.focus();
+  // Bootstrap animates the glow for 0.15 s, so wait for its final value.
+  await expect.poll(() => notesField.evaluate((el) => getComputedStyle(el).boxShadow)).toContain("rgba(0, 107, 60, 0.25)");
+  const followUp = page.getByRole("checkbox", { name: "Follow-Up Required?" });
+  await followUp.check();
+  expect(await followUp.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(0, 107, 60)");
+  await followUp.uncheck();
   await page.getByRole("button", { name: "Save Action" }).press("Enter");
   await expect(page.getByText("Action added.")).toBeVisible();
 

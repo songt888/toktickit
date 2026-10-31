@@ -2,6 +2,7 @@
 // Runs against its own database, so 10,000 Tickets never touch the shared test data.
 // Opt-in (about 30 s): `npm run test:perf` in server/. Plain `npm test` skips it.
 import { execSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -13,8 +14,12 @@ perfUrl.pathname = `/${perfDatabase}`;
 
 // The app's client, with query events so each request's SQL statements can be counted.
 const queries: string[] = [];
+const queryParams: string[] = [];
 const perfClient = new PrismaClient({ datasourceUrl: perfUrl.toString(), log: [{ emit: "event", level: "query" }] });
-perfClient.$on("query", (event) => queries.push(event.query));
+perfClient.$on("query", (event) => {
+  queries.push(event.query);
+  queryParams.push(event.params);
+});
 vi.mock("../../src/prisma.js", () => ({ getPrisma: () => perfClient }));
 
 const TICKETS = 10_000;
@@ -32,7 +37,7 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
   beforeAll(async () => {
     await dropPerfDatabase();
     await admin.$executeRawUnsafe(`CREATE DATABASE "${perfDatabase}"`);
-    execSync("npx prisma migrate deploy", { env: { ...process.env, DATABASE_URL: perfUrl.toString() }, stdio: "ignore" });
+    execSync("npx prisma migrate deploy", { env: { ...process.env, DATABASE_URL: perfUrl.toString() }, stdio: "pipe" }); // a failed migration throws with its output
 
     const { seedLab2Data } = await import("../../prisma/seed.js");
     await seedLab2Data(perfClient);
@@ -90,6 +95,7 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
   });
 
   // One untimed warm-up, then five sequential timed requests; statements counted per request.
+  const plans: string[] = [];
   async function measure(url: string, cookie: string) {
     await send("get", url, cookie);
     const timings: number[] = [];
@@ -97,6 +103,7 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
     let bodyBytes = 0;
     for (let run = 0; run < 5; run += 1) {
       queries.length = 0;
+      queryParams.length = 0;
       const started = performance.now();
       const response = await send("get", url, cookie);
       timings.push(performance.now() - started);
@@ -106,6 +113,16 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
       bodyBytes = Math.max(bodyBytes, Buffer.byteLength(JSON.stringify(response.body)));
     }
     timings.sort((a, b) => a - b);
+    // Query plans for the last request's SELECTs, with the values it actually sent.
+    const selects = queries.map((sql, index) => ({ sql, params: JSON.parse(queryParams[index]) as unknown[] })).filter(({ sql }) => /^\s*SELECT/i.test(sql));
+    for (const { sql, params } of selects) {
+      // Inline the logged values as literals; dates go back to timestamp (the column type) so the plan matches the real query.
+      const literal = (value: unknown) => typeof value === "number" || typeof value === "boolean" ? String(value)
+        : typeof value === "string" && /^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(?:\.\d+)? UTC$/.test(value) ? `'${value.replace(" UTC", "")}'::timestamp`
+          : `'${String(value).replaceAll("'", "''")}'`;
+      const rows = await perfClient.$queryRawUnsafe<Array<{ "QUERY PLAN": string }>>(`EXPLAIN ${sql.replace(/\$(\d+)/g, (_, n) => literal(params[Number(n) - 1]))}`);
+      plans.push(`-- ${url}\n${sql}\n${rows.map((row) => row["QUERY PLAN"]).join("\n")}\n`);
+    }
     return { statements, bodyBytes, medianMs: Math.round(timings[2]), maxMs: Math.round(timings[4]) };
   }
 
@@ -119,6 +136,7 @@ describe.runIf(process.env.PERF === "1")("Dashboard performance smoke (PERF-01)"
       myActionsList: await measure("/api/staff/actions-taken?pageSize=50", cookies.staff),
     };
     const [[version]] = [await perfClient.$queryRaw<Array<{ version: string }>>(Prisma.sql`SELECT version()`)];
+    writeFileSync(new URL("../../../artifacts/lab-04/performance/perf-01-plans.txt", import.meta.url), plans.join("\n"));
     console.log(JSON.stringify({ perf: "PERF-01", node: process.version, postgres: version.version.split(" ").slice(0, 2).join(" "), tickets: TICKETS, actions: ACTIONS, budget: BUDGET, results }));
     for (const [name, result] of Object.entries(results)) {
       expect(result.statements, name).toBeLessThanOrEqual(BUDGET.statements);

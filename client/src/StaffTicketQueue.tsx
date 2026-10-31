@@ -1,3 +1,4 @@
+import { statusBadgeClass } from "./statusBadge.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
@@ -82,16 +83,6 @@ function priorityBadgeClass(priority: TicketPriority): string {
   }
 }
 
-function statusBadgeClass(status: TicketStatus): string {
-  switch (status) {
-    case "NEW": return "bg-success-subtle text-success-emphasis border border-success-subtle";
-    case "IN_PROGRESS": return "text-bg-warning text-dark";
-    case "RESOLVED": return "text-bg-success";
-    case "CLOSED": return "text-bg-dark";
-    case "CANCELLED": return "text-bg-danger";
-    default: return "text-bg-secondary";
-  }
-}
 
 // A Dashboard drill-down: the exact Queue filter plus a visible label.
 export type QueueScope = { label: string; filter: StaffTicketListOptions };
@@ -233,7 +224,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
     return (
       <>
         <div><span className="fw-semibold">Created:</span> {formatDate(ticket.ticketDate)}</div>
-        <div><span className="fw-semibold">Summary:</span> {ticket.summary}</div>
+        <div className="text-break"><span className="fw-semibold">Summary:</span> {ticket.summary}</div>
         <div><span className="fw-semibold">Category:</span> {ticket.category.name}</div>
         <div><span className="fw-semibold">Requester:</span> {ticket.requester.name}</div>
         <div><span className="fw-semibold">Requested Priority:</span>{" "}

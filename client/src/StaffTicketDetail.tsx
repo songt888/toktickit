@@ -1,3 +1,4 @@
+import { statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ActionsTaken from "./ActionsTaken.js";
 import TicketStatusHistory from "./TicketStatusHistory.js";
@@ -55,16 +56,6 @@ function priorityBadgeClass(priority: TicketPriority): string {
   }
 }
 
-function statusBadgeClass(status: TicketStatus): string {
-  switch (status) {
-    case "NEW": return "bg-success-subtle text-success-emphasis border border-success-subtle";
-    case "IN_PROGRESS": return "text-bg-warning text-dark";
-    case "RESOLVED": return "text-bg-success";
-    case "CLOSED": return "text-bg-dark";
-    case "CANCELLED": return "text-bg-danger";
-    default: return "text-bg-secondary";
-  }
-}
 
 // What is still needed before Resolved is allowed (specification BR-13).
 function resolutionGateText(gate: ResolutionGate): string {

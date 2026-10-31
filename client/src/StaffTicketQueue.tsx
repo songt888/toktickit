@@ -422,6 +422,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
 
         {canShowResults && pagination && items.length > 0 && (
           <>
+            {/* Requester shows from 1200 px; below that all ten listed columns need the room. */}
             <div className="table-responsive d-none d-lg-block">
               <table className="table align-middle">
                 <caption className="visually-hidden">IT Staff Ticket Queue</caption>
@@ -431,7 +432,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <th scope="col">Created</th>
                     <th scope="col">Summary</th>
                     <th scope="col">Category</th>
-                    <th scope="col">Requester</th>
+                    <th scope="col" className="d-none d-xl-table-cell">Requester</th>
                     <th scope="col">Requested</th>
                     <th scope="col">IT Priority</th>
                     <th scope="col">Status</th>
@@ -447,11 +448,11 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                       <td>{formatDate(ticket.ticketDate)}</td>
                       <td className="text-break">{ticket.summary}</td>
                       <td className="text-break">{ticket.category.name}</td>
-                      <td className="text-break">{ticket.requester.name}</td>
+                      <td className="text-break d-none d-xl-table-cell">{ticket.requester.name}</td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.itPriority)}`}>{ticket.itPriority}</span></td>
                       <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
-                      <td className="text-break">{ticket.owner?.name ?? "Unassigned"}</td>
+                      <td className="text-break" style={{ minWidth: "7rem" }}>{ticket.owner?.name ?? "Unassigned"}</td>
                       <td>{formatDate(ticket.updatedAt)}</td>
                       <td>
                         <button className="btn btn-outline-success btn-sm" type="button" onClick={() => onOpenTicket(ticket.id)}>

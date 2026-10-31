@@ -15,12 +15,12 @@ async function signIn(page: Page, user: { email: string; password: string }) {
 }
 
 // RESP-01: no page-level horizontal scroll and no visible control cut off at the right edge, at every width.
-async function checkLayouts(page: Page, name: string, anchor: string) {
-  for (const { label, width, height } of widths) {
+async function checkLayouts(page: Page, name: string, anchor: string, sizes = widths) {
+  for (const { label, width, height } of sizes) {
     await page.setViewportSize({ width, height });
     // Measure the loaded screen, not a loading state.
     await expect(page.locator("main [role=status]:visible").filter({ hasText: /^Loading/ })).toHaveCount(0);
-    const { offenders, wideTables, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
+    const { offenders, wideTables, splitWords, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const controls = [...document.querySelectorAll<HTMLElement>("main button, main a, main input, main select, main textarea, main .badge")];
       return {
@@ -32,6 +32,11 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
         wideTables: [...document.querySelectorAll<HTMLElement>("main .table-responsive")]
           .filter((wrap) => wrap.clientWidth > 0 && wrap.scrollWidth > wrap.clientWidth + 1)
           .map((wrap) => `${wrap.scrollWidth}px in ${wrap.clientWidth}px: ${wrap.querySelector("thead")?.textContent?.slice(0, 80)}`),
+        // A short single word (like "Unassigned") squeezed onto two lines by a narrow table column.
+        splitWords: [...document.querySelectorAll<HTMLElement>("main td")]
+          .filter((cell) => cell.childNodes.length === 1 && cell.firstChild?.nodeType === Node.TEXT_NODE && /^\S{1,20}$/.test(cell.textContent?.trim() ?? ""))
+          .filter((cell) => { const range = document.createRange(); range.selectNodeContents(cell); return range.getClientRects().length > 1; })
+          .map((cell) => cell.textContent),
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: viewport,
         clipped: controls.filter((control) => {
@@ -47,6 +52,7 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
     });
     expect(scrollWidth, `${name} ${label} overflow: ${offenders.join(" | ")}`).toBeLessThanOrEqual(clientWidth + 1);
     expect(wideTables, `${name} ${label} tables scrolling sideways`).toEqual([]);
+    expect(splitWords, `${name} ${label} short words split across lines`).toEqual([]);
     expect(clipped, `${name} ${label} clipped controls`).toEqual([]);
     expect(spilled, `${name} ${label} text wider than its box`).toEqual([]);
     await page.getByText(anchor, { exact: true }).first().scrollIntoViewIfNeeded();
@@ -100,6 +106,8 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await page.getByRole("button", { name: "Apply filters" }).click();
   await expect(page.getByRole("row").filter({ hasText: summary })).toBeVisible();
   await checkLayouts(page, "queue-scoped", "Ticket Queue");
+  // 992 px is the narrowest width that shows the Queue table instead of cards.
+  await checkLayouts(page, "queue-scoped", "Ticket Queue", [{ label: "table-992", width: 992, height: 900 }]);
 
   await page.getByRole("row").filter({ hasText: summary }).getByRole("button", { name: "Open Detail" }).click();
   await expect(page.getByRole("heading", { name: "Actions Taken" })).toBeVisible();

@@ -11,7 +11,7 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | `staff-dashboard/zero-state.png` | Zero state for a new Staff user after Retry | `dashboards.spec.ts` (E2E-03 failure injection) |
 | `staff-dashboard/refresh-failure.png` | A failed refresh keeping older data, labelled with its time | `dashboards.spec.ts` (E2E-03 failure injection) |
 | `staff-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` (E2E-03 failure injection) |
-| `responsive/queue-scoped-*.png` | Drill-down: a card opens the Ticket Queue with its exact scope banner | `responsive.spec.ts` (RESP-01) |
+| `responsive/queue-scoped-*.png` | Drill-down: a card opens the Ticket Queue with its exact scope banner; `queue-scoped-table-992.png` is the narrowest width with the Queue table | `responsive.spec.ts` (RESP-01) |
 | `responsive/my-pending-actions-*.png` | The My Pending Actions drill-down page | `responsive.spec.ts` |
 | `responsive/staff-dashboard-*.png` | Staff Dashboard at all three widths with overflow and clipping checks | `responsive.spec.ts` |
 

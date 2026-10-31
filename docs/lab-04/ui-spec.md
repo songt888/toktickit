@@ -171,7 +171,7 @@ accessible metric/action names and standard keyboard activation.
 - [x] Required fields, errors, inactive assignee and gate failure are clear.
 - [x] Conflict/retry preserves draft and clears stale confirmations.
 - [x] Keyboard order, focus restoration, labels and announcements are verified.
-- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow (RESP-01 measures 13 screens after their rows load, including the Queue table with long requester/owner names, and fails on a table that scrolls sideways.)
+- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow (RESP-01 measures 13 screens after their rows load, including the Queue table with long requester/owner names at 1280 and 992 px, and fails on a table that scrolls sideways.)
 - [ ] No unintended console errors, broken links, placeholder or unfinished controls.
 
 Checked as built in #72 (evidence: `docs/lab-04/tests.md` UI-07, STYLE-01, RESP-01, A11Y-01, E2E-01 to E2E-03 and `artifacts/lab-04/screenshots/README.md`). The last item has no automated check yet, so it stays open.

@@ -311,8 +311,11 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   await page.getByRole("button", { name: "Logout" }).click();
 
   // The Administrator sees the same Dashboard with only their own assignment.
-  const adminSnapshot = await signIn(page, admin, "staff");
+  await signIn(page, admin, "staff");
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  // Every Administrator metric, all 12 buckets included, equals the SQL reading for the Administrator.
+  const adminSnapshot = await staffDashboardMatchesDatabase(page, admin.id);
+  await expect(cardValue(page, "My Pending Actions")).toHaveText("1");
   expect([adminSnapshot.metrics.myTickets, adminSnapshot.metrics.myActions]).toEqual([0, 1]);
   expect(adminSnapshot.myActions.map((item: { id: number }) => item.id)).toEqual([actionIds[1]]);
   await expect(page.getByRole("link", { name: "User Management" })).toBeVisible();

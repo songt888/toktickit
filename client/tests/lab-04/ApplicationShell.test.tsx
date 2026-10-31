@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../../src/App.js";
 import * as api from "../../src/api.js";
-import { action, list, mockList } from "./actionFixtures.js";
+import { action, deferred, list, mockList } from "./actionFixtures.js";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -176,5 +176,68 @@ describe("Staff and Administrator application shell with the Dashboard (UI-07 St
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
     await user.click(screen.getByRole("link", { name: "User Management" }));
     expect(await screen.findByRole("heading", { name: "User Management" })).toBeInTheDocument();
+  });
+});
+
+describe("Logout clears one user's drafts and data before the next user (UI-07 logout part)", () => {
+  const ari: api.AuthUser = { id: 41, name: "Ari Suksan", email: "ari@example.com", role: "REQUESTER", isActive: true, mustChangePassword: false };
+  const somchai: api.AuthUser = { id: 42, name: "Somchai Dee", email: "somchai@example.com", role: "REQUESTER", isActive: true, mustChangePassword: false };
+
+  it("drops an unsent Create Ticket draft and the previous user's identity at logout", async () => {
+    vi.spyOn(api, "getCurrentUser").mockResolvedValue({ user: ari, requiresPasswordChange: false });
+    vi.spyOn(api, "getCategories").mockResolvedValue([{ id: 1, name: "Hardware" }]);
+    vi.spyOn(api, "getRelatedSystems").mockResolvedValue([{ id: 2, name: "Printing" }]);
+    vi.spyOn(api, "getMyTickets").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
+    vi.spyOn(api, "logout").mockResolvedValue();
+    vi.spyOn(api, "login").mockResolvedValue({ user: somchai, requiresPasswordChange: false });
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("link", { name: "Create Ticket" }));
+    await user.type(await screen.findByRole("textbox", { name: /Summary/ }), "Ari's private draft");
+
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.type(await screen.findByLabelText("Email"), somchai.email);
+    await user.type(screen.getByLabelText("Password"), "Password123!");
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    expect(await screen.findByText("Somchai Dee")).toBeInTheDocument();
+    expect(screen.queryByText("Ari Suksan")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Create Ticket" }));
+    expect(await screen.findByRole("textbox", { name: /Summary/ })).toHaveValue("");
+    expect(screen.queryByDisplayValue("Ari's private draft")).not.toBeInTheDocument();
+  });
+
+  it("never shows a late Dashboard response for the previous user", async () => {
+    const staffA: api.AuthUser = { id: 31, name: "Nattakit Support", email: "a@example.com", role: "IT_STAFF", isActive: true, mustChangePassword: false };
+    const staffB: api.AuthUser = { id: 33, name: "Mali Ops", email: "b@example.com", role: "IT_STAFF", isActive: true, mustChangePassword: false };
+    const zero = { NEW: 0, OPEN: 0, IN_PROGRESS: 0, WAITING_FOR_REQUESTER: 0, RESOLVED: 0, CLOSED: 0, REOPENED: 0, CANCELLED: 0 };
+    const snapshotFor = (myTickets: number): api.StaffDashboardData => ({
+      asOf, recentFrom, displayTimeZone: "Asia/Bangkok",
+      metrics: { unassignedTickets: 0, myTickets, myActions: 0, byStatus: zero, byItPriority: { LOW: 0, MEDIUM: 0, HIGH: 0, URGENT: 0 } },
+      myActions: [], recentTickets: [], urgentTickets: [],
+    });
+    const late = deferred<api.StaffDashboardData>();
+    vi.spyOn(api, "getCurrentUser").mockResolvedValue({ user: staffA, requiresPasswordChange: false });
+    vi.spyOn(api, "getStaffDashboard").mockReturnValueOnce(late.promise).mockResolvedValueOnce(snapshotFor(5));
+    vi.spyOn(api, "getCategories").mockResolvedValue([]);
+    vi.spyOn(api, "getRelatedSystems").mockResolvedValue([]);
+    vi.spyOn(api, "getStaffTickets").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
+    vi.spyOn(api, "logout").mockResolvedValue();
+    vi.spyOn(api, "login").mockResolvedValue({ user: staffB, requiresPasswordChange: false });
+    const user = userEvent.setup();
+    render(<App />);
+    expect(await screen.findByText("Loading your Dashboard…")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.type(await screen.findByLabelText("Email"), staffB.email);
+    await user.type(screen.getByLabelText("Password"), "Password123!");
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+    const myTicketsCard = () => screen.getAllByRole("heading", { name: "My Tickets" })[0].closest("section")!;
+    await waitFor(() => expect(myTicketsCard()).toHaveTextContent("5"));
+
+    // User A's request finally answers; B's screen must not change.
+    await act(async () => late.resolve(snapshotFor(99)));
+    expect(myTicketsCard()).toHaveTextContent("5");
+    expect(screen.queryByText("99")).not.toBeInTheDocument();
   });
 });

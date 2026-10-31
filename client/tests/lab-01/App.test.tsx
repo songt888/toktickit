@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import App from "../../src/App.js";
 import * as api from "../../src/api.js";
+import { openMyTickets } from "../openMyTickets.js";
 
 const requester = {
   id: 7,
@@ -34,6 +35,8 @@ describe("App", () => {
 
     render(<App />);
 
+    // Lab 4: the Requester lands on the Dashboard; My Tickets is one click away.
+    await openMyTickets();
     expect(await screen.findByRole("heading", { name: "My Tickets" })).toBeInTheDocument();
     expect(screen.getByText("Ari Suksan")).toBeInTheDocument();
     expect(screen.queryByLabelText(/Choose a Development Requester/)).not.toBeInTheDocument();

@@ -1,6 +1,6 @@
 import { expect, request, test, type Page } from "@playwright/test";
 import path from "node:path";
-import { freshUser } from "./freshUser.js";
+import { freshUser, uniqueTag } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 
@@ -23,7 +23,7 @@ test("A11Y-01 Lab 4 screens work by keyboard with labels, focus, skip link, acti
   page.on("dialog", (dialog) => void dialog.accept());
   const staff = await freshUser("a11y-staff", "IT_STAFF");
   const requesterA = await freshUser("a11y-requester", "REQUESTER");
-  const summary = `E2E Lab 4 a11y ${Date.now()}`;
+  const summary = `E2E Lab 4 a11y ${uniqueTag()}`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
   expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];

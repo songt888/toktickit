@@ -2,6 +2,7 @@ import { expect, request, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
+import { uniqueTag } from "./freshUser.js";
 import { hashPassword } from "../../server/src/password.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
@@ -13,7 +14,7 @@ test.afterAll(() => prisma.$disconnect());
 
 // Fresh Requesters per run, so no other spec or worker can change these counts.
 async function freshRequester(label: string, role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR" = "REQUESTER") {
-  const email = `e2e.dashboard.${label}.${Date.now()}@example.com`;
+  const email = `e2e.dashboard.${label}.${uniqueTag()}@example.com`;
   const user = await prisma.user.create({
     data: { name: `E2E Dashboard ${label}`, email, role, isActive: true, passwordHash: hashPassword(password), mustChangePassword: false, passwordChangedAt: new Date() },
   });
@@ -75,7 +76,7 @@ test("E2E-03 Requester Dashboard matches the database, drills down exactly and s
   const system = (await (await api.get("/api/related-systems")).json())[0];
   const created: Array<{ id: number; ticketNumber: string; summary: string }> = [];
   for (const label of ["new", "waiting", "progress", "resolved", "closed", "cancelled", "old"]) {
-    const summary = `E2E dashboard ${label} ${Date.now()}`;
+    const summary = `E2E dashboard ${label} ${uniqueTag()}`;
     const response = await api.post("/api/tickets", {
       data: { categoryId: category.id, relatedSystemId: system.id, summary, description: "Dashboard fixture.", requestedPriority: "LOW" },
     });
@@ -225,7 +226,7 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   const tickets: Array<{ id: number; ticketNumber: string }> = [];
   for (const label of ["owned", "unassigned"]) {
     const response = await requesterApi.post("/api/tickets", {
-      data: { categoryId: category.id, relatedSystemId: system.id, summary: `E2E staff dashboard ${label} ${Date.now()}`, description: "Staff Dashboard fixture.", requestedPriority: "LOW" },
+      data: { categoryId: category.id, relatedSystemId: system.id, summary: `E2E staff dashboard ${label} ${uniqueTag()}`, description: "Staff Dashboard fixture.", requestedPriority: "LOW" },
     });
     tickets.push(await response.json());
   }

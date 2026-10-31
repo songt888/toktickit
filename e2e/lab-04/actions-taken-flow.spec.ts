@@ -1,6 +1,6 @@
 import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
 import path from "node:path";
-import { freshUser } from "./freshUser.js";
+import { freshUser, uniqueTag } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 
@@ -53,7 +53,7 @@ test("E2E-01 records Actions by different staff, runs the lifecycle and shows th
   const [staff, admin, requesterA, requesterB] = await Promise.all([
     freshUser("flow-staff", "IT_STAFF"), freshUser("flow-admin", "ADMINISTRATOR"), freshUser("flow-requester-a", "REQUESTER"), freshUser("flow-requester-b", "REQUESTER"),
   ]);
-  const summary = `E2E Lab 4 actions ${Date.now()}`;
+  const summary = `E2E Lab 4 actions ${uniqueTag()}`;
 
   // Requester A raises the Ticket; the Administrator owns it, so Action performers differ from the Owner.
   const requesterApi = await apiAs(requesterA);

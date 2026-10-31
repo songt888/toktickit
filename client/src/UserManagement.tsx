@@ -245,7 +245,7 @@ export default function UserManagement() {
         {users.map((user) => (
           <article className="card border-0 shadow-sm" key={user.id}>
             <div className="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-              <div className="min-w-0">
+              <div className="text-break" style={{ minWidth: 0 }}>
                 <h3 className="h6 mb-1">{user.name}</h3>
                 <p className="text-secondary mb-2 text-break">{user.email}</p>
                 <div className="d-flex flex-wrap gap-2">

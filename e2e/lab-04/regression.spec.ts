@@ -2,6 +2,7 @@ import { expect, request, test, type APIRequestContext, type Page } from "@playw
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
+import { uniqueTag } from "./freshUser.js";
 import { hashPassword } from "../../server/src/password.js";
 
 // E2E-04: Lab 1-3 behaviour still works with Lab 4 in place. Fresh users, so shared E2E accounts never change.
@@ -11,7 +12,7 @@ const prisma = getPrisma();
 test.afterAll(() => prisma.$disconnect());
 
 async function freshUser(label: string, role: "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR") {
-  const email = `e2e.regression.${label}.${Date.now()}@example.com`;
+  const email = `e2e.regression.${label}.${uniqueTag()}@example.com`;
   const user = await prisma.user.create({
     data: { name: `E2E Regression ${label}`, email, role, isActive: true, passwordHash: hashPassword(password), mustChangePassword: false, passwordChangedAt: new Date() },
   });
@@ -66,7 +67,7 @@ test("E2E-04 tickets, attachments, comments, queue owner, IT priority and Intern
   const staffApi = await apiAs(staff);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];
-  const summary = `E2E regression ticket ${Date.now()}`;
+  const summary = `E2E regression ticket ${uniqueTag()}`;
   const created = await requesterApi.post("/api/tickets", {
     data: { categoryId: category.id, relatedSystemId: system.id, summary, description: "Monitor flickers.", requestedPriority: "LOW" },
   });

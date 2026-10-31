@@ -55,7 +55,7 @@ Labs 1-3 behaviour (auth, password change, logout, Tickets, attachments, comment
 
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
-| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 12 Lab 4 screens at 1280/820/390 px; each fails the run on page overflow, a control cut off at the edge, or text wider than its box | `responsive.spec.ts` (RESP-01) |
+| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 13 Lab 4 screens (including `admin-user-management`) at 1280/820/390 px; each fails the run on page overflow, a control cut off at the edge, or text wider than its box | `responsive.spec.ts` (RESP-01) |
 | `accessibility/cancel-panel-errors.png` | Keyboard-opened form with focus moved in and errors tied to fields | `accessibility.spec.ts` (A11Y-01) |
 
 Performance evidence (no screenshot): `../performance/perf-01.md`.

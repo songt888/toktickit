@@ -12,3 +12,6 @@ export async function freshUser(label: string, role: "REQUESTER" | "IT_STAFF" | 
   });
   return { id: user.id, name: user.name, email, password };
 }
+
+// Date.now() alone repeats when parallel workers start in the same millisecond.
+export const uniqueTag = () => `${Date.now()}-${randomUUID().slice(0, 8)}`;

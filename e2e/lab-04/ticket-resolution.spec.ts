@@ -2,7 +2,7 @@ import { expect, request, test, type APIRequestContext, type Page } from "@playw
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
 import { hashPassword } from "../../server/src/password.js";
-import { freshUser } from "./freshUser.js";
+import { freshUser, uniqueTag } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 
@@ -56,7 +56,7 @@ async function gate(page: Page, completed: number, pending: number, unsettled: n
 test("E2E-02 records ordered work, blocks resolving until work and follow-up settle, then resolves, closes, reopens and cancels", async ({ page }) => {
   const staff = await freshUser("resolution-staff", "IT_STAFF");
   const requesterA = await freshUser("resolution-requester", "REQUESTER");
-  const summary = `E2E Lab 4 resolution ${Date.now()}`;
+  const summary = `E2E Lab 4 resolution ${uniqueTag()}`;
   const requesterApi = await apiAs(requesterA);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];
@@ -84,7 +84,8 @@ test("E2E-02 records ordered work, blocks resolving until work and follow-up set
   // Ordered work: two Actions listed in the order performed.
   await addAction(page, "Replaced the VPN client profile");
   await addAction(page, "Re-test the VPN for one hour");
-  expect(await page.locator('li[aria-label^="Action: "]').evaluateAll((items) => items.map((item) => item.getAttribute("aria-label"))))
+  // Polled: the list reloads after a save and is briefly empty.
+  await expect.poll(() => page.locator('li[aria-label^="Action: "]').evaluateAll((items) => items.map((item) => item.getAttribute("aria-label"))))
     .toEqual(["Action: Replaced the VPN client profile", "Action: Re-test the VPN for one hour"]);
 
   // First Action completes but still needs follow-up; the second is pending: gate fails.
@@ -161,10 +162,10 @@ test("E2E-02 an Action whose assignee was deactivated is flagged and cannot be w
   const requesterA = await freshUser("assignee-requester", "REQUESTER");
   const prisma = getPrisma();
   const helper = await prisma.user.create({
-    data: { name: `E2E Leaving Staff ${Date.now()}`, email: `e2e.leaving.${Date.now()}@example.com`, role: "IT_STAFF", isActive: true,
+    data: { name: `E2E Leaving Staff ${uniqueTag()}`, email: `e2e.leaving.${uniqueTag()}@example.com`, role: "IT_STAFF", isActive: true,
       passwordHash: hashPassword("E2ELeavingPassword123"), mustChangePassword: false, passwordChangedAt: new Date() },
   });
-  const summary = `E2E Lab 4 inactive assignee ${Date.now()}`;
+  const summary = `E2E Lab 4 inactive assignee ${uniqueTag()}`;
   const requesterApi = await apiAs(requesterA);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
   const system = (await (await requesterApi.get("/api/related-systems")).json())[0];

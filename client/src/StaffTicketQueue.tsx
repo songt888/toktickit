@@ -446,12 +446,12 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                       <th scope="row">{ticket.ticketNumber}</th>
                       <td>{formatDate(ticket.ticketDate)}</td>
                       <td className="text-break">{ticket.summary}</td>
-                      <td>{ticket.category.name}</td>
-                      <td>{ticket.requester.name}</td>
+                      <td className="text-break">{ticket.category.name}</td>
+                      <td className="text-break">{ticket.requester.name}</td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.itPriority)}`}>{ticket.itPriority}</span></td>
                       <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
-                      <td>{ticket.owner?.name ?? "Unassigned"}</td>
+                      <td className="text-break">{ticket.owner?.name ?? "Unassigned"}</td>
                       <td>{formatDate(ticket.updatedAt)}</td>
                       <td>
                         <button className="btn btn-outline-success btn-sm" type="button" onClick={() => onOpenTicket(ticket.id)}>

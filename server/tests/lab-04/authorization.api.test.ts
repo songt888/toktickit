@@ -189,19 +189,27 @@ describe("Session-derived scope cannot be forged (AUTH-02)", () => {
     const ticket = await world.ticket(owner.id);
     const forged = await send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(await ticketStamp(ticket.id), { performedById: other.id }));
     expect(forged.status).toBe(400);
+    expect(forged.body.fieldErrors).toEqual({ performedById: "This field cannot be set here." });
     expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(0);
 
     const { action } = await createAction(ticket.id, staff.cookie);
     expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById).toBe(staff.id);
-    // Every PATCH route refuses a forged performer too, and changes nothing.
-    for (const [route, extra] of [["", { description: "Forged edit" }], ["/assignee", { assigneeId: staff.id }], ["/status", { status: "IN_PROGRESS" }]] as const) {
+    // Every PATCH route refuses a forged performer, for that field alone: the same request without it succeeds.
+    const otherStaff = await world.user("forge-staff-2", "IT_STAFF");
+    for (const [route, extra] of [["", { description: "Edited by staff" }], ["/assignee", { assigneeId: otherStaff.id }], ["/status", { status: "IN_PROGRESS" }]] as const) {
+      const name = route || "edit";
       const before = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
-      const patch = await send("patch", `/api/tickets/${ticket.id}/actions-taken/${action.id}${route}`, staff.cookie, {
-        mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: before.version, performedById: other.id, ...extra,
-      });
-      expect(patch.status, route || "edit").toBe(400);
+      const url = `/api/tickets/${ticket.id}/actions-taken/${action.id}${route}`;
+      const body = { ticketUpdatedAt: await ticketStamp(ticket.id), version: before.version, ...extra };
+      const forgedPatch = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID(), performedById: other.id });
+      expect(forgedPatch.status, name).toBe(400);
+      expect(forgedPatch.body.fieldErrors, name).toEqual({ performedById: "This field cannot be set here." });
       const after = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
-      expect([after.performedById, after.version, after.status], route || "edit").toEqual([staff.id, before.version, before.status]);
+      expect(after, name).toEqual(before);
+
+      const honest = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID() });
+      expect(honest.status, `${name} without performedById`).toBe(200);
+      expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById, name).toBe(staff.id);
     }
     expect((await send("get", `/api/staff/actions-taken?assigneeId=${staff.id}`, staff.cookie)).status).toBe(400);
     expect((await send("get", "/api/dashboard/requester", staff.cookie)).status).toBe(403);

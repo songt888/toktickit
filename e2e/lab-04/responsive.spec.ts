@@ -1,7 +1,7 @@
 import { expect, request, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { freshUser } from "./freshUser.js";
+import { freshUser, uniqueTag } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
 const widths = [{ label: "desktop", width: 1280, height: 900 }, { label: "tablet", width: 820, height: 1000 }, { label: "mobile", width: 390, height: 844 }];
@@ -18,7 +18,9 @@ async function signIn(page: Page, user: { email: string; password: string }) {
 async function checkLayouts(page: Page, name: string, anchor: string) {
   for (const { label, width, height } of widths) {
     await page.setViewportSize({ width, height });
-    const { offenders, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
+    // Measure the loaded screen, not a loading state.
+    await expect(page.locator("main [role=status]:visible").filter({ hasText: /^Loading/ })).toHaveCount(0);
+    const { offenders, wideTables, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const controls = [...document.querySelectorAll<HTMLElement>("main button, main a, main input, main select, main textarea, main .badge")];
       return {
@@ -26,6 +28,10 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
         offenders: [...document.body.querySelectorAll<HTMLElement>("*")]
           .filter((el) => el.children.length === 0 && el.getBoundingClientRect().right > viewport + 1)
           .map((el) => el.outerHTML.slice(0, 120)).slice(0, 5),
+        // A visible table that needs sideways scrolling hides its last columns (Owner, Updated, Open Detail).
+        wideTables: [...document.querySelectorAll<HTMLElement>("main .table-responsive")]
+          .filter((wrap) => wrap.clientWidth > 0 && wrap.scrollWidth > wrap.clientWidth + 1)
+          .map((wrap) => `${wrap.scrollWidth}px in ${wrap.clientWidth}px: ${wrap.querySelector("thead")?.textContent?.slice(0, 80)}`),
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: viewport,
         clipped: controls.filter((control) => {
@@ -40,6 +46,7 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
       };
     });
     expect(scrollWidth, `${name} ${label} overflow: ${offenders.join(" | ")}`).toBeLessThanOrEqual(clientWidth + 1);
+    expect(wideTables, `${name} ${label} tables scrolling sideways`).toEqual([]);
     expect(clipped, `${name} ${label} clipped controls`).toEqual([]);
     expect(spilled, `${name} ${label} text wider than its box`).toEqual([]);
     await page.getByText(anchor, { exact: true }).first().scrollIntoViewIfNeeded();
@@ -50,12 +57,12 @@ async function checkLayouts(page: Page, name: string, anchor: string) {
 
 test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page }) => {
   page.on("dialog", (dialog) => void dialog.accept());
-  // Long unbroken names too, since author names sit in flex rows next to dates.
-  const staff = await freshUser("resp-staff", "IT_STAFF", `Staff ${"Supercalifragilisticexpialidocious".repeat(2)}`);
-  const requesterA = await freshUser("resp-requester", "REQUESTER", `Requester ${"Supercalifragilisticexpialidocious".repeat(2)}`);
+  // Long unbroken names near the 120-character limit, since names sit in flex rows and table cells.
+  const staff = await freshUser("resp-staff", "IT_STAFF", `Staff ${"Supercalifragilisticexpialidocious".repeat(3)}`);
+  const requesterA = await freshUser("resp-requester", "REQUESTER", `Requester ${"Supercalifragilisticexpialidocious".repeat(3)}`);
   // A long unbroken word in every free-text field checks wrapping, not just short demo text.
   const longWord = "SupercalifragilisticexpialidociousNetworkPrinterQueueFailure";
-  const summary = `E2E Lab 4 responsive ${Date.now()} SupercalifragilisticexpialidociousNetworkPrinterQueueFailure`;
+  const summary = `E2E Lab 4 responsive ${uniqueTag()} SupercalifragilisticexpialidociousNetworkPrinterQueueFailure`;
   const requesterApi = await request.newContext({ baseURL: apiURL });
   expect((await requesterApi.post("/api/auth/login", { data: { email: requesterA.email, password: requesterA.password } })).ok()).toBe(true);
   const category = (await (await requesterApi.get("/api/categories")).json())[0];
@@ -88,10 +95,12 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await checkLayouts(page, "staff-dashboard", "Unassigned Tickets");
   await page.getByRole("button", { name: "View Unassigned Tickets in the Ticket Queue" }).click();
   await expect(page.getByText("Unassigned active Tickets")).toBeVisible();
-  await checkLayouts(page, "queue-scoped", "Ticket Queue");
-
+  // Wait for this Ticket's row, so the Queue is measured with rows (long requester name included).
   await page.getByLabel("Search Queue").fill(summary);
   await page.getByRole("button", { name: "Apply filters" }).click();
+  await expect(page.getByRole("row").filter({ hasText: summary })).toBeVisible();
+  await checkLayouts(page, "queue-scoped", "Ticket Queue");
+
   await page.getByRole("row").filter({ hasText: summary }).getByRole("button", { name: "Open Detail" }).click();
   await expect(page.getByRole("heading", { name: "Actions Taken" })).toBeVisible();
   await checkLayouts(page, "staff-detail-actions", "Actions Taken");
@@ -127,5 +136,15 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await page.getByRole("row").filter({ hasText: summary }).getByRole("button", { name: "View details" }).click();
   await expect(page.getByRole("listitem", { name: `Action: ${description}` })).toBeVisible();
   await checkLayouts(page, "requester-detail-actions", "Actions Taken");
+  await page.getByRole("button", { name: "Logout" }).click();
+
+  // User Management lists the long-named Staff user.
+  const admin = await freshUser("resp-admin", "ADMINISTRATOR");
+  await signIn(page, admin);
+  await page.getByRole("link", { name: "User Management" }).click();
+  await page.getByLabel("Search name or email").fill(staff.email);
+  await page.getByRole("button", { name: "Apply filters" }).click();
+  await expect(page.getByRole("heading", { name: staff.name })).toBeVisible();
+  await checkLayouts(page, "admin-user-management", "User Management");
   await requesterApi.dispose();
 });

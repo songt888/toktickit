@@ -192,6 +192,10 @@ export interface StaffTicketListOptions {
   requestedPriority?: TicketPriority;
   itPriority?: TicketPriority;
   currentStatus?: TicketStatus;
+  // Lab 4 Dashboard drill-down (api-spec section 6); dates are the Dashboard's returned ISO values.
+  statusGroup?: "active" | "resolved";
+  updatedFrom?: string;
+  updatedTo?: string;
   ownerId?: number | "unassigned";
   sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority" | "itPriority" | "currentStatus";
   order?: "asc" | "desc";
@@ -755,4 +759,43 @@ export async function getRequesterDashboard(): Promise<RequesterDashboardData> {
   const response = await fetch(`${API_URL}/api/dashboard/requester`, { credentials: "include" });
   if (!response.ok) throw await authError(response, "Unable to load the Dashboard.");
   return (await response.json()) as RequesterDashboardData;
+}
+
+// Lab 4 Staff and Administrator Dashboard (api-spec sections 5-6).
+export interface ActionSummary {
+  id: number;
+  ticketId: number;
+  ticketNumber: string;
+  description: string;
+  status: ActionStatus;
+  updatedAt: string;
+}
+
+export interface StaffDashboardData {
+  asOf: string;
+  recentFrom: string;
+  displayTimeZone: string;
+  metrics: {
+    unassignedTickets: number;
+    myTickets: number;
+    myActions: number;
+    byStatus: Record<TicketStatus, number>;
+    byItPriority: Record<TicketPriority, number>;
+  };
+  myActions: ActionSummary[];
+  recentTickets: DashboardTicket[];
+  urgentTickets: DashboardTicket[];
+}
+
+export async function getStaffDashboard(): Promise<StaffDashboardData> {
+  const response = await fetch(`${API_URL}/api/dashboard/staff`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Dashboard.");
+  return (await response.json()) as StaffDashboardData;
+}
+
+export async function getMyPendingActions(page = 1, pageSize: 10 | 25 | 50 = 10): Promise<{ items: ActionSummary[]; pagination: Pagination }> {
+  const query = new URLSearchParams({ assigneeId: "me", statusGroup: "pending", ticketStatusGroup: "active", page: String(page), pageSize: String(pageSize) });
+  const response = await fetch(`${API_URL}/api/staff/actions-taken?${query}`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load your pending Actions.");
+  return (await response.json()) as { items: ActionSummary[]; pagination: Pagination };
 }

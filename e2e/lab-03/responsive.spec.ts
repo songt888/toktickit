@@ -69,7 +69,10 @@ test("checks the requester, Staff, and Administrator screens at this viewport", 
   await capture(page, viewport, "requester-ticket-detail");
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await signIn(page, "e2e.staff@example.com", staffPassword, "Ticket Queue");
+  await signIn(page, "e2e.staff@example.com", staffPassword, "Dashboard");
+  // Lab 4: Staff land on the Dashboard; the Ticket Queue is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "Ticket Queue" }).click();
   await expect(page.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
   await page.getByLabel("Search Queue").fill(summary);
   const queuePromise = page.waitForResponse((response) =>
@@ -87,7 +90,10 @@ test("checks the requester, Staff, and Administrator screens at this viewport", 
   await capture(page, viewport, "staff-ticket-detail");
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await signIn(page, "e2e.admin@example.com", adminPassword, "User Management");
+  await signIn(page, "e2e.admin@example.com", adminPassword, "Dashboard");
+  // Lab 4: Administrators land on the Dashboard; User Management is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "User Management" }).click();
   await expect(page.getByRole("link", { name: "User Management" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByLabel("Search name or email")).toBeVisible();
   await expect(page.getByRole("button", { name: "Add user" })).toBeVisible();

@@ -93,14 +93,26 @@ function statusBadgeClass(status: TicketStatus): string {
   }
 }
 
+// A Dashboard drill-down: the exact Queue filter plus a visible label.
+export type QueueScope = { label: string; filter: StaffTicketListOptions };
+
 export interface StaffTicketQueueProps {
   onOpenTicket: (ticketId: number) => void;
   visible?: boolean;
+  initialScope?: QueueScope | null;
 }
 
-export default function StaffTicketQueue({ onOpenTicket, visible = true }: StaffTicketQueueProps) {
-  const [draft, setDraft] = useState<QueueDraft>(defaultDraft);
-  const [filters, setFilters] = useState<StaffTicketListOptions>(optionsFromDraft(defaultDraft));
+export default function StaffTicketQueue({ onOpenTicket, visible = true, initialScope = null }: StaffTicketQueueProps) {
+  // Fields the form can show are preselected; the rest of the scope lives in the banner.
+  const initialDraft: QueueDraft = {
+    ...defaultDraft,
+    currentStatus: initialScope?.filter.currentStatus ?? "",
+    itPriority: initialScope?.filter.itPriority ?? "",
+    ownerId: initialScope?.filter.ownerId === "unassigned" ? "unassigned" : "",
+  };
+  const [scope, setScope] = useState<QueueScope | null>(initialScope);
+  const [draft, setDraft] = useState<QueueDraft>(initialDraft);
+  const [filters, setFilters] = useState<StaffTicketListOptions>({ ...optionsFromDraft(defaultDraft), ...initialScope?.filter });
   const [categories, setCategories] = useState<Category[]>([]);
   const [relatedSystems, setRelatedSystems] = useState<RelatedSystem[]>([]);
   const [result, setResult] = useState<StaffTicketListResponse | null>(null);
@@ -179,10 +191,12 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setScope(null);
     setFilters(optionsFromDraft(draft));
   }
 
   function clearFilters() {
+    setScope(null);
     setDraft(defaultDraft);
     setFilters(optionsFromDraft(defaultDraft));
   }
@@ -197,6 +211,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
   }
 
   const hasFilters = Boolean(
+    scope ||
     filters.search ||
       filters.categoryId ||
       filters.relatedSystemId ||
@@ -250,6 +265,13 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true }: Staff
             <p className="text-secondary mb-0">Operational tickets available to Staff and Administrators.</p>
           </div>
         </div>
+
+        {scope && (
+          <div className="alert alert-success d-flex flex-wrap align-items-center justify-content-between gap-2" role="status">
+            <span>Showing Dashboard filter: <strong>{scope.label}</strong></span>
+            <button className="btn btn-sm btn-outline-success" type="button" onClick={clearFilters}>Clear Dashboard filter</button>
+          </div>
+        )}
 
         <form className="border rounded p-3 mb-4 bg-light" onSubmit={applyFilters}>
           <div className="row g-3">

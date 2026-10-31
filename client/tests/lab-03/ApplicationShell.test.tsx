@@ -95,17 +95,25 @@ describe("Authenticated application shell", () => {
     render(<App />);
 
     expect(await screen.findByText("Nattakit Support")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
+    // Lab 4: Staff land on the Dashboard; the Ticket Queue stays one click away.
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("link", { name: "My Tickets" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Create Ticket" })).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("link", { name: "Ticket Queue" }));
+    expect(screen.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
     expect(await screen.findByRole("heading", { name: "Ticket Queue" })).toBeInTheDocument();
   });
 
-  it("shows user management only for Administrators and opens it by default", async () => {
+  it("shows user management only for Administrators, one click from the Dashboard", async () => {
     vi.spyOn(api, "getCurrentUser").mockResolvedValue({ user: administrator, requiresPasswordChange: false });
     mockAdminWorkspace();
     render(<App />);
 
+    // Lab 4: Administrators land on the Staff Dashboard view.
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+    await userEvent.setup().click(screen.getByRole("link", { name: "User Management" }));
     expect(await screen.findByRole("heading", { name: "User Management" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "User Management" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Ticket Queue" })).toBeInTheDocument();

@@ -121,6 +121,9 @@ test("covers requester ownership, comments, resolution, and Staff collaboration 
 
   await logout(page);
   await signIn(page, "e2e.staff@example.com", "E2EStaffPassword123");
+  // Lab 4: Staff land on the Dashboard; the Ticket Queue is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "Ticket Queue" }).click();
   await expect(page.getByRole("heading", { name: "Ticket Queue" })).toBeVisible();
   await page.getByLabel("Search Queue").fill(summary);
   const queuePromise = page.waitForResponse((response) =>

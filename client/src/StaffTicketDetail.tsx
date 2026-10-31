@@ -25,6 +25,8 @@ export interface StaffTicketDetailProps {
   ticketId: number;
   currentUserId: number;
   onBack: () => void;
+  backLabel?: string;
+  focusActionId?: number;
 }
 
 const priorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -92,7 +94,7 @@ function errorFeedback(error: unknown): Feedback {
   };
 }
 
-export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: StaffTicketDetailProps) {
+export default function StaffTicketDetail({ ticketId, currentUserId, onBack, backLabel = "Back to Ticket Queue", focusActionId }: StaffTicketDetailProps) {
   const requestSequence = useRef(0);
   const refreshSequence = useRef(0);
   const refreshPending = useRef(false);
@@ -348,7 +350,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     <section id="staff-ticket-detail" className="card border-0 shadow-sm mb-4" aria-labelledby="staff-ticket-detail-title">
       <div className="card-body">
         <button className="btn btn-outline-secondary mb-3" type="button" onClick={onBack}>
-          Back to Ticket Queue
+          {backLabel}
         </button>
         <h2 id="staff-ticket-detail-title" className="h4 mb-3">Operational Ticket Detail</h2>
 
@@ -520,6 +522,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
               key={ticket.id}
               ticketId={ticket.id}
               ticketStatus={ticket.currentStatus}
+              focusActionId={focusActionId}
               editable={{
                 currentUserId,
                 ticketUpdatedAt: ticket.updatedAt,

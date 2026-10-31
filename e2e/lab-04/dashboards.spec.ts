@@ -159,7 +159,15 @@ async function staffReference(userId: number) {
       (SELECT COUNT(*) FROM "ActionTaken" a JOIN "Ticket" t ON t.id = a."ticketId" WHERE a."assigneeId" = ${userId}
         AND a.status IN ('PLANNED','IN_PROGRESS') AND t."currentStatus" IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED')) AS actions
     FROM "Ticket"`;
-  return { unassignedTickets: Number(row.unassigned), myTickets: Number(row.mine), myActions: Number(row.actions) };
+  const byStatus = await prisma.$queryRaw<Array<{ key: string; n: bigint }>>`SELECT "currentStatus"::text AS key, COUNT(*) AS n FROM "Ticket" GROUP BY 1`;
+  const byPriority = await prisma.$queryRaw<Array<{ key: string; n: bigint }>>`
+    SELECT "itPriority"::text AS key, COUNT(*) AS n FROM "Ticket" WHERE "currentStatus" IN ('NEW','OPEN','IN_PROGRESS','WAITING_FOR_REQUESTER','REOPENED') GROUP BY 1`;
+  const bucket = (keys: string[], rows: Array<{ key: string; n: bigint }>) => Object.fromEntries(keys.map((key) => [key, Number(rows.find((r) => r.key === key)?.n ?? 0)]));
+  return {
+    unassignedTickets: Number(row.unassigned), myTickets: Number(row.mine), myActions: Number(row.actions),
+    byStatus: bucket(["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "RESOLVED", "CLOSED", "REOPENED", "CANCELLED"], byStatus),
+    byItPriority: bucket(["LOW", "MEDIUM", "HIGH", "URGENT"], byPriority),
+  };
 }
 
 async function staffDashboardMatchesDatabase(page: Page, userId: number) {
@@ -171,8 +179,8 @@ async function staffDashboardMatchesDatabase(page: Page, userId: number) {
     await page.getByRole("button", { name: "Refresh" }).click();
     const snapshot = await (await reloaded).json();
     const after = await staffReference(userId);
-    const shown = { unassignedTickets: snapshot.metrics.unassignedTickets, myTickets: snapshot.metrics.myTickets, myActions: snapshot.metrics.myActions };
-    if (JSON.stringify(before) === JSON.stringify(after) && JSON.stringify(shown) === JSON.stringify(before)) return snapshot;
+    // Every metric, all 12 buckets included, must equal the SQL reading.
+    if (JSON.stringify(before) === JSON.stringify(after) && JSON.stringify(snapshot.metrics) === JSON.stringify(before)) return snapshot;
   }
   throw new Error("Staff Dashboard never matched the database");
 }
@@ -242,6 +250,8 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   expect(snapshot.urgentTickets.map((item: { id: number }) => item.id)).toContain(tickets[0].id);
   await expect(cardValue(page, "Unassigned Tickets")).toHaveText(String(snapshot.metrics.unassignedTickets));
   await expect(cardValue(page, "My Tickets")).toHaveText("1");
+  await expect(page.getByRole("button", { name: `Closed: ${snapshot.metrics.byStatus.CLOSED} Tickets, view in the Ticket Queue` })).toBeVisible();
+  await expect(page.getByRole("button", { name: `Urgent: ${snapshot.metrics.byItPriority.URGENT} active Tickets, view in the Ticket Queue` })).toBeVisible();
 
   for (const { label, width, height } of [{ label: "desktop", width: 1280, height: 900 }, { label: "tablet", width: 820, height: 1000 }, { label: "mobile", width: 390, height: 844 }]) {
     await page.setViewportSize({ width, height });

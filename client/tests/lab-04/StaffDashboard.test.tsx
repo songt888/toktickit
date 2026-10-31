@@ -168,6 +168,18 @@ describe("My Pending Actions list (UI-06 paging)", () => {
     await waitFor(() => expect(api.getMyPendingActions).toHaveBeenLastCalledWith(2));
   });
 
+  it("moves back to the last page that exists when the remembered page has emptied", async () => {
+    const load = vi.spyOn(api, "getMyPendingActions")
+      .mockResolvedValueOnce({ items: [], pagination: { page: 2, pageSize: 10, totalItems: 10, totalPages: 1 } })
+      .mockResolvedValueOnce({ items: [item(1)], pagination: { page: 1, pageSize: 10, totalItems: 10, totalPages: 1 } });
+    const onPageChange = vi.fn();
+    render(<MyPendingActions page={2} onPageChange={onPageChange} onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);
+    expect(await screen.findByText("Action 1")).toBeInTheDocument();
+    expect(load.mock.calls.map(([page]) => page)).toEqual([2, 1]);
+    expect(onPageChange).toHaveBeenLastCalledWith(1);
+    expect(screen.queryByText("No pending Actions assigned to you.")).not.toBeInTheDocument();
+  });
+
   it("shows the empty message", async () => {
     vi.spyOn(api, "getMyPendingActions").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
     render(<MyPendingActions page={1} onPageChange={vi.fn()} onBack={vi.fn()} onOpenAction={vi.fn()} onSessionExpired={vi.fn()} />);

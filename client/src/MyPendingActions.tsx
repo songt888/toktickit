@@ -26,6 +26,9 @@ export default function MyPendingActions({ page, onPageChange, onBack, onOpenAct
     try {
       const loaded = await getMyPendingActions(target);
       if (current !== sequence.current) return;
+      // The page emptied while away (e.g. its last Action was finished): show the last page that still exists.
+      const lastPage = Math.max(1, loaded.pagination.totalPages);
+      if (loaded.items.length === 0 && target > lastPage) return void load(lastPage);
       setResult(loaded);
       setState("success");
       onPageChange(loaded.pagination.page);

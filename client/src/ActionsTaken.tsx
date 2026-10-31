@@ -368,7 +368,10 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
     setFocusId(`action-history-toggle-${actionId}`);
   }
 
+  // Fields marked with the visual * are also announced as required.
+  const requiredKeys = ["actionAt", "description", "assigneeId", "followUpNote", "cancellationReason", ...(panel?.kind === "complete" ? ["result"] : [])];
   const errorProps = (key: string, help?: string) => ({
+    "aria-required": requiredKeys.includes(key) || undefined,
     "aria-invalid": fieldErrors[key] ? true : undefined,
     "aria-describedby": [help, fieldErrors[key] ? `action-${key}-error` : undefined].filter(Boolean).join(" ") || undefined,
   });

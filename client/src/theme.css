@@ -1,0 +1,42 @@
+/* Zen Green tokens (Lab 4 ui-spec section 1), mapped onto Bootstrap's "success" colour. */
+:root {
+  --tt-primary: #006B3C;
+  --tt-secondary: #0B7A46;
+  --tt-pale: #EAF6EF;
+  --tt-page: #F5F7F6;
+  --bs-success: var(--tt-primary);
+  --bs-success-rgb: 0, 107, 60;
+  --bs-success-bg-subtle: var(--tt-pale);
+  --bs-success-border-subtle: #B6DCC6;
+  --bs-success-text-emphasis: #004D2B;
+  --bs-link-color: var(--tt-primary);
+  --bs-link-color-rgb: 0, 107, 60;
+  --bs-link-hover-color: var(--tt-secondary);
+  --bs-link-hover-color-rgb: 11, 122, 70;
+}
+
+body {
+  background-color: var(--tt-page);
+}
+
+.btn-success {
+  --bs-btn-bg: var(--tt-primary);
+  --bs-btn-border-color: var(--tt-primary);
+  --bs-btn-hover-bg: var(--tt-secondary);
+  --bs-btn-hover-border-color: var(--tt-secondary);
+  --bs-btn-active-bg: #00552F;
+  --bs-btn-active-border-color: #00552F;
+  --bs-btn-disabled-bg: var(--tt-primary);
+  --bs-btn-disabled-border-color: var(--tt-primary);
+}
+
+.btn-outline-success {
+  --bs-btn-color: var(--tt-primary);
+  --bs-btn-border-color: var(--tt-primary);
+  --bs-btn-hover-bg: var(--tt-primary);
+  --bs-btn-hover-border-color: var(--tt-primary);
+  --bs-btn-active-bg: #00552F;
+  --bs-btn-active-border-color: #00552F;
+  --bs-btn-disabled-color: var(--tt-primary);
+  --bs-btn-disabled-border-color: var(--tt-primary);
+}

@@ -186,7 +186,9 @@ async function staffDashboardMatchesDatabase(page: Page, userId: number) {
 }
 
 async function queueDrillDown(page: Page, button: string | RegExp) {
+  // Let any plain Queue load finish first, so it cannot be mistaken for the drill-down's response below.
   await page.getByRole("link", { name: "Ticket Queue" }).click();
+  await page.waitForLoadState("networkidle");
   await page.getByRole("link", { name: "Dashboard" }).click();
   await expect(page.getByRole("button", { name: "Refresh" })).toBeEnabled();
   const list = page.waitForResponse((response) => response.url().includes("/api/staff/tickets?") && response.status() === 200);
@@ -319,4 +321,35 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   expect([adminSnapshot.metrics.myTickets, adminSnapshot.metrics.myActions]).toEqual([0, 1]);
   expect(adminSnapshot.myActions.map((item: { id: number }) => item.id)).toEqual([actionIds[1]]);
   await expect(page.getByRole("link", { name: "User Management" })).toBeVisible();
+});
+
+test("E2E-03 failure injection: a failed Dashboard load shows an error with Retry, and a failed refresh keeps older data", async ({ page }) => {
+  for (const [kind, user, card] of [
+    ["requester", await freshRequester("failure-requester"), "Open Tickets"],
+    ["staff", await freshRequester("failure-staff", "IT_STAFF"), "My Tickets"],
+  ] as const) {
+    const url = `**/api/dashboard/${kind}`;
+    await page.route(url, (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Injected failure" }) }));
+    await page.goto("/");
+    await page.getByLabel("Email").fill(user.email);
+    await page.getByLabel("Password").fill(user.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page.getByRole("alert")).toContainText("The Dashboard could not be loaded.");
+    await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
+
+    // The service recovers: Retry loads the real Dashboard.
+    await page.unroute(url);
+    await page.getByRole("button", { name: "Retry" }).click();
+    await expect(cardValue(page, card)).toHaveText("0");
+    await expect(page.getByRole("alert")).toHaveCount(0);
+
+    // A later refresh fails: the last good numbers stay, labelled as older data.
+    await page.route(url, (route) => route.fulfill({ status: 500, body: "{}" }));
+    await page.getByRole("button", { name: "Refresh" }).click();
+    await expect(page.getByRole("alert")).toContainText("The Dashboard could not be refreshed. Showing older data from");
+    await expect(cardValue(page, card)).toHaveText("0");
+    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/refresh-failure.png`), fullPage: true });
+    await page.unroute(url);
+    await page.getByRole("button", { name: "Logout" }).click();
+  }
 });

@@ -906,7 +906,8 @@ app.get(
           take: parsedQuery.value.pageSize,
           select: staffTicketListSelect,
         }),
-      ]);
+        // One snapshot, so the count, the page and each row's related users always agree.
+      ], { isolationLevel: "RepeatableRead" });
 
       res.status(200).json({
         items,

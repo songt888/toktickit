@@ -1,3 +1,5 @@
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
+import { breakAtUnderscores } from "./statusText.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Category,
@@ -187,26 +189,14 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
     ? "No tickets match your search or filters."
     : "No tickets yet. Create your first ticket.";
 
-  function priorityBadgeClass(priority: TicketPriority): string {
-    switch (priority) {
-      case "LOW": return "text-bg-secondary";
-      case "MEDIUM": return "text-bg-info";
-      case "HIGH": return "text-bg-warning text-dark";
-      case "URGENT": return "text-bg-danger";
-    }
-  }
-
-  function statusBadgeClass(status: TicketListItem["currentStatus"]): string {
-    return status === "NEW" ? "text-bg-primary" : "text-bg-secondary";
-  }
 
   const renderRow = (ticket: TicketListItem) => (
     <tr key={ticket.id}>
       <th scope="row">{ticket.ticketNumber}</th>
-      <td>{ticket.summary}</td>
+      <td className="text-break">{ticket.summary}</td>
       <td>{ticket.category.name}</td>
       <td>{ticket.relatedSystem.name}</td>
-      <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
+      <td><span className={`badge text-wrap ${statusBadgeClass(ticket.currentStatus)}`}>{breakAtUnderscores(ticket.currentStatus)}</span></td>
       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
       <td>{formatDate(ticket.updatedAt)}</td>
       <td>
@@ -226,7 +216,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
     >
       <div className="card-body">
         <div className="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
-          <div>
+          <div className="text-break" style={{ minWidth: 0 }}>
             <h2 id="my-tickets-title" className="h4 mb-1">My Tickets</h2>
             <p className="text-secondary mb-0">Tickets created by {requester.name}.</p>
           </div>
@@ -380,7 +370,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
         {canShowResults && items.length > 0 && (
           <>
             <div className="table-responsive d-none d-md-block">
-              <table className="table align-middle" aria-label="My Tickets list">
+              <table className="table table-sm align-middle" aria-label="My Tickets list">
                 <thead>
                   <tr>
                     <th scope="col">Ticket Number</th>
@@ -401,7 +391,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
               {items.map((ticket) => (
                 <article key={ticket.id} className="border rounded p-3">
                   <h3 className="h6">{ticket.ticketNumber}</h3>
-                  <p className="mb-2">{ticket.summary}</p>
+                  <p className="mb-2 text-break">{ticket.summary}</p>
                   <dl className="row small mb-0">
                     <dt className="col-5">Category</dt><dd className="col-7">{ticket.category.name}</dd>
                     <dt className="col-5">Related System</dt><dd className="col-7">{ticket.relatedSystem.name}</dd>

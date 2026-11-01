@@ -51,7 +51,7 @@ const lockedStatuses: TicketStatus[] = ["RESOLVED", "CLOSED", "CANCELLED"];
 const statusLabel: Record<ActionStatus, string> = {
   PLANNED: "Planned", IN_PROGRESS: "In progress", COMPLETED: "Completed", CANCELLED: "Cancelled",
 };
-const statusClass: Record<ActionStatus, string> = {
+export const actionStatusClass: Record<ActionStatus, string> = {
   PLANNED: "text-bg-secondary", IN_PROGRESS: "text-bg-warning text-dark", COMPLETED: "text-bg-success", CANCELLED: "text-bg-light border text-dark",
 };
 const panelTitle: Record<PanelKind, string> = {
@@ -368,7 +368,12 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
     setFocusId(`action-history-toggle-${actionId}`);
   }
 
+  // Fields marked with the visual * are also announced as required.
+  // Result is required to complete, and stays required when editing an already completed Action.
+  const resultRequired = panel?.kind === "complete" || (panel?.kind === "edit" && panel.action?.status === "COMPLETED");
+  const requiredKeys = ["actionAt", "description", "assigneeId", "followUpNote", "cancellationReason", "confirm", ...(resultRequired ? ["result"] : [])];
   const errorProps = (key: string, help?: string) => ({
+    "aria-required": requiredKeys.includes(key) || undefined,
     "aria-invalid": fieldErrors[key] ? true : undefined,
     "aria-describedby": [help, fieldErrors[key] ? `action-${key}-error` : undefined].filter(Boolean).join(" ") || undefined,
   });
@@ -411,7 +416,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
         )}
         {showResult && (
           <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}{kind === "complete" || action?.status === "COMPLETED" ? <> <span className="text-danger" aria-hidden="true">*</span></> : null}</label>
+            <label className="form-label fw-semibold" htmlFor="action-result">Result{kind === "complete" ? " (required to complete)" : ""}{resultRequired ? <> <span className="text-danger" aria-hidden="true">*</span></> : null}</label>
             <textarea id="action-result" className={`form-control ${fieldErrors.result ? "is-invalid" : ""}`} rows={2} maxLength={4000}
               value={draft.result} onChange={(event) => edit("result", event.target.value)} {...errorProps("result")} />
             {errorText("result")}
@@ -471,7 +476,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
               <input id="action-cancel-confirm" type="checkbox" className={`form-check-input ${fieldErrors.confirm ? "is-invalid" : ""}`} checked={draft.confirmCancel}
                 onChange={(event) => edit("confirmCancel", event.target.checked)} {...errorProps("confirm")} />
               <label className="form-check-label" htmlFor="action-cancel-confirm">
-                I confirm cancelling this Action. This cancels the Action only, not the Ticket.
+                I confirm cancelling this Action. This cancels the Action only, not the Ticket. <span className="text-danger" aria-hidden="true">*</span>
               </label>
             </div>
             {errorText("confirm")}
@@ -506,7 +511,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
             {history.items.map((revision) => (
               <li key={revision.version} className="border rounded p-2 mb-2">
                 <strong>Version {revision.version}: {revision.operation}</strong> by {revision.actor.name} on {formatBangkok(revision.createdAt)}
-                <div className="text-secondary" style={{ whiteSpace: "pre-wrap" }}>
+                <div className="text-secondary text-break" style={{ whiteSpace: "pre-wrap" }}>
                   Status {statusLabel[revision.snapshot.status]} · assigned to {revision.snapshot.assignee.name} · {revision.snapshot.description}
                   {revision.snapshot.result ? ` · result: ${revision.snapshot.result}` : ""}
                   {revision.snapshot.followUpRequired ? ` · follow-up: ${revision.snapshot.followUpNote}` : ""}
@@ -536,7 +541,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
     return (
       <li key={action.id} id={`action-${action.id}`} tabIndex={-1} className="list-group-item" aria-label={`Action: ${action.description.slice(0, 80)}`}>
         <div className="d-flex flex-wrap justify-content-between gap-2">
-          <span className={`badge ${statusClass[action.status]}`}>{statusLabel[action.status]}</span>
+          <span className={`badge ${actionStatusClass[action.status]}`}>{statusLabel[action.status]}</span>
           <span className="small text-secondary">Version {action.version}</span>
         </div>
         <p className="mt-2 mb-2" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.description}</p>
@@ -552,7 +557,7 @@ export default function ActionsTaken({ ticketId, ticketStatus, editable, focusAc
           <dt className="col-sm-4">Follow-Up Required?</dt>
           <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.followUpRequired ? `Yes: ${action.followUpNote}` : "No"}</dd>
           <dt className="col-sm-4">Attachment Notes</dt><dd className="col-sm-8" style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{action.attachmentNotes ?? "None"}</dd>
-          {action.cancellationReason && (<><dt className="col-sm-4">Cancellation Reason</dt><dd className="col-sm-8">{action.cancellationReason}</dd></>)}
+          {action.cancellationReason && (<><dt className="col-sm-4">Cancellation Reason</dt><dd className="col-sm-8 text-break">{action.cancellationReason}</dd></>)}
           <dt className="col-sm-4">Created / Updated</dt><dd className="col-sm-8">{formatBangkok(action.createdAt)} / {formatBangkok(action.updatedAt)}</dd>
         </dl>
         <div className="d-flex flex-wrap gap-2 mt-2">

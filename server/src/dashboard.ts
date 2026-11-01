@@ -59,10 +59,10 @@ export function registerDashboardRoutes(app: Express) {
     const order: Prisma.TicketOrderByWithRelationInput[] = [{ updatedAt: "desc" }, { id: "desc" }];
     try {
       const db = getPrisma();
-      const [unassignedTickets, myTickets, myActions, byStatus, byItPriority, myActionList, recentTickets, urgentTickets] = await db.$transaction(
+      const [byOwner, myActions, byStatus, byItPriority, myActionList, recentTickets, urgentTickets] = await db.$transaction(
         [
-          db.ticket.count({ where: { ...active, ownerId: null } }),
-          db.ticket.count({ where: { ...active, ownerId: userId } }),
+          // Unassigned and own active Tickets in one grouped read (PERF-01 statement budget).
+          db.ticket.groupBy({ by: ["ownerId"], where: { ...active, OR: [{ ownerId: null }, { ownerId: userId }] }, _count: { _all: true }, orderBy: { ownerId: "asc" } }),
           db.actionTaken.count({ where: myActionsWhere(userId) }),
           db.ticket.groupBy({ by: ["currentStatus"], _count: { _all: true }, orderBy: { currentStatus: "asc" } }),
           db.ticket.groupBy({ by: ["itPriority"], where: active, _count: { _all: true }, orderBy: { itPriority: "asc" } }),
@@ -72,13 +72,14 @@ export function registerDashboardRoutes(app: Express) {
         ],
         { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
       );
+      const ownedBy = (ownerId: number | null) => (byOwner.find((row) => row.ownerId === ownerId)?._count as { _all: number } | undefined)?._all ?? 0;
       res.status(200).json({
         asOf,
         recentFrom,
         displayTimeZone: "Asia/Bangkok",
         metrics: {
-          unassignedTickets,
-          myTickets,
+          unassignedTickets: ownedBy(null),
+          myTickets: ownedBy(userId),
           myActions,
           byStatus: buckets(ticketStatuses, byStatus.map((row) => ({ key: row.currentStatus, count: (row._count as { _all: number })._all }))),
           byItPriority: buckets(ticketPriorities, byItPriority.map((row) => ({ key: row.itPriority, count: (row._count as { _all: number })._all }))),

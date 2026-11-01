@@ -1,15 +1,13 @@
-import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
+import { request, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test } from "./guardedTest.js";
 import path from "node:path";
+import { freshUser, uniqueTag } from "./freshUser.js";
 
 const apiURL = process.env.E2E_API_URL ?? "http://127.0.0.1:3000";
-const staff = { email: "e2e.staff@example.com", password: "E2EStaffPassword123", name: "E2E Staff User" };
-const admin = { email: "e2e.admin@example.com", password: "E2EAdminPassword123", name: "E2E Administrator" };
-const requesterA = { email: "e2e.requester.a@example.com", password: "E2ERequesterPassword123" };
-const requesterB = { email: "e2e.requester.b@example.com", password: "E2ERequesterPassword123" };
 
 async function apiAs(user: { email: string; password: string }): Promise<APIRequestContext> {
   const context = await request.newContext({ baseURL: apiURL });
-  const response = await context.post("/api/auth/login", { data: user });
+  const response = await context.post("/api/auth/login", { data: { email: user.email, password: user.password } });
   expect(response.ok()).toBe(true);
   return context;
 }
@@ -53,7 +51,10 @@ async function captureLayouts(page: Page, name: string) {
 const actionCard = (page: Page, description: string) => page.getByRole("listitem", { name: `Action: ${description}` });
 
 test("E2E-01 records Actions by different staff, runs the lifecycle and shows them read-only to the Requester", async ({ page }) => {
-  const summary = `E2E Lab 4 actions ${Date.now()}`;
+  const [staff, admin, requesterA, requesterB] = await Promise.all([
+    freshUser("flow-staff", "IT_STAFF"), freshUser("flow-admin", "ADMINISTRATOR"), freshUser("flow-requester-a", "REQUESTER"), freshUser("flow-requester-b", "REQUESTER"),
+  ]);
+  const summary = `E2E Lab 4 actions ${uniqueTag()}`;
 
   // Requester A raises the Ticket; the Administrator owns it, so Action performers differ from the Owner.
   const requesterApi = await apiAs(requesterA);
@@ -127,9 +128,9 @@ test("E2E-01 records Actions by different staff, runs the lifecycle and shows th
   await expect(second.getByRole("button")).toHaveText(["View History"]);
 
   await first.getByRole("button", { name: "View History" }).click();
-  await expect(first.getByText(/Version 1: CREATE by E2E Staff User/)).toBeVisible();
-  await expect(first.getByText(/Version 3: ASSIGN by E2E Administrator/)).toBeVisible();
-  await expect(first.getByText(/Version 4: STATUS by E2E Administrator/)).toBeVisible();
+  await expect(first.getByText(new RegExp(`Version 1: CREATE by ${staff.name}`))).toBeVisible();
+  await expect(first.getByText(new RegExp(`Version 3: ASSIGN by ${admin.name}`))).toBeVisible();
+  await expect(first.getByText(new RegExp(`Version 4: STATUS by ${admin.name}`))).toBeVisible();
   await captureLayouts(page, "staff");
   await signOut(page);
 

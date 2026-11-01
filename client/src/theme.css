@@ -1,0 +1,73 @@
+/* Zen Green tokens (Lab 4 ui-spec section 1), mapped onto Bootstrap's "success" colour. */
+:root {
+  --tt-primary: #006B3C;
+  --tt-secondary: #0B7A46;
+  --tt-pale: #EAF6EF;
+  --tt-page: #F5F7F6;
+  --bs-success: var(--tt-primary);
+  --bs-success-rgb: 0, 107, 60;
+  --bs-success-bg-subtle: var(--tt-pale);
+  --bs-success-border-subtle: #B6DCC6;
+  --bs-success-text-emphasis: #004D2B;
+  --bs-link-color: var(--tt-primary);
+  --bs-link-color-rgb: 0, 107, 60;
+  --bs-link-hover-color: var(--tt-secondary);
+  --bs-link-hover-color-rgb: 11, 122, 70;
+}
+
+body {
+  background-color: var(--tt-page);
+  /* Long unbroken user text (names, summaries) wraps instead of widening the page, as Bootstrap's .card already does. */
+  overflow-wrap: break-word;
+}
+
+.btn-success {
+  --bs-btn-bg: var(--tt-primary);
+  --bs-btn-border-color: var(--tt-primary);
+  --bs-btn-hover-bg: var(--tt-secondary);
+  --bs-btn-hover-border-color: var(--tt-secondary);
+  --bs-btn-active-bg: #00552F;
+  --bs-btn-active-border-color: #00552F;
+  --bs-btn-disabled-bg: var(--tt-primary);
+  --bs-btn-disabled-border-color: var(--tt-primary);
+}
+
+.btn-outline-success {
+  --bs-btn-color: var(--tt-primary);
+  --bs-btn-border-color: var(--tt-primary);
+  --bs-btn-hover-bg: var(--tt-primary);
+  --bs-btn-hover-border-color: var(--tt-primary);
+  --bs-btn-active-bg: #00552F;
+  --bs-btn-active-border-color: #00552F;
+  --bs-btn-disabled-color: var(--tt-primary);
+  --bs-btn-disabled-border-color: var(--tt-primary);
+}
+
+/* Bootstrap hard-codes its blue for focus rings and checked inputs; give them the green instead. */
+:root {
+  --bs-primary: var(--tt-primary);
+  --bs-primary-rgb: 0, 107, 60;
+  --bs-focus-ring-color: rgba(0, 107, 60, 0.25);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: #7FBF9C;
+  box-shadow: 0 0 0 0.25rem rgba(0, 107, 60, 0.25);
+}
+
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate {
+  background-color: var(--tt-primary);
+  border-color: var(--tt-primary);
+}
+
+.nav-link:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(0, 107, 60, 0.25);
+}
+
+.btn-success,
+.btn-outline-success {
+  --bs-btn-focus-shadow-rgb: 0, 107, 60;
+}

@@ -1,5 +1,7 @@
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ActionsTaken from "./ActionsTaken.js";
+import TicketStatusHistory from "./TicketStatusHistory.js";
 import {
   addInternalNote,
   addPublicComment,
@@ -45,25 +47,7 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
-function statusBadgeClass(status: TicketStatus): string {
-  switch (status) {
-    case "NEW": return "text-bg-primary";
-    case "IN_PROGRESS": return "text-bg-warning text-dark";
-    case "RESOLVED": return "text-bg-success";
-    case "CLOSED": return "text-bg-dark";
-    case "CANCELLED": return "text-bg-danger";
-    default: return "text-bg-secondary";
-  }
-}
 
 // What is still needed before Resolved is allowed (specification BR-13).
 function resolutionGateText(gate: ResolutionGate): string {
@@ -410,9 +394,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                 <dt className="col-sm-4">Last Resolved</dt>
                 <dd className="col-sm-8">{ticket.lastResolvedAt ? formatDate(ticket.lastResolvedAt) : "Not recorded"}</dd>
                 <dt className="col-sm-4">Summary</dt>
-                <dd className="col-sm-8">{ticket.summary}</dd>
+                <dd className="col-sm-8 text-break">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
-                <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
+                <dd className="col-sm-8 text-break" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
                 <dt className="col-sm-4">Last Updated</dt>
                 <dd className="col-sm-8">{formatDate(ticket.updatedAt)}</dd>
               </dl>
@@ -536,7 +520,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
               }}
             />
 
-            <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
+            <TicketStatusHistory key={`status-${ticket.id}`} ticketId={ticket.id} refreshKey={ticket.updatedAt} />
+
+            <section className="border border-success rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>
               <p className="text-secondary">Visible to the requester and support staff.</p>
               {ticket.publicComments.length === 0
@@ -545,9 +531,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ol className="list-group list-group-numbered">
                     {ticket.publicComments.map((comment) => (
                       <li className="list-group-item" key={comment.id}>
-                        <strong>{comment.author.name}</strong>
+                        <strong className="text-break">{comment.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={comment.createdAt}>{formatDate(comment.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                       </li>
                     ))}
                   </ol>
@@ -564,7 +550,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   disabled={publicCommentSaving}
                   onChange={(event) => setPublicCommentDraft(event.target.value)}
                 />
-                <button className="btn btn-outline-primary mt-2" type="submit" disabled={publicCommentSaving}>
+                <button className="btn btn-outline-success mt-2" type="submit" disabled={publicCommentSaving}>
                   {publicCommentSaving ? "Posting comment…" : "Post Public Comment"}
                 </button>
                 {publicCommentFeedback && (
@@ -584,9 +570,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ol className="list-group list-group-numbered">
                     {ticket.internalNotes.map((note) => (
                       <li className="list-group-item" key={note.id}>
-                        <strong>{note.author.name}</strong>
+                        <strong className="text-break">{note.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={note.createdAt}>{formatDate(note.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
                       </li>
                     ))}
                   </ol>
@@ -622,12 +608,12 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                   <ul className="list-group">
                     {ticket.attachments.map((attachment) => (
                       <li className="list-group-item d-flex flex-wrap justify-content-between gap-2" key={attachment.id}>
-                        <span>{attachment.originalName}</span>
+                        <span className="text-break">{attachment.originalName}</span>
                         <span className="small text-secondary">
                           {attachment.removedAt ? "Removed" : "Active"} · {attachment.sizeBytes} bytes
                         </span>
                         {!attachment.removedAt && (
-                          <button type="button" className="btn btn-outline-primary btn-sm"
+                          <button type="button" className="btn btn-outline-success btn-sm"
                             disabled={downloadingId !== null}
                             aria-label={`Download ${attachment.originalName}`}
                             onClick={() => void handleDownload(attachment)}>

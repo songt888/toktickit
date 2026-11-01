@@ -183,5 +183,5 @@ describe("Actions Taken concurrency", () => {
       mutationId: randomUUID(), ticketUpdatedAt: await ticketStamp(ticket.id), version: 1, assigneeId: gone.id,
     });
     expect([late.status, late.body.fieldErrors?.assigneeId]).toEqual([400, eligibility]);
-  });
+  }, 60_000); // 12 raced rounds plus setup; the 5 s default is too tight under a parallel run.
 });

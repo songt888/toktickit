@@ -55,6 +55,9 @@ export async function createWorld(label: string) {
         await tx.actionTakenRevision.deleteMany({ where: { action: { ticketId: { in: ticketIds } } } });
         await tx.actionTaken.deleteMany({ where: { ticketId: { in: ticketIds } } });
         await tx.ticketStatusEvent.deleteMany({ where: { ticketId: { in: ticketIds } } });
+        // Foreign keys are off here too, so notes and comments go first or they are left pointing at nothing.
+        await tx.internalNote.deleteMany({ where: { OR: [{ ticketId: { in: ticketIds } }, { authorId: { in: userIds } }] } });
+        await tx.publicComment.deleteMany({ where: { OR: [{ ticketId: { in: ticketIds } }, { authorId: { in: userIds } }] } });
         await tx.ticket.deleteMany({ where: { id: { in: ticketIds } } });
         await tx.authSession.deleteMany({ where: { userId: { in: userIds } } });
         await tx.user.deleteMany({ where: { id: { in: userIds } } });
@@ -93,7 +96,7 @@ export function createBody(ticketUpdatedAt: string, extra: Record<string, unknow
 // Creates an Action through the API and returns it with the next Ticket timestamp.
 export async function createAction(ticketId: number, cookie: string, extra: Record<string, unknown> = {}) {
   const response = await send("post", `/api/tickets/${ticketId}/actions-taken`, cookie, createBody(await ticketStamp(ticketId), extra));
-  if (response.status !== 201) throw new Error(`create failed: ${response.status} ${JSON.stringify(response.body)}`);
+  if (response.status !== 201) throw new Error(`create failed: ${response.status} ${JSON.stringify(response.body)} ${response.text?.slice(0, 200)}`);
   return response.body as { action: { id: number; version: number; status: string }; ticketUpdatedAt: string };
 }
 

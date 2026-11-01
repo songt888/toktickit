@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { formatBangkok } from "./ActionsTaken.js";
+import { statusBadgeClass } from "./statusBadge.js";
 import { ApiRequestError, getRequesterDashboard, type RequesterDashboardData, type TicketListOptions } from "./api.js";
 
 // A Dashboard drill-down: the exact list filter for My Tickets plus a visible label.
@@ -138,8 +139,8 @@ export default function RequesterDashboard({ requesterId, visible, onViewTickets
                     {data.recentTickets.map((ticket) => (
                       <li key={ticket.id} className="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-                          <strong>{ticket.ticketNumber}</strong> <span className="badge text-bg-secondary">{ticket.currentStatus}</span>
-                          <div>{ticket.summary}</div>
+                          <strong>{ticket.ticketNumber}</strong> <span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span>
+                          <div className="text-break">{ticket.summary}</div>
                           <div className="small text-secondary">Updated {formatBangkok(ticket.updatedAt)}</div>
                         </div>
                         <button type="button" className="btn btn-sm btn-outline-success" aria-label={`Open Detail for ${ticket.ticketNumber}`} onClick={() => onOpenTicket(ticket.id)}>

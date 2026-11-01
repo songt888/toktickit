@@ -157,7 +157,28 @@ npm run test:e2e
 ```
 
 Vitest and Supertest cover server APIs; Playwright covers authenticated role workflows and
-responsive layouts. To watch the browser during E2E tests:
+responsive layouts.
+
+The Lab 4 Dashboard performance smoke (PERF-01, 10,000 Tickets and 30,000 Actions, about
+30 seconds) is skipped by `npm test`. Run it on its own; it creates and drops its own database
+and writes query plans next to [`perf-01.md`](artifacts/lab-04/performance/perf-01.md):
+
+```bash
+cd server
+npm run test:perf
+```
+
+The database user in `DATABASE_URL` needs the `CREATEDB` privilege (the `toktickit` owner from the
+Docker setup above has it, as the Postgres superuser). Each run makes a `toktickit_perf_<pid>_<time>`
+database and drops it at the end; a run that is killed first leaves its database behind. To list
+and remove leftovers:
+
+```bash
+docker exec toktickit-postgres psql -U toktickit -d toktickit -Atc "SELECT datname FROM pg_database WHERE datname LIKE 'toktickit_perf_%'"
+docker exec toktickit-postgres psql -U toktickit -d toktickit -c 'DROP DATABASE "toktickit_perf_<pid>_<time>" WITH (FORCE)'
+```
+
+To watch the browser during E2E tests:
 
 ```bash
 npm install

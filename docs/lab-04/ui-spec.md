@@ -1,6 +1,6 @@
 # Lab 4 Zen Green UI Specification
 
-Status: Proposed for Issue #65 review. All screens/checks here are planned.
+Status: Implemented in Lab 4 (reviewed in Issue #65, finished in #72). The checklist in section 7 records what was verified and where.
 Use [specification.md](specification.md) and [api-spec.md](api-spec.md) for
 rules and shapes; preserve [Lab 3 conventions](../lab-03/ui-spec.md).
 
@@ -159,20 +159,22 @@ horizontal overflow, clipped badges, hidden buttons or inaccessible dialogs.
 Use visible keyboard focus, semantic headings/labels, non-color status text,
 accessible metric/action names and standard keyboard activation.
 
-### Planned visual and accessibility checklist
+### Visual and accessibility checklist
 
-- [ ] All roles preserve identity, active Dashboard navigation and earlier screens.
-- [ ] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.
-- [ ] Dashboard labels, counts, scope captions and drill-downs match the API.
-- [ ] My Actions means current assignee; zero/loading/forbidden/failure states work.
+- [x] All roles preserve identity, active Dashboard navigation and earlier screens.
+- [x] Green tokens, spacing, forms, buttons, Ticket/Action/priority badges agree.
+- [x] Dashboard labels, counts, scope captions and drill-downs match the API.
+- [x] My Actions means current assignee; zero/loading/forbidden/failure states work.
 - [x] Actions list/create/reassign/edit/start/complete/cancel/history are usable.
 - [x] Performed by, Ticket Owner and Assigned to are clearly distinguished.
 - [x] Requester Action view is read-only and never exposes Internal Notes.
-- [ ] Required fields, errors, inactive assignee and gate failure are clear.
-- [ ] Conflict/retry preserves draft and clears stale confirmations.
-- [ ] Keyboard order, focus restoration, labels and announcements are verified.
-- [ ] Every major screen at 1280/820/390px has no clipping/overlap/page overflow.
-- [ ] No unintended console errors, broken links, placeholder or unfinished controls.
+- [x] Required fields, errors, inactive assignee and gate failure are clear.
+- [x] Conflict/retry preserves draft and clears stale confirmations.
+- [x] Keyboard order, focus restoration, labels and announcements are verified.
+- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow (RESP-01 measures 14 screens after they load. The Requester's My Tickets and the Queue's Dashboard drill-down include unassigned WAITING_FOR_REQUESTER and IN_PROGRESS Tickets created for the check, so the longest status badges are measured on purpose. The Queue is measured with its scope banner and that page of mixed rows, and again with the fixture Ticket's long summary and long requester name, at 1280 px and at 992 px, where the Requester column is hidden until 1200 px. A table that scrolls sideways or a short word split across lines fails the run.)
+- [x] No unintended console errors, broken links, placeholder or unfinished controls. (Every Lab 4 E2E test fails on an uncaught page error or a browser console error, apart from failed requests it lists as `<status> <path>`, such as the injected Dashboard outages (`e2e/lab-04/guardedTest.ts`); RESP-01 fails on a link with no target, a visible button or link with no name, or TODO/placeholder text on any of its 14 screens.)
+
+Checked as built in #72 (evidence: `docs/lab-04/tests.md` UI-07, STYLE-01, RESP-01, A11Y-01, E2E-01 to E2E-04 and `artifacts/lab-04/screenshots/README.md`). Every item now has an automated check.
 
 Keep unchecked until verified. Screenshot root is
 `artifacts/lab-04/screenshots/{staff-dashboard,requester-dashboard,actions-taken}/`.

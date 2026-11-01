@@ -24,3 +24,8 @@ beforeEach(() => {
     myActions: [], recentTickets: [], urgentTickets: [],
   });
 });
+
+// Both Ticket Detail screens also load the Ticket Status History; default to none recorded.
+beforeEach(() => {
+  vi.spyOn(api, "getTicketStatusHistory").mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 10, totalItems: 0, totalPages: 0 } });
+});

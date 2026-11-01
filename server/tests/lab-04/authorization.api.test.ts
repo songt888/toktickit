@@ -145,3 +145,73 @@ describe("Staff Dashboard authorization (AUTH-01, Staff Dashboard)", () => {
     expect(JSON.stringify(staffView.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|storedName/);
   });
 });
+
+describe("Session-derived scope cannot be forged (AUTH-02)", () => {
+  it("a Requester cannot widen their scope or reach operational data by sending someone else's id", async () => {
+    const mine = await world.ticket(owner.id);
+    const theirs = await world.ticket(other.id);
+    for (const key of ["requesterId", "userId", "ownerId", "assigneeId"]) {
+      expect((await send("get", `/api/dashboard/requester?${key}=${other.id}`, owner.cookie)).status, key).toBe(400);
+      const list = await send("get", `/api/tickets?${key}=${other.id}&pageSize=50`, owner.cookie);
+      const ids = list.body.items.map((item: { id: number }) => item.id);
+      expect(ids, key).toContain(mine.id);
+      expect(ids, key).not.toContain(theirs.id);
+    }
+    for (const url of ["/api/dashboard/staff", "/api/staff/actions-taken", "/api/staff/tickets", `/api/staff/tickets/${theirs.id}`]) {
+      expect((await send("get", url, owner.cookie)).status, url).toBe(403);
+    }
+  });
+
+  it("Staff and Administrators cannot read another user's Dashboard or My Actions by sending their id", async () => {
+    const admin = await world.user("forge-admin", "ADMINISTRATOR");
+    for (const user of [staff, admin]) {
+      for (const key of ["userId", "ownerId", "assigneeId", "requesterId"]) {
+        for (const url of [`/api/dashboard/staff?${key}=${other.id}`, `/api/staff/actions-taken?${key}=${other.id}`]) {
+          expect((await send("get", url, user.cookie)).status, url).toBe(400);
+        }
+      }
+    }
+  });
+
+  it("a new Ticket belongs to the session Requester whatever requesterId the body carries", async () => {
+    const category = await prisma.category.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });
+    const system = await prisma.relatedSystem.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });
+    const response = await send("post", "/api/tickets", owner.cookie, {
+      requesterId: other.id, categoryId: category.id, relatedSystemId: system.id, summary: "Forged owner", description: "Body names another Requester.", requestedPriority: "LOW",
+    });
+    // The body field is ignored; ownership is taken from the session.
+    expect(response.status).toBe(201);
+    world.track(response.body.id);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: response.body.id } })).requesterId).toBe(owner.id);
+  });
+
+  it("an Action's performer comes from the session; a forged performer or another user's Action list is refused", async () => {
+    const ticket = await world.ticket(owner.id);
+    const forged = await send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(await ticketStamp(ticket.id), { performedById: other.id }));
+    expect(forged.status).toBe(400);
+    expect(forged.body.fieldErrors).toEqual({ performedById: "This field cannot be set here." });
+    expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(0);
+
+    const { action } = await createAction(ticket.id, staff.cookie);
+    expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById).toBe(staff.id);
+    // Every PATCH route refuses a forged performer, for that field alone: the same request without it succeeds.
+    const otherStaff = await world.user("forge-staff-2", "IT_STAFF");
+    for (const [route, extra] of [["", { description: "Edited by staff" }], ["/assignee", { assigneeId: otherStaff.id }], ["/status", { status: "IN_PROGRESS" }]] as const) {
+      const name = route || "edit";
+      const before = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
+      const url = `/api/tickets/${ticket.id}/actions-taken/${action.id}${route}`;
+      const body = { ticketUpdatedAt: await ticketStamp(ticket.id), version: before.version, ...extra };
+      const forgedPatch = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID(), performedById: other.id });
+      expect(forgedPatch.status, name).toBe(400);
+      expect(forgedPatch.body.fieldErrors, name).toEqual({ performedById: "This field cannot be set here." });
+      const after = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
+      expect(after, name).toEqual(before);
+
+      const honest = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID() });
+      expect(honest.status, `${name} without performedById`).toBe(200);
+      expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById, name).toBe(staff.id);
+    }
+    expect((await send("get", `/api/staff/actions-taken?assigneeId=${staff.id}`, staff.cookie)).status).toBe(400);
+    expect((await send("get", "/api/dashboard/requester", staff.cookie)).status).toBe(403);
+  });
+});

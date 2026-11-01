@@ -1,3 +1,4 @@
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
@@ -10,6 +11,7 @@ import {
 } from "./api.js";
 import type { TicketDetail as TicketDetailData, TicketPriority } from "./api.js";
 import ActionsTaken from "./ActionsTaken.js";
+import TicketStatusHistory from "./TicketStatusHistory.js";
 import AttachmentSection from "./AttachmentSection.js";
 
 type DetailState = "loading" | "success" | "error";
@@ -25,14 +27,6 @@ function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
 function commentAuthorLabel(comment: PublicComment): string {
   return `${comment.author.name} (${comment.author.email})`;
@@ -208,11 +202,11 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                   </span>
                 </dd>
                 <dt className="col-sm-4">Current Status</dt>
-                <dd className="col-sm-8"><span className="badge text-bg-primary">{ticket.currentStatus}</span></dd>
+                <dd className="col-sm-8"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Summary</dt>
-                <dd className="col-sm-8">{ticket.summary}</dd>
+                <dd className="col-sm-8 text-break">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
-                <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
+                <dd className="col-sm-8 text-break" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
                 <dt className="col-sm-4">Created</dt>
                 <dd className="col-sm-8">{formatDateTime(ticket.createdAt)}</dd>
                 <dt className="col-sm-4">Last Updated</dt>
@@ -267,12 +261,12 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
                   {comments.map((comment) => (
                     <li key={comment.id} className="list-group-item">
                       <div className="d-flex flex-wrap justify-content-between gap-2">
-                        <strong>{commentAuthorLabel(comment)}</strong>
+                        <strong className="text-break">{commentAuthorLabel(comment)}</strong>
                         <time className="small text-secondary" dateTime={comment.createdAt}>
                           {formatDateTime(comment.createdAt)}
                         </time>
                       </div>
-                      <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
+                      <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                     </li>
                   ))}
                 </ol>
@@ -310,6 +304,7 @@ export default function TicketDetail({ ticketId, onBack, backLabel = "Back to My
             </section>
 
             <ActionsTaken key={ticket.id} ticketId={ticket.id} ticketStatus={ticket.currentStatus} />
+            <TicketStatusHistory key={`status-${ticket.id}`} ticketId={ticket.id} refreshKey={ticket.updatedAt} />
 
             <AttachmentSection
               ticketId={ticket.id}

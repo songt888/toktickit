@@ -1,3 +1,5 @@
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
+import { breakAtUnderscores } from "./statusText.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
@@ -73,25 +75,7 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
-function statusBadgeClass(status: TicketStatus): string {
-  switch (status) {
-    case "NEW": return "text-bg-primary";
-    case "IN_PROGRESS": return "text-bg-warning text-dark";
-    case "RESOLVED": return "text-bg-success";
-    case "CLOSED": return "text-bg-dark";
-    case "CANCELLED": return "text-bg-danger";
-    default: return "text-bg-secondary";
-  }
-}
 
 // A Dashboard drill-down: the exact Queue filter plus a visible label.
 export type QueueScope = { label: string; filter: StaffTicketListOptions };
@@ -233,7 +217,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
     return (
       <>
         <div><span className="fw-semibold">Created:</span> {formatDate(ticket.ticketDate)}</div>
-        <div><span className="fw-semibold">Summary:</span> {ticket.summary}</div>
+        <div className="text-break"><span className="fw-semibold">Summary:</span> {ticket.summary}</div>
         <div><span className="fw-semibold">Category:</span> {ticket.category.name}</div>
         <div><span className="fw-semibold">Requester:</span> {ticket.requester.name}</div>
         <div><span className="fw-semibold">Requested Priority:</span>{" "}
@@ -439,8 +423,9 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
 
         {canShowResults && pagination && items.length > 0 && (
           <>
+            {/* Requester shows from 1200 px; below that all ten listed columns need the room. */}
             <div className="table-responsive d-none d-lg-block">
-              <table className="table align-middle">
+              <table className="table table-sm align-middle">
                 <caption className="visually-hidden">IT Staff Ticket Queue</caption>
                 <thead>
                   <tr>
@@ -448,7 +433,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <th scope="col">Created</th>
                     <th scope="col">Summary</th>
                     <th scope="col">Category</th>
-                    <th scope="col">Requester</th>
+                    <th scope="col" className="d-none d-xl-table-cell">Requester</th>
                     <th scope="col">Requested</th>
                     <th scope="col">IT Priority</th>
                     <th scope="col">Status</th>
@@ -462,13 +447,13 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <tr key={ticket.id}>
                       <th scope="row">{ticket.ticketNumber}</th>
                       <td>{formatDate(ticket.ticketDate)}</td>
-                      <td>{ticket.summary}</td>
-                      <td>{ticket.category.name}</td>
-                      <td>{ticket.requester.name}</td>
+                      <td className="text-break">{ticket.summary}</td>
+                      <td className="text-break">{ticket.category.name}</td>
+                      <td className="text-break d-none d-xl-table-cell">{ticket.requester.name}</td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.itPriority)}`}>{ticket.itPriority}</span></td>
-                      <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
-                      <td>{ticket.owner?.name ?? "Unassigned"}</td>
+                      <td><span className={`badge text-wrap ${statusBadgeClass(ticket.currentStatus)}`}>{breakAtUnderscores(ticket.currentStatus)}</span></td>
+                      <td className="text-break" style={{ minWidth: "7rem" }}>{ticket.owner?.name ?? "Unassigned"}</td>
                       <td>{formatDate(ticket.updatedAt)}</td>
                       <td>
                         <button className="btn btn-outline-success btn-sm" type="button" onClick={() => onOpenTicket(ticket.id)}>
@@ -488,7 +473,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                     <h3 className="h6 mb-0">{ticket.ticketNumber}</h3>
                     <span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span>
                   </div>
-                  <div className="small d-grid gap-1">{renderTicketFields(ticket)}</div>
+                  <div className="small d-grid gap-1 text-break">{renderTicketFields(ticket)}</div>
                   <button className="btn btn-outline-success btn-sm mt-3" type="button" onClick={() => onOpenTicket(ticket.id)}>
                     Open Detail
                   </button>

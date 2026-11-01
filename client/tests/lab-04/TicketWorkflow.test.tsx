@@ -60,7 +60,7 @@ describe("Ticket workflow controls (UI-03)", () => {
     expect(screen.getByText("Ready to resolve.")).toBeInTheDocument();
   });
 
-  it("groups the readiness summary and hides the resolve hint when Resolved is not a next move", async () => {
+  it("groups the readiness summary and shows the resolve hint when Resolved is a next move", async () => {
     await open_(detail({ resolutionGate: open }));
     expect(screen.getByRole("group", { name: "Resolution readiness" })).toBeInTheDocument();
     expect(screen.getByText("Ready to resolve.")).toBeInTheDocument();

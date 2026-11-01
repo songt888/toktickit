@@ -16,7 +16,8 @@ merged one.
 
 These examples summarize prompts I used across Lab 4; wording is lightly
 normalized for readability, and each one keeps only what the original message
-asked. Prompts 1 and 2 were sent to Codex, prompts 3 to 10 to Claude Code. I
+asked. Prompts 1 and 2 were sent to Codex, prompts 3 to 10 to Claude Code. Prompts 2, 5, 6 and 10
+were written in Thai and are translated here. I
 checked generated suggestions against the specification, code, tests, GitHub
 and actual browser results.
 

@@ -22,7 +22,7 @@ counted as approval.
 | [#82](https://github.com/songt888/toktickit/pull/82) Staff and Administrator Dashboard | [#71](https://github.com/songt888/toktickit/issues/71) | 3 | `f507afe` | `0bc02e5` |
 | [#83](https://github.com/songt888/toktickit/pull/83) Final regression, E2E, responsive, accessibility and performance | [#72](https://github.com/songt888/toktickit/issues/72) | 8 | `13dceb5` | `0512c04` |
 
-## Author verification (Issue #65, contract stage)
+## Author verification (Issue #65)
 
 Executed on 2026-10-05 (Asia/Bangkok) in the isolated contract worktree:
 
@@ -38,13 +38,15 @@ Executed on 2026-10-05 (Asia/Bangkok) in the isolated contract worktree:
   in tests.md; API/UI/model/status/gate/metric naming reviewed against the current
   Lab 3 code. New runner/filter capabilities are explicitly marked as increments.
 
-Original workspace hash preservation and final staged-diff check are verified
-before commit/push. No Lab 4 feature tests, migration, SQL triggers or runtime
+Original workspace hashes were verified unchanged (including separate
+Playwright edits and the existing PDF deletion); the staged diff contained
+only nine scoped contract/workflow/checker files. Initial contract commit:
+`f67233e`. No Lab 4 feature tests, migration, SQL triggers or runtime
 gate/metrics have been executed; their matrix stays Planned. Builds validate
 the unchanged application baseline, not the proposed feature implementation.
 
-This block is kept as recorded on 2026-10-05, before PR #74 was reviewed. "Planned" and "proposed" here
-describe that date; the results since then are in [tests.md](tests.md).
+This block is the Issue #65 record exactly as it stood at `0512c04` (2026-10-05); "Planned" and "proposed" describe
+that date, and the results since then are in [tests.md](tests.md).
 
 ## Reviews received and responses
 
@@ -87,7 +89,7 @@ Each row is one formal review. "Response" is the change made before the next rev
 | Reviewed commit | Concern | Response | State |
 |---|---|---|---|
 | `c9cf216` | A race accepted a 500 loser; CONC-01 lacked the barrier and priority/status races it claimed; UI-03 claimed a confirmation test; readiness summary missing; select stayed on a disabled RESOLVED after a gate 409. | Loser asserted as 409 STALE_STATE; barrier-controlled races added; confirmation test; readiness summary with counts; select reset after 409. | CHANGES_REQUESTED |
-| `cae2076` | Approved, with non-blocking notes: hide "Ready to resolve." when RESOLVED is not a next move, add `role="group"`, update PR body counts. | No further commit: `cae2076` is the merged head, so the code notes were not applied in PR #79. The "Ready to resolve." note is fixed in PR #84 (`StaffTicketDetail.tsx`). | APPROVED |
+| `cae2076` | Approved, with non-blocking notes: hide "Ready to resolve." when RESOLVED is not a next move, add `role="group"`, update PR body counts. | No further commit: `cae2076` is the merged head, so the code notes were not applied in PR #79. The "Ready to resolve." note and `role="group"` are fixed in PR #84 (`StaffTicketDetail.tsx`). | APPROVED |
 
 ### #80 Actions Taken UI
 

@@ -166,7 +166,7 @@ PERF-01 is skipped inside `npm test` by design, so a release that does not run
 
 ### 4.1 Pre-release run for #73 (2026-11-01)
 
-Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 into `lab4-staging` as `0512c04`, plus the #73 docs, one client change, one seed change and their tests), local Docker PostgreSQL 16, Node v24.19.0. Only `tests.md` and `reviewer.md` change after this commit.
+Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 into `lab4-staging` as `0512c04`, plus the #73 docs, one client change, one seed change and their tests), local Docker PostgreSQL 16, Node v24.19.0. After this commit only documentation (`tests.md`, `reviewer.md`, `ai-use.md`, `issue-plan.md`, `specification.md`) and the name of one seed test (DB-03c to DB-03j) changed; no code behaviour changed.
 
 | Command | Result |
 |---|---|
@@ -183,7 +183,7 @@ Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 i
 | `root: git diff --check` | Clean |
 
 
-The contract checker did not pass at `0512c04` itself, because its rows still said `Pass`; it passes on this branch. Compared with `0512c04` (server 185, client 128), this branch adds one server test (DB-03c) and four client tests (UI-03), and one E2E assertion (no "Ready to resolve." once RESOLVED); the Playwright count stays 26. These are the counts that REG-01 should read after #73.
+The contract checker did not pass at `0512c04` itself, because its rows still said `Pass`; it passes on this branch. Compared with `0512c04` (server 185, client 128), this branch adds one server test (DB-03j) and four client tests (UI-03), and one E2E assertion (no "Ready to resolve." once RESOLVED); the Playwright count stays 26. These are the counts that REG-01 should read after #73.
 
 This is the pre-release run. RELEASE-01 needs the same commands from the released `main` SHA, recorded in the follow-up PR.
 

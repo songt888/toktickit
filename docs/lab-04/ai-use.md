@@ -61,8 +61,25 @@ and the 60-of-60 rerun; #7 found two layout bugs the tests had missed (a split "
 
 ## My Reflection
 
-*To be written by Kirakit Kingkaew in my own words before this PR is approved.* An AI-written
-first-person reflection would not be evidence of my experience, so this section is intentionally
-left for me. Points I plan to cover: which AI suggestions I accepted or rejected and why, what the
-review rounds taught me about AI-generated tests and docs, and what I would do differently in the
-next lab.
+I used AI for the slow parts of Lab 4: reading the handout, drafting the contract and the review
+comments, and writing and rerunning tests. I kept the decisions. I decided what to build, I read each
+review comment before it was posted from my account, and I never let the AI approve or merge a PR.
+I also told it to move Kanban cards and close Issues by itself, because that was routine and easy to
+check on the board.
+
+The AI was most useful when I gave it a clear bar. After my partner's fifth review of PR #83 I said
+"make it correct100persent". It reran the whole server suite instead of only the failing test, found
+that about one run in eight failed, and traced it to Supertest reaching a different program on the
+same port. The fix and a 60-of-60 rerun were in the PR. I would not have found that by rerunning the
+test until it went green.
+
+The AI was also wrong in ways I only caught because my partner reviewed carefully. Several test
+rows were marked Passed without a test behind them (PR #78, #79, #80 and #82), and some tests could
+not fail at all. I accepted those corrections and had the rows narrowed or the tests rewritten. I
+refused one shortcut in this report: the migration does not backfill history for old Tickets, because
+the contract says history must not be invented, and I preferred a visible note over fake data.
+
+What I learned is that a document is only as good as the run behind it. Every count in `tests.md` now
+comes from a rerun on the branch, and the review rounds showed me that "it passed once" is not
+evidence. Next time I will run the full suite before I push, write each new test so I can see it fail
+without the fix, and ask for the review comments one by one instead of fixing many at once.

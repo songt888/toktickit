@@ -11,7 +11,8 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | `staff-dashboard/zero-state.png` | Zero state for a new Staff user after Retry | `dashboards.spec.ts` (E2E-03 failure injection) |
 | `staff-dashboard/refresh-failure.png` | A failed refresh keeping older data, labelled with its time | `dashboards.spec.ts` (E2E-03 failure injection) |
 | `staff-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` (E2E-03 failure injection) |
-| `responsive/queue-scoped-*.png` | Drill-down: a card opens the Ticket Queue with its exact scope banner; `queue-scoped-table-992.png` is the narrowest width with the Queue table | `responsive.spec.ts` (RESP-01) |
+| `responsive/queue-scoped-*.png` | Drill-down: a card opens the Ticket Queue with its exact scope banner and first page of rows; `queue-scoped-table-992.png` is the narrowest width with the Queue table | `responsive.spec.ts` (RESP-01) |
+| `responsive/queue-search-*.png` | The Queue after searching for the fixture Ticket (long summary and requester name); Apply filters clears the Dashboard scope, so these have no banner | `responsive.spec.ts` (RESP-01) |
 | `responsive/my-pending-actions-*.png` | The My Pending Actions drill-down page | `responsive.spec.ts` |
 | `responsive/staff-dashboard-*.png` | Staff Dashboard at all three widths with overflow and clipping checks | `responsive.spec.ts` |
 
@@ -55,7 +56,7 @@ Labs 1-3 behaviour (auth, password change, logout, Tickets, attachments, comment
 
 | Screenshot | Shows | Spec |
 | --- | --- | --- |
-| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 13 Lab 4 screens (including `admin-user-management`) at 1280/820/390 px; each fails the run on page overflow, a control cut off at the edge, or text wider than its box | `responsive.spec.ts` (RESP-01) |
+| `responsive/*-desktop.png`, `*-tablet.png`, `*-mobile.png` | 14 Lab 4 screens (including `admin-user-management`) at 1280/820/390 px; each fails the run on page overflow, a control cut off at the edge, or text wider than its box | `responsive.spec.ts` (RESP-01) |
 | `accessibility/cancel-panel-errors.png` | Keyboard-opened form with focus moved in and errors tied to fields | `accessibility.spec.ts` (A11Y-01) |
 
 Performance evidence (no screenshot): `../performance/perf-01.md`.

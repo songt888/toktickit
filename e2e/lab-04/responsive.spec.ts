@@ -100,14 +100,19 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await expect(page.getByRole("heading", { name: "Unassigned Tickets", exact: true })).toBeVisible();
   await checkLayouts(page, "staff-dashboard", "Unassigned Tickets");
   await page.getByRole("button", { name: "View Unassigned Tickets in the Ticket Queue" }).click();
-  await expect(page.getByText("Unassigned active Tickets")).toBeVisible();
-  // Wait for this Ticket's row, so the Queue is measured with rows (long requester name included).
+  // The drill-down view itself: scope banner plus its rows. Apply filters clears the scope, so measure it first.
+  const banner = page.getByText("Unassigned active Tickets");
+  await expect(banner).toBeVisible();
+  await expect(page.locator("main table tbody tr").first()).toBeVisible();
+  // 992 px is the narrowest width that shows the Queue table instead of cards.
+  for (const sizes of [widths, [{ label: "table-992", width: 992, height: 900 }]]) await checkLayouts(page, "queue-scoped", "Ticket Queue", sizes);
+  await expect(banner).toBeVisible();
+
+  // Then search for this Ticket, so its row (long summary and requester name) is measured.
   await page.getByLabel("Search Queue").fill(summary);
   await page.getByRole("button", { name: "Apply filters" }).click();
   await expect(page.getByRole("row").filter({ hasText: summary })).toBeVisible();
-  await checkLayouts(page, "queue-scoped", "Ticket Queue");
-  // 992 px is the narrowest width that shows the Queue table instead of cards.
-  await checkLayouts(page, "queue-scoped", "Ticket Queue", [{ label: "table-992", width: 992, height: 900 }]);
+  for (const sizes of [widths, [{ label: "table-992", width: 992, height: 900 }]]) await checkLayouts(page, "queue-search", "Ticket Queue", sizes);
 
   await page.getByRole("row").filter({ hasText: summary }).getByRole("button", { name: "Open Detail" }).click();
   await expect(page.getByRole("heading", { name: "Actions Taken" })).toBeVisible();

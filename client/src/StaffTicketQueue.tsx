@@ -1,5 +1,5 @@
 import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
   Category,
@@ -83,6 +83,13 @@ export interface StaffTicketQueueProps {
   onOpenTicket: (ticketId: number) => void;
   visible?: boolean;
   initialScope?: QueueScope | null;
+}
+
+// Lets WAITING_FOR_REQUESTER wrap in a narrow table cell; the text itself is unchanged.
+function breakAtUnderscores(value: string) {
+  return value.split("_").map((part, index, parts) => (
+    <Fragment key={index}>{part}{index < parts.length - 1 && <>_<wbr /></>}</Fragment>
+  ));
 }
 
 export default function StaffTicketQueue({ onOpenTicket, visible = true, initialScope = null }: StaffTicketQueueProps) {
@@ -424,7 +431,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
           <>
             {/* Requester shows from 1200 px; below that all ten listed columns need the room. */}
             <div className="table-responsive d-none d-lg-block">
-              <table className="table align-middle">
+              <table className="table table-sm align-middle">
                 <caption className="visually-hidden">IT Staff Ticket Queue</caption>
                 <thead>
                   <tr>
@@ -451,7 +458,7 @@ export default function StaffTicketQueue({ onOpenTicket, visible = true, initial
                       <td className="text-break d-none d-xl-table-cell">{ticket.requester.name}</td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
                       <td><span className={`badge ${priorityBadgeClass(ticket.itPriority)}`}>{ticket.itPriority}</span></td>
-                      <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
+                      <td><span className={`badge text-wrap ${statusBadgeClass(ticket.currentStatus)}`}>{breakAtUnderscores(ticket.currentStatus)}</span></td>
                       <td className="text-break" style={{ minWidth: "7rem" }}>{ticket.owner?.name ?? "Unassigned"}</td>
                       <td>{formatDate(ticket.updatedAt)}</td>
                       <td>

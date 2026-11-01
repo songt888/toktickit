@@ -1,0 +1,150 @@
+# command: (cd client ) npm test -- --reporter=verbose
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:08Z  node: v24.19.0
+
+
+> toktickit-client@1.0.0 test
+> vitest run --reporter=verbose
+
+
+ RUN  v2.1.9 <repo>/client
+
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > defines the four Zen Green tokens and loads them after Bootstrap so they win
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > shows every Action field, keeps performer, assignee and statuses distinct, and supports several Actions
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > labels every metric and state with text, never colour alone
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows read-only ticket fields and separated attachment metadata
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > offers only the permitted lifecycle controls for each Action status
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows a loading state while the detail request is pending
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > offers only the matrix moves for the current status
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > explains the gate and disables Resolved while work is incomplete, even if the Requester says it looks resolved
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > shows readiness counts when the gate is met too
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > groups the readiness summary and shows the resolve hint when Resolved is a next move
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > keeps the public comment form disabled until comments finish loading
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > disables every Action change on a resolved, closed or cancelled Ticket and says to reopen
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > downloads active attachments, hides removed downloads, and safely handles failure
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > shows no resolve hint on CLOSED, with the gate met or not
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > shows no resolve hint on CANCELLED, with the gate met or not
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Staff and Administrator Dashboard (UI-06) > shows the three cards, captioned status and priority breakdowns, and the three lists
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > keeps comment loading errors separate from form validation errors
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > marks required fields, ties errors to their field, and shows read-only history as text
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > leaves no Bootstrap blue primary class anywhere in the app
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > gives each Ticket status its own badge on every screen, and greens Bootstrap's focus and checked colours
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > claims the Ticket as the signed-in user and keeps Requested Priority read-only
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > shows the selected requester and reference data from the APIs
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > shows no resolve hint on RESOLVED, with the gate met or not
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows a not-found failure and can retry
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > renders each Ticket status with its own badge on the Dashboards and Requester Detail
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > shows API-backed ticket fields and the Create Ticket action
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Requester application shell with the Dashboard (UI-07 Requester part, UI-05 drill-down) > starts on the Dashboard, opens My Tickets with the exact card filter, and clears it on request
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > resolves when the gate is met and refreshes status and last-resolved time
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Staff and Administrator Dashboard (UI-06) > drills down with the exact Queue filters, the session user id and the returned dates
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > shows field-level validation and does not call the create API for invalid input
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > assigns to an eligible user, updates IT Priority, and saves a permitted status
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > announces Result as required when editing a completed Action, and the cancel confirmation as required
+ ✓ tests/lab-04/ui-style.test.tsx > Zen Green style contract (STYLE-01) > announces every Create Ticket field marked * as required
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > shows the server's gate when it rejects a Resolve that looked allowed
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > requires confirmation before moving a Ticket to Closed
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Staff and Administrator Dashboard (UI-06) > separates loading, empty sections, failure with retry and a labelled older snapshot
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > adds plain-text comments and keeps resolution separate from ticket status
+ ✓ tests/lab-02/RequesterTicketDetail.test.tsx > Ticket Detail UI > shows validation feedback for an empty public comment
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Requester application shell with the Dashboard (UI-07 Requester part, UI-05 drill-down) > returns from a Ticket opened on the Dashboard to the Dashboard, with Dashboard still active
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > creates an Action with the current user as default assignee and a Bangkok-offset date
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > keeps the stale-update review for other conflicts
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > offers a refresh when the server rejects a stale update
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Staff and Administrator Dashboard (UI-06) > shows no data for a forbidden role and hands a 401 to the app
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > preserves list query state and active navigation after returning from detail
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Staff and Administrator Dashboard (UI-06) > reloads on entry and ignores a slower response from an earlier visit
+ ✓ tests/lab-04/TicketWorkflow.test.tsx > Ticket workflow controls (UI-03) > asks for confirmation before Closed and asks again after a conflict
+ ✓ tests/lab-04/StaffDashboard.test.tsx > My Pending Actions list (UI-06 paging) > pages through the session user's pending Actions, reports the page, and opens one
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Staff and Administrator application shell with the Dashboard (UI-07 Staff/Admin part, UI-06 drill-down) > starts on the Dashboard and opens the Queue with the exact card filter, owner preselected, until cleared
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > refreshes the list when returning from Create Ticket
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > requires a follow-up note when follow-up is on and asks before discarding a written note
+ ✓ tests/lab-04/StaffDashboard.test.tsx > My Pending Actions list (UI-06 paging) > opens on the page it is given, and Retry repeats the page that failed
+ ✓ tests/lab-04/StaffDashboard.test.tsx > My Pending Actions list (UI-06 paging) > moves back to the last page that exists when the remembered page has emptied
+ ✓ tests/lab-04/StaffDashboard.test.tsx > My Pending Actions list (UI-06 paging) > shows the empty message
+ ✓ tests/lab-04/StaffDashboard.test.tsx > Opening an Action from the Dashboard (UI-06 Open Action) > finds the Action on a later page of Actions Taken and focuses it
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > applies search, filter, sorting, page size, and pagination controls
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Staff and Administrator application shell with the Dashboard (UI-07 Staff/Admin part, UI-06 drill-down) > opens an Action from the Dashboard or My Pending Actions and goes back to where it came from
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > submits once, shows a busy state, and displays the generated ticket number 436ms
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Staff and Administrator application shell with the Dashboard (UI-07 Staff/Admin part, UI-06 drill-down) > gives Administrators the same Dashboard with User Management still available
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > posts Public Comments and private Internal Notes as plain text 315ms
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > completes with a required result and cancels with a reason and explicit confirmation
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > distinguishes an empty list from a filtered no-results state
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > shows a failure state and can retry the API request
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > edits only the changed fields, keeps status read-only and allows clearing settled follow-up on completed work
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > uses the authenticated requester and does not expose identity switching
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > flags an inactive assignee, allows only reassign and cancel, and shows a server assignee rejection beside the field
+ ✓ tests/lab-04/RequesterDashboard.test.tsx > Requester Dashboard (UI-05) > shows three labelled cards with numbers including zero, the snapshot time and the recent list
+ ✓ tests/lab-02/MyTickets.test.tsx > My Tickets UI > ignores an older ticket response when a newer request finishes first
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken for Staff and Administrators (UI-01) > gives the assignee list its own retry state and blocks saving an incomplete create form
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > lists safe user data and applies name/email search and role filters
+ ✓ tests/lab-04/RequesterDashboard.test.tsx > Requester Dashboard (UI-05) > drills down with the exact filters and the returned asOf/recentFrom, never browser-made dates
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > sends one request for a double click while saving
+ ✓ tests/lab-04/RequesterActionsTaken.test.tsx > Requester Actions Taken (UI-02) > shows all Actions read-only, with history but no write controls
+ ✓ tests/lab-04/RequesterDashboard.test.tsx > Requester Dashboard (UI-05) > separates loading, empty, failure with retry, and a labelled older snapshot after a failed refresh
+ ✓ tests/lab-03/StaffTicketDetail.test.tsx > Staff Ticket Detail operational controls > validates blank collaboration forms and preserves drafts after request failures
+ ✓ tests/lab-04/RequesterActionsTaken.test.tsx > Requester Actions Taken (UI-02) > separates loading, empty and failure states, with a retry
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Logout clears one user's drafts and data before the next user (UI-07 logout part) > drops an unsent Create Ticket draft and the previous user's identity at logout
+ ✓ tests/lab-04/ApplicationShell.test.tsx > Logout clears one user's drafts and data before the next user (UI-07 logout part) > never shows a late Dashboard response for the previous user
+ ✓ tests/lab-04/RequesterActionsTaken.test.tsx > Requester Actions Taken (UI-02) > pages in stable order and moves focus to the list heading
+ ✓ tests/lab-04/RequesterActionsTaken.test.tsx > Requester Actions Taken (UI-02) > never shows the previous Ticket's late list after switching Tickets (remount)
+ ✓ tests/lab-04/RequesterActionsTaken.test.tsx > Requester Actions Taken (UI-02) > appears in the Requester Ticket Detail beside the existing sections
+ ✓ tests/lab-04/RequesterDashboard.test.tsx > Requester Dashboard (UI-05) > shows no data for a forbidden role and hands a 401 to the app
+ ✓ tests/lab-04/RequesterDashboard.test.tsx > Requester Dashboard (UI-05) > reloads on entry and ignores a slower response from an earlier visit
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > keeps the draft and request id across a network retry, and uses a new id once the draft changes
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows the safe user, role, permitted navigation, and no requester selector
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > keeps normal screens blocked when the session requires a password change
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > keeps a draft and its text after a server error
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > uploads selected attachments after the ticket is created 453ms
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows the staff queue navigation and workspace for an IT Staff session
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > shows user management only for Administrators, one click from the Dashboard
+ ✓ tests/lab-03/ApplicationShell.test.tsx > Authenticated application shell > clears the authenticated shell after logout
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > on a stale conflict keeps the draft, clears the cancel confirmation and only resubmits after Load Latest and review
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > creates and edits users, then sets an initial password without displaying it 475ms
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > treats a replayed save as already done and reloads the latest values
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > requires confirmation before changing account access
+ ✓ tests/lab-04/TicketStatusHistory.test.tsx > Ticket Status History (UI-02, AC-07) > lists ordered from/to events with actor and time, and says when none are recorded
+ ✓ tests/lab-04/TicketStatusHistory.test.tsx > Ticket Status History (UI-02, AC-07) > retries after a failed load
+ ✓ tests/lab-03/UserManagement.test.tsx > Administrator User Management UI > shows distinct empty, no-results, forbidden, and retryable failure states
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > refreshes the Ticket timestamp and resolution readiness after an Action is saved
+ ✓ tests/lab-04/TicketStatusHistory.test.tsx > Ticket Status History (UI-02, AC-07) > pages through earlier and later changes, disabling the end buttons
+ ✓ tests/lab-04/TicketStatusHistory.test.tsx > Ticket Status History (UI-02, AC-07) > tells the user to sign in again on 401 instead of offering Retry
+ ✓ tests/lab-04/TicketStatusHistory.test.tsx > Ticket Status History (UI-02, AC-07) > never shows a late answer from an earlier load over a newer one
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > preserves entered values and shows a safe error when creation fails 418ms
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > shows metadata, downloads active files, and hides download for removed files
+ ✓ tests/lab-02/CreateTicket.test.tsx > Create Ticket UI > reports unsupported, oversized, and excessive attachments clearly
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > uploads a valid file and reports an upload failure
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > renders identity from auth/me and does not expose the old requester selector
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > after Load Latest, Edit sends only the user's own change, so another user's newer value survives
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > shows operational fields, ownership, badges, and opens Ticket Detail
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > ignores a write that finishes after the user switched to another Ticket
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > enforces the password rules and confirmation
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > passes only ticket identifiers to the detail API after authenticated list navigation
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > shows only the history that was asked for last when an earlier history request returns late
+ ✓ tests/lab-02/AttachmentSection.test.tsx > Attachment Section UI > requires a reason before confirming soft removal
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > keeps the newest Ticket timestamp when an older detail refresh lands late
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > sends search, filter, sort, and pagination options to the API
+ ✓ tests/lab-03/StaffTicketQueue.test.tsx > Staff Ticket Queue UI > shows no-results and retryable failure states
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > submits a valid change and continues with the updated user
+ ✓ tests/lab-03/RequesterRegression.test.tsx > Requester authenticated-session regression > lets the authenticated requester add a public comment and mark the problem resolved
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > restarts an Action refresh that was in flight during a Ticket save: no rollback, and the new gate still arrives
+ ✓ tests/lab-02/ui-style.test.tsx > TokTickIT UI style and accessibility contract > uses labelled Bootstrap controls, visible required markers, and action hierarchy
+ ✓ tests/lab-03/Login.test.tsx > Login > shows field validation without calling the API
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > shows the requester from the authenticated session without a selector
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > restarts an Action refresh that was in flight during a public comment: no rollback, and the new gate still arrives
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > does not read or write a requester identity in local storage
+ ✓ tests/lab-02/RequesterSelection.test.tsx > Authenticated requester context > shows sign in when the authenticated session is unavailable
+ ✓ tests/lab-03/ChangePassword.test.tsx > Change Password > shows a safe API failure and keeps the form visible
+ ✓ tests/lab-04/dashboard-dates.test.tsx > Bangkok display of Dashboard times (UNIT-05 display part) > shows UTC instants in Bangkok time, crossing the date line where needed
+ ✓ tests/lab-01/App.test.tsx > App > renders the authenticated requester workspace from the session
+ ✓ tests/lab-01/App.test.tsx > App > shows the sign-in screen when there is no authenticated session
+ ✓ tests/lab-04/ActionsTaken.test.tsx > Actions Taken write safety (UI-04) > restarts an Action refresh that was in flight during a internal note: no rollback, and the new gate still arrives
+ ✓ tests/lab-03/Login.test.tsx > Login > shows a busy state and returns the authenticated user on success
+ ✓ tests/lab-03/Login.test.tsx > Login > shows a safe message for invalid credentials
+
+ Test Files  23 passed (23)
+      Tests  132 passed (132)
+   Start at  19:26:08
+   Duration  3.16s (transform 502ms, setup 1.24s, collect 3.03s, tests 12.63s, environment 6.27s, prepare 946ms)
+
+
+# exit: 0  finished: 2026-11-01T12:26:12Z

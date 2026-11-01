@@ -1,0 +1,47 @@
+# command: (cd <repo> ) npm run test:e2e -- --workers=1 --reporter=list
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:14Z  node: v24.19.0
+
+
+> test:e2e
+> playwright test --workers=1 --reporter=list
+
+
+> toktickit-server@1.0.0 prisma:seed
+> tsx prisma/seed.ts
+
+Seeded 5 categories, 7 related systems, and 5 requesters.
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+Running 26 tests using 1 worker
+
+  ✓   1 [desktop] › e2e/lab-02/requester-ticket-flow.spec.ts:24:5 › covers authenticated requester ticket creation, detail, attachments, and isolation (2.3s)
+  ✓   2 [responsive] › e2e/lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow (808ms)
+  ✓   3 [responsive] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (1.6s)
+  ✓   4 [tablet] › e2e/lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow (742ms)
+  ✓   5 [tablet] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (1.6s)
+  ✓   6 [mobile] › e2e/lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow (783ms)
+  ✓   7 [mobile] › e2e/lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport (2.5s)
+  ✓   8 [auth-desktop] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (752ms)
+  ✓   9 [auth-tablet] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (653ms)
+  ✓  10 [auth-mobile] › e2e/lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout (718ms)
+  ✓  11 [requester-desktop] › e2e/lab-03/requester-flow.spec.ts:24:5 › covers requester ownership, comments, resolution, and Staff collaboration with attachments (3.9s)
+  ✓  12 [accessibility] › e2e/lab-03/accessibility.spec.ts:31:5 › keyboard navigation, labels, active navigation, and feedback are accessible (797ms)
+  ✓  13 [staff-desktop] › e2e/lab-03/staff-ticket-flow.spec.ts:24:5 › covers the staff queue, operational detail, and responsive layouts (702ms)
+  ✓  14 [staff-desktop] › e2e/lab-03/staff-ticket-flow.spec.ts:88:5 › claims, reassigns, unassigns, reprioritizes, and changes status with confirmation (1.1s)
+  ✓  15 [admin-desktop] › e2e/lab-03/user-administration.spec.ts:34:5 › Administrator can manage users, reset an initial password, and use the responsive screen (4.0s)
+  ✓  16 [lab4-desktop] › e2e/lab-04/accessibility.spec.ts:23:5 › A11Y-01 Lab 4 screens work by keyboard with labels, focus, skip link, active nav and announced errors (2.2s)
+  ✓  17 [lab4-desktop] › e2e/lab-04/actions-taken-flow.spec.ts:53:5 › E2E-01 records Actions by different staff, runs the lifecycle and shows them read-only to the Requester (7.8s)
+  ✓  18 [lab4-desktop] › e2e/lab-04/dashboards.spec.ts:69:5 › E2E-03 Requester Dashboard matches the database, drills down exactly and stays owner-scoped (1.5s)
+  ✓  19 [lab4-desktop] › e2e/lab-04/dashboards.spec.ts:217:5 › E2E-03 Staff and Administrator Dashboards match the database, drill down exactly and open assigned Actions (4.9s)
+  ✓  20 [lab4-desktop] › e2e/lab-04/dashboards.spec.ts:335:7 › E2E-03 failure injection: a failed Dashboard load shows an error with Retry, and a failed refresh keeps older data (1.2s)
+  ✓  21 [lab4-desktop] › e2e/lab-04/regression.spec.ts:39:7 › E2E-04 auth, password and logout still work (754ms)
+  ✓  22 [lab4-desktop] › e2e/lab-04/regression.spec.ts:68:5 › E2E-04 tickets, attachments, comments, queue owner, IT priority and Internal Notes still work (949ms)
+  ✓  23 [lab4-desktop] › e2e/lab-04/regression.spec.ts:127:5 › E2E-04 Administrator safety rules still hold (553ms)
+  ✓  24 [lab4-desktop] › e2e/lab-04/responsive.spec.ts:74:5 › RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px (9.2s)
+  ✓  25 [lab4-desktop] › e2e/lab-04/ticket-resolution.spec.ts:57:5 › E2E-02 records ordered work, blocks resolving until work and follow-up settle, then resolves, closes, reopens and cancels (8.7s)
+  ✓  26 [lab4-desktop] › e2e/lab-04/ticket-resolution.spec.ts:163:5 › E2E-02 an Action whose assignee was deactivated is flagged and cannot be worked until reassigned (912ms)
+
+  26 passed (1.1m)
+
+# exit: 0  finished: 2026-11-01T12:27:21Z

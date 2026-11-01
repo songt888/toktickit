@@ -194,8 +194,15 @@ counts in the PR (see "How I verified partner fixes" below).
 ## Final-main follow-up for #73
 
 - The full final-main run on `991b254` is in [tests.md](tests.md) section 4.2, with logs under
-  `artifacts/lab-04/verification-2026-11-01/`. It is recorded through this follow-up PR into `main`;
-  #73 is closed and set to Done only after it is approved and merged.
+  `artifacts/lab-04/verification-2026-11-01/`. It is recorded through follow-up PR
+  [#86](https://github.com/songt888/toktickit/pull/86) into `main`; #73 is closed and set to Done
+  only after it is approved and merged.
+
+### #86 final-main follow-up
+
+| Reviewed commit | Concern | Response | State |
+|---|---|---|---|
+| `057a891` | The 01 to 12 `.log` files were not in the PR: `.gitignore` `*.log` skipped them, only the README and `03-seed-counts.txt` were committed; `ai-use.md` should say the report PDF script came from a separate request, since #73 allows no PDF work otherwise. SHAs, rounds, counts and the `b10c7dc` tree checked out. | All 13 logs force-added as in Lab 3; `ai-use.md` says the PDF was a separate request outside #73. | CHANGES_REQUESTED |
 
 ## Review and release checklist
 

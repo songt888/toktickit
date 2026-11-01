@@ -1,0 +1,9 @@
+# command: (cd server ) npm run build
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:07Z  node: v24.19.0
+
+
+> toktickit-server@1.0.0 build
+> tsc
+
+
+# exit: 0  finished: 2026-11-01T12:26:08Z

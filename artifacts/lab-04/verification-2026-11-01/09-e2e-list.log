@@ -1,0 +1,37 @@
+# command: (cd <repo> ) npm run test:e2e -- --list
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:13Z  node: v24.19.0
+
+
+> test:e2e
+> playwright test --list
+
+Listing tests:
+  [desktop] › lab-02/requester-ticket-flow.spec.ts:24:5 › covers authenticated requester ticket creation, detail, attachments, and isolation
+  [responsive] › lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow
+  [responsive] › lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport
+  [tablet] › lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow
+  [tablet] › lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport
+  [mobile] › lab-02/responsive.spec.ts:30:5 › keeps the authenticated requester shell usable and free of horizontal overflow
+  [mobile] › lab-03/responsive.spec.ts:33:5 › checks the requester, Staff, and Administrator screens at this viewport
+  [auth-desktop] › lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout
+  [auth-tablet] › lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout
+  [auth-mobile] › lab-03/authentication.spec.ts:11:5 › requires an initial password change and revokes the session on logout
+  [requester-desktop] › lab-03/requester-flow.spec.ts:24:5 › covers requester ownership, comments, resolution, and Staff collaboration with attachments
+  [accessibility] › lab-03/accessibility.spec.ts:31:5 › keyboard navigation, labels, active navigation, and feedback are accessible
+  [staff-desktop] › lab-03/staff-ticket-flow.spec.ts:24:5 › covers the staff queue, operational detail, and responsive layouts
+  [staff-desktop] › lab-03/staff-ticket-flow.spec.ts:88:5 › claims, reassigns, unassigns, reprioritizes, and changes status with confirmation
+  [admin-desktop] › lab-03/user-administration.spec.ts:34:5 › Administrator can manage users, reset an initial password, and use the responsive screen
+  [lab4-desktop] › lab-04/accessibility.spec.ts:23:5 › A11Y-01 Lab 4 screens work by keyboard with labels, focus, skip link, active nav and announced errors
+  [lab4-desktop] › lab-04/actions-taken-flow.spec.ts:53:5 › E2E-01 records Actions by different staff, runs the lifecycle and shows them read-only to the Requester
+  [lab4-desktop] › lab-04/dashboards.spec.ts:69:5 › E2E-03 Requester Dashboard matches the database, drills down exactly and stays owner-scoped
+  [lab4-desktop] › lab-04/dashboards.spec.ts:217:5 › E2E-03 Staff and Administrator Dashboards match the database, drill down exactly and open assigned Actions
+  [lab4-desktop] › lab-04/dashboards.spec.ts:335:7 › E2E-03 failure injection: a failed Dashboard load shows an error with Retry, and a failed refresh keeps older data
+  [lab4-desktop] › lab-04/regression.spec.ts:39:7 › E2E-04 auth, password and logout still work
+  [lab4-desktop] › lab-04/regression.spec.ts:68:5 › E2E-04 tickets, attachments, comments, queue owner, IT priority and Internal Notes still work
+  [lab4-desktop] › lab-04/regression.spec.ts:127:5 › E2E-04 Administrator safety rules still hold
+  [lab4-desktop] › lab-04/responsive.spec.ts:74:5 › RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px
+  [lab4-desktop] › lab-04/ticket-resolution.spec.ts:57:5 › E2E-02 records ordered work, blocks resolving until work and follow-up settle, then resolves, closes, reopens and cancels
+  [lab4-desktop] › lab-04/ticket-resolution.spec.ts:163:5 › E2E-02 an Action whose assignee was deactivated is flagged and cannot be worked until reassigned
+Total: 26 tests in 14 files
+
+# exit: 0  finished: 2026-11-01T12:26:14Z

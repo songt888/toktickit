@@ -61,9 +61,11 @@ reviews also caught test rows marked Passed without a test behind them (PRs #78,
 #79, #80 and #82) and tests that could not fail; each was fixed with a test that
 fails without the change, or the row was narrowed. Counts in `tests.md` come from
 recorded runs, and the final `main` verification was run on the released SHA
-`991b254` after the release merged. Claude Code also wrote the script that
-assembles the report PDF outside the repository from the committed documents and
-screenshots; the PDF is not committed.
+`991b254` after the release merged. Issue #73 allows no PDF work unless
+separately requested; in a separate request outside that Issue, I asked Claude
+Code for a draft report PDF, and it wrote a script that assembles it outside the
+repository from the committed documents and screenshots. The PDF is not
+committed.
 
 ## My Reflection
 

@@ -7,46 +7,40 @@
 - **Claude Code** in the Claude desktop app, running **Claude Sonnet 5.5** and **Claude Opus 5.5**
   (model ids `claude-sonnet-5-5` and `claude-opus-5-5`, read from the local session logs): reading
   the Lab 4 handout, the contract review rounds on PR #74, implementation of Issues #66 to #72
-  (PRs #75 and #77 to #83), drafting my review comments on my partner's PRs, Kanban updates, and
+  (PRs #77 to #83) and the PDF-untracking chore (PR #75, Issue #76), drafting my review comments on my partner's PRs, Kanban updates, and
   this #73 documentation.
 
-I chose what to build, read every review comment before it was posted from my account, approved
-each push, and merged only after my partner's formal GitHub approval. The AI never approved or
+I chose what to build and read each review comment before it was posted from my account. My
+partner stickkersz formally approved and merged every PR into `lab4-staging`; the AI never approved or
 merged a PR.
 
 ## Selected real prompts
 
-The list below is a **summary** of nine requests I really made during Lab 4, in cleaner wording. Each
-line states only what the original message asked; the exact messages (spelling kept, Thai translated)
-are quoted in the table after it.
+Ten requests from Lab 4. The "Message as sent" column is exact (spelling kept, nothing added; pasted
+text is shown as it was pasted). The "English summary" column is a **summary** I wrote for this report;
+it was not sent to the AI.
 
-1. "Here is the Lab 4 handout (SE Lab 4.pdf); confirm you received it."
-2. "Review my partner's pull request #81 with my account, and send me a draft in the tone of my Lab 3 comments."
-3. "Implement Issue #66 as planned: the Prisma migration and models for Actions Taken and status changes, a backfill for old Tickets, a rerunnable seed, and tests."
-4. "Move #65 to Done and close it, move #66 to PR Review, add #76 to the board as Done, and do this automatically from now on."
-5. "Start Issue #72."
-6. "Here is my partner's fifth review; make the result 100% correct."
-7. "QA recheck the work again."
-8. "Recheck your explanation of the failing Lab 3 server test."
-9. "Start Issue #73."
+| # | Tool, date (UTC) | Message as sent | English summary |
+|---|---|---|---|
+| 1 | Codex, Lab 4 planning session (date not recorded) | `ok accept this plan` | Accept the Lab 4 workflow and Issue plan. It did not approve the contract. |
+| 2 | Codex, Lab 4 planning session (date not recorded) | Issue #65 instruction (Thai, selected excerpts): "จัดทำเอกสารใน docs/lab-04/"; "กำหนดให้ชัด: Action assignee/status, ขอบเขต append-only, Resolution gate และ Dashboard calculations"; "ตรวจความสอดคล้องของ schema, API, UI, business rules และ AC/test mapping"; "Commit/push แล้วเปิด PR เข้า lab4-staging"; "รอ teammate Approve และ Merge" | Write the documents in `docs/lab-04/`; define Action assignee/status, the append-only boundary, the Resolution gate and the Dashboard calculations; check schema, API, UI, business rules and AC/test mapping for consistency; commit, push and open a PR into `lab4-staging`; wait for the teammate to approve and merge. These are excerpts of one prompt. |
+| 3 | Claude Code, 2026-10-29 16:05 | `@"/Users/song/Downloads/SE+Lab+4.pdf"` `recieve this info` (local path shown as sent) | Receive the Lab 4 handout. |
+| 4 | Claude Code, 2026-10-29 16:15 and 16:19 | "https://github.com/stickkersz/toktickit/pull/81 let review my friend work with my account", then "i want tone like the past comment on lab3.can u  sent me draft" | Review my partner's PR #81 with my account, in the tone of my Lab 3 comments, and send me a draft first. |
+| 5 | Claude Code, 2026-10-30 07:30 | Pasted brief: "Issue #66 data foundation" with bullets in Thai: "Prisma migration และ model สำหรับ Actions Taken กับ Status Change"; "Backfill Status Change ให้ ticket เก่า"; "Seed ที่รันซ้ำได้ ครอบคลุมทุกสถานะ ticket ที่มี 0, 1 และหลาย action และผู้ใช้ที่ dashboard เป็นศูนย์"; "Test migration และ seed"; "งานอื่นทั้งหมด (API, UI, workflow, dashboard) ต้องรอ issue นี้" | Issue #66: a Prisma migration and models for Actions Taken and status changes; a backfill of status changes for old Tickets; a rerunnable seed covering every Ticket status with 0, 1 and many Actions and users with an empty Dashboard; migration and seed tests; all other work waits for this Issue. |
+| 6 | Claude Code, 2026-10-30 07:47 | `let` + pasted "ย้าย #65 เป็น Done และปิด Issue * ย้าย #66 เป็น PR Review * เพิ่ม #76 เข้าบอร์ดเป็น Done", then "* and next time do it for me auto matic" | Move #65 to Done and close it; move #66 to PR Review; add #76 to the board as Done; and do this automatically from now on. |
+| 7 | Claude Code, 2026-10-31 08:08 | `Start #72` | Start Issue #72. |
+| 8 | Claude Code, 2026-10-31 18:43 | My partner's review of `3f6c05f` pasted (five bullets: Queue wrapping at 1280 px, RESP-01 waiting for rows, the `/assignee` test, the CONC-02 timeout, the `ui-spec.md` tick), then `make it correct100persent` | Fix every point in this review, and make the result fully correct. |
+| 9 | Claude Code, 2026-10-31 19:34 | `can u qa recheck again` | Run another QA check of the current work. |
+| 10 | Claude Code, 2026-11-01 06:47 | Thai text pasted back from an earlier explanation by the AI: "ระหว่างทางมีเทสต์ server ของ Lab 3 พังหนึ่งตัว (เทสต์ที่ค้นหา “_” แล้วต้องไม่เจออะไร) สาเหตุคือ Ticket ทดสอบ 10 ใบที่ RESP-01 รุ่นทดลองของผมสร้างทิ้งไว้ใน DB ในเครื่อง ชื่อมี _ ลบออกแล้วไม่มีข้อมูลค้าง และ spec ตัวจริงใช้คำธรรมดาแล้ว จะไม่เกิดซ้ำ", then `recheck` | The AI said one Lab 3 server test (search for "_" must find nothing) failed because 10 test Tickets from an earlier RESP-01 draft were left in the local database; it deleted them and the real spec uses plain words, so it will not recur. Recheck that. |
 
-### Original wording
+What came of them:
 
-| # | Date (UTC) | Message as sent |
-|---|---|---|
-| 1 | 2026-10-29 16:05 | `@"<path>/SE+Lab+4.pdf" recieve this info` (local path shortened) |
-| 2 | 2026-10-29 16:15 and 16:19 | "https://github.com/stickkersz/toktickit/pull/81 let review my friend work with my account", then "i want tone like the past comment on lab3.can u  sent me draft" |
-| 3 | 2026-10-30 07:30 | Thai plan pasted: "Prisma migration และ model สำหรับ Actions Taken กับ Status Change; Backfill Status Change ให้ ticket เก่า; Seed ที่รันซ้ำได้ ..." [Prisma migration and models for Actions Taken and Status Change; backfill for old tickets; rerunnable seed] |
-| 4 | 2026-10-30 07:47 | Thai list: "ย้าย #65 เป็น Done และปิด Issue; ย้าย #66 เป็น PR Review; เพิ่ม #76 เข้าบอร์ดเป็น Done", then "and next time do it for me auto matic" |
-| 5 | 2026-10-31 08:08 | "Start #72" |
-| 6 | 2026-10-31 18:43 | partner's fifth review pasted, then "make it correct100persent" |
-| 7 | 2026-10-31 19:34 | "can u qa recheck again" |
-| 8 | 2026-11-01 06:47 | Thai message about the failing Lab 3 test, ending "recheck" |
-| 9 | 2026-11-01 | "Start #73" |
-
-What came of them: #3 led to AC-12 (no invented history, DB-02); #6 found the Supertest port clash
-and the 60-of-60 rerun; #7 found two layout bugs the tests had missed (a split "Unassigned" at
-1280px, Queue overflow at 992px) and added checks that fail without the fixes.
+- #2: the first draft of the Issue #65 contract, reviewed by my partner in PR #74 (two rounds).
+- #4: the draft found two gaps in my partner's contract (no stored fingerprint for Idempotency-Key reuse, and no Cancel from `WAITING_FOR_REQUESTER`/`REOPENED`); I posted it after reading it.
+- #5: the migration and seed in PR #77. The brief asked for a backfill, but the already approved contract (AC-12, merged in PR #74 before this prompt) forbids inventing history, so the implementation adds no backfill; legacy Tickets show a "history not reconstructed" note and DB-02 tests that no rows are invented.
+- #8: the Supertest port clash behind the random server failures (about 1 run in 8) was found and fixed in `server/tests/setup.ts`, with 60 of 60 full runs passing afterwards.
+- #9: the recheck found two layout bugs the tests had missed (a split "Unassigned" at 1280 px, and the Queue overflowing at 992 px) and added checks that fail without the fixes.
+- #10: the deleted rows were checked in the database, and the full server and Playwright suites were run again before I accepted it.
 
 ## How AI output was checked
 
@@ -57,7 +51,7 @@ and the 60-of-60 rerun; #7 found two layout bugs the tests had missed (a split "
   real test or by narrowing the row (see the per-PR findings in [reviewer.md](reviewer.md)).
 - New checks were confirmed by breaking them on purpose: removing a fix and watching the test fail,
   or running a throwaway spec against the console-error guard.
-- Counts in the docs come from reruns on the branch being merged, not from earlier PRs.
+- Counts in `tests.md` come from reruns, and each says where it ran: section 4.1 is the run on `lab4-staging` at `0512c04`. The run on `main` after the release will be recorded in the final follow-up PR.
 
 ## My Reflection
 
@@ -75,11 +69,11 @@ test until it went green.
 
 The AI was also wrong in ways I only caught because my partner reviewed carefully. Several test
 rows were marked Passed without a test behind them (PR #78, #79, #80 and #82), and some tests could
-not fail at all. I accepted those corrections and had the rows narrowed or the tests rewritten. I
-refused one shortcut in this report: the migration does not backfill history for old Tickets, because
-the contract says history must not be invented, and I preferred a visible note over fake data.
+not fail at all. I accepted those corrections and had the rows narrowed or the tests rewritten. My own Issue #66 brief asked for a backfill of status history for old Tickets, but the approved
+contract says history must not be invented, so the implementation follows the contract and shows a
+visible note instead of fake data.
 
 What I learned is that a document is only as good as the run behind it. Every count in `tests.md` now
-comes from a rerun on the branch, and the review rounds showed me that "it passed once" is not
+says which run it comes from, and the review rounds showed me that "it passed once" is not
 evidence. Next time I will run the full suite before I push, write each new test so I can see it fail
 without the fix, and ask for the review comments one by one instead of fixing many at once.

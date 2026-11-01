@@ -1,7 +1,7 @@
 # Lab 4 Test DD and Traceability Plan
 
 Status: every feature row is **Passed**: it ran green in the Issue that owns it (#66 to #72, merged into
-`lab4-staging` through PRs #77 to #83) and again on this branch for #73 (section 4). DOC-01 and
+`lab4-staging` through PRs #77 to #83) and again before release on the #73 branch (section 4.1). DOC-01 and
 RELEASE-01 stay **Pending** until the reviewed release to `main` and the final-main verification
 follow-up are merged. Per-test notes are in section 2.1.
 Do not copy Lab 3 totals or claim unimplemented test paths already exist.
@@ -95,6 +95,8 @@ production SLA; investigate failures rather than silently raising thresholds.
 Rows not listed passed as written in the matrix, with no extra notes.
 
 - **UNIT-05**: #72: server: exact bounds included and 1 ms either side excluded (compared in PostgreSQL), Bangkok-midnight case, offset-only ISO input, null legacy time never matches; client: UTC instants shown in Bangkok time across the date line
+- **DB-03**: #73: DB-03c checks that a Lab 4 fixture user still on the migration placeholder hash gets the initial password when the seed runs with one, like the Lab 3 users; it fails without the `seedLab4.ts` change
+- **UI-03**: #73: the readiness summary is a labelled group, and no resolve hint ("Ready to resolve." or "To resolve this Ticket ...") shows when RESOLVED is not a next move (CLOSED, CANCELLED, RESOLVED); the new tests fail without the `StaffTicketDetail.tsx` change
 - **AUTH-02**: #72: a Requester's forged requesterId/userId/ownerId/assigneeId is rejected (400) or ignored; Staff and Administrator `?userId=`/`ownerId`/`assigneeId`/`requesterId` on the Dashboard and My Actions is 400; a forged performedById is refused on create and on every Action PATCH route (edit, assignee to a different eligible Staff user, status) with 400 and exactly `fieldErrors.performedById`, the row unchanged; the same body without it then succeeds (200) and keeps the session user as performer, and a body requesterId never changes the Ticket owner; Staff endpoints 403 for Requesters
 - **CONC-02**: #72: 12 raced rounds, 60 s test timeout like CONC-01
 - **UI-02**: Ticket Status History added in #72: ordered from/to events with actor, empty and legacy note, Retry, paging both ways, 401 sign-in message, and a late earlier response never replacing a newer one
@@ -117,14 +119,10 @@ Rows not listed passed as written in the matrix, with no extra notes.
 style/responsive/accessibility/performance; #73: reviewed release/evidence.
 Complete dependencies in [issue-plan.md](issue-plan.md) before each issue.
 
-Server Vitest currently includes `tests/**/*.test.ts`. Client Vite test include
-currently names only Labs 2/3: in the first client implementation add Lab 4
-and restore Lab 1 inclusion so REG-01 genuinely runs all suites. Root Playwright
-projects currently match Labs 2/3 specifically: #72 adds lab4-desktop/tablet/
-mobile coverage for new spec files, preserving existing projects and avoiding
-duplicate desktop scenarios. Verify `--list` and logged per-file counts; do
-not assume a passing command includes files it never selected. No runner
-changes are made by the contract PR.
+Server Vitest includes `tests/**/*.test.ts`; the client Vite test include covers Labs 1 to 4 (the
+Lab 1 client test was re-enabled in #72); Playwright has a `lab4-desktop` project beside the Lab 2/3
+projects. Verify `--list` and logged per-file counts; do not assume a passing command includes
+files it never selected.
 
 As built in #72: Lab 4 specs run once in `lab4-desktop` and set 1280/820/390 px
 widths inside the spec (RESP-01, E2E-01), so no scenario runs three times.

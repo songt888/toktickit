@@ -1,8 +1,8 @@
 # Lab 4 Engineering Specification
 
 Status: Approved contract for [Issue #65](https://github.com/songt888/toktickit/issues/65)
-(PR #74, merged into `lab4-staging` as `6a36b0a` on 2026-10-30), implemented in PRs #75 and
-#77 to #83 (Issues #66 to #72). Contract date: 2026-10-05 (Asia/Bangkok).
+(PR #74, merged into `lab4-staging` as `6a36b0a` on 2026-10-30), implemented in PRs #77 to #83
+(Issues #66 to #72); PR #75 only untracked a PDF. Contract date: 2026-10-05 (Asia/Bangkok).
 Baseline: released `main` at `9313209d224592c9265bb8595aa7cc0f1336b9db`.
 
 Source: CPE334 Lab 4 handout, sections 1-13 and Answer Parts 1-9, supplied as
@@ -369,5 +369,5 @@ choices. In particular: mandatory Action assignment; shared Action revisions;
 audited completed-field corrections; at least one completed, no pending or
 unsettled-follow-up Action for resolution; 7-day rolling UTC windows; assignment
 defines current-user pending Actions; Admin reuses Staff Dashboard. The peer
-review must accept or amend these before #66 starts. Contract changes update
+review accepted or amended these in PR #74 before #66 started. Contract changes update
 schema/API/UI/test mappings together, never silently diverge during coding.

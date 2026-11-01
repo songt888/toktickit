@@ -56,7 +56,8 @@ The default `DATABASE_URL` connects to the Docker database above. Keep `server/.
 
 Initialize Prisma, apply the Lab 2, Lab 3 and Lab 4 migrations, and seed reference data, demo users and
 the Lab 4 fixtures. To sign in as a seeded user, supply a private initial password **on the first seed**:
-the seed creates each account once and never resets an existing account's password. Use a local
+the seed gives the password only to an account that does not exist yet or is still on the migration
+placeholder password, and never resets a password that has been set. Use a local
 password of at least 12 characters and do not commit it:
 
 ```bash
@@ -66,8 +67,9 @@ npx prisma migrate deploy
 LAB3_SEED_INITIAL_PASSWORD="<YOUR_LOCAL_PASSWORD>" npm run prisma:seed
 ```
 
-If you already seeded without a password, either reset the database and seed again with the command
-above, or have an Administrator set each user's password in User Management.
+If you already seeded without a password, run the command above again: the Lab 2/3 users and the two
+Lab 4 fixture users still on the migration placeholder password receive it, and accounts whose password
+was already set are left alone.
 
 The local demo accounts are `ari.suksan@example.com` (Requester),
 `nattakit.support@example.com` (IT Staff), and `lab.admin@example.com` (Administrator). They use the
@@ -75,8 +77,9 @@ initial password supplied to the seed and must change it at first sign-in. Do no
 accounts or passwords in a deployed environment.
 
 The seed is safe to run more than once. It creates four active categories, one inactive category
-fixture, six active related systems, one inactive related-system fixture, four active requesters,
-and one inactive requester fixture. The active categories are:
+fixture, six active related systems, one inactive related-system fixture, four active requesters
+(plus the Lab 4 fixture Requester `malee.newcomer@example.com`, so five), and one inactive requester
+fixture. The active categories are:
 
 - Account and Access
 - Hardware

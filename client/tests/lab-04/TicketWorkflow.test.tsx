@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import StaffTicketDetail from "../../src/StaffTicketDetail.js";
 import * as api from "../../src/api.js";
@@ -58,6 +58,22 @@ describe("Ticket workflow controls (UI-03)", () => {
     await open_(detail({ resolutionGate: open }));
     expect(screen.getByText("Completed Actions: 2")).toBeInTheDocument();
     expect(screen.getByText("Ready to resolve.")).toBeInTheDocument();
+  });
+
+  it("groups the readiness summary and hides the resolve hint when Resolved is not a next move", async () => {
+    await open_(detail({ resolutionGate: open }));
+    expect(screen.getByRole("group", { name: "Resolution readiness" })).toBeInTheDocument();
+    expect(screen.getByText("Ready to resolve.")).toBeInTheDocument();
+  });
+
+  it.each(["CLOSED", "CANCELLED", "RESOLVED"] as const)("shows no resolve hint on %s, with the gate met or not", async (currentStatus) => {
+    for (const gate of [open, blocked]) {
+      await open_(detail({ currentStatus, resolutionGate: gate }));
+      expect(screen.getByRole("group", { name: "Resolution readiness" })).toBeInTheDocument();
+      expect(screen.queryByText("Ready to resolve.")).not.toBeInTheDocument();
+      expect(screen.queryByText(/^To resolve this Ticket/)).not.toBeInTheDocument();
+      cleanup();
+    }
   });
 
   it("resolves when the gate is met and refreshes status and last-resolved time", async () => {

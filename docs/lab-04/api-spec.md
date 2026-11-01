@@ -274,7 +274,7 @@ search/filter/sort/page behavior and add:
 
 | Query | Validation and predicate |
 |---|---|
-| currentStatus | One of all eight Ticket enums (Requester currently only accepts NEW; expand in Lab 4) |
+| currentStatus | One of all eight Ticket enums (Requesters and Staff both accept all eight) |
 | statusGroup | active (BR-21) or resolved (RESOLVED/CLOSED); cannot combine with currentStatus |
 | updatedFrom / updatedTo | UTC ISO lower/upper inclusive bound on updatedAt; either optional; lower<=upper |
 | resolvedFrom / resolvedTo | Same bounds on lastResolvedAt; unknown/null dates do not match |

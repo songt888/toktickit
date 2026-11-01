@@ -95,7 +95,7 @@ production SLA; investigate failures rather than silently raising thresholds.
 Rows not listed passed as written in the matrix, with no extra notes.
 
 - **UNIT-05**: #72: server: exact bounds included and 1 ms either side excluded (compared in PostgreSQL), Bangkok-midnight case, offset-only ISO input, null legacy time never matches; client: UTC instants shown in Bangkok time across the date line
-- **DB-03**: #73: DB-03c checks that a Lab 4 fixture user still on the migration placeholder hash gets the initial password when the seed runs with one, like the Lab 3 users; it fails without the `seedLab4.ts` change
+- **DB-03**: #73: DB-03j checks that a Lab 4 fixture user still on the migration placeholder hash gets the initial password when the seed runs with one, like the Lab 3 users; it fails without the `seedLab4.ts` change
 - **UI-03**: #73: the readiness summary is a labelled group, and no resolve hint ("Ready to resolve." or "To resolve this Ticket ...") shows when RESOLVED is not a next move (CLOSED, CANCELLED, RESOLVED); the new tests fail without the `StaffTicketDetail.tsx` change
 - **AUTH-02**: #72: a Requester's forged requesterId/userId/ownerId/assigneeId is rejected (400) or ignored; Staff and Administrator `?userId=`/`ownerId`/`assigneeId`/`requesterId` on the Dashboard and My Actions is 400; a forged performedById is refused on create and on every Action PATCH route (edit, assignee to a different eligible Staff user, status) with 400 and exactly `fieldErrors.performedById`, the row unchanged; the same body without it then succeeds (200) and keeps the session user as performer, and a body requesterId never changes the Ticket owner; Staff endpoints 403 for Requesters
 - **CONC-02**: #72: 12 raced rounds, 60 s test timeout like CONC-01

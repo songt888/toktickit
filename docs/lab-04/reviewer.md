@@ -22,6 +22,30 @@ counted as approval.
 | [#82](https://github.com/songt888/toktickit/pull/82) Staff and Administrator Dashboard | [#71](https://github.com/songt888/toktickit/issues/71) | 3 | `f507afe` | `0bc02e5` |
 | [#83](https://github.com/songt888/toktickit/pull/83) Final regression, E2E, responsive, accessibility and performance | [#72](https://github.com/songt888/toktickit/issues/72) | 8 | `13dceb5` | `0512c04` |
 
+## Author verification (Issue #65, contract stage)
+
+Executed on 2026-10-05 (Asia/Bangkok) in the isolated contract worktree:
+
+- `python3 scripts/check-lab4-contract.py`: 24 ACs, 44 planned test IDs,
+  69 bidirectional mappings and local links valid (exit 0).
+- Prisma 5 validation of a temporary schema combining the existing schema,
+  proposed models, inverse relations and Ticket fields/index: valid (exit 0).
+  Validation used a dummy URL and did not connect to or migrate a database.
+- `npm run build` in server: TypeScript build passed (exit 0).
+- `npm run build` in client: TypeScript/Vite build passed (exit 0).
+- `git diff --check`: passed (exit 0); repeat before each commit.
+- Source comparison: all mandatory handout sections and Answer Parts 1-9 mapped
+  in tests.md; API/UI/model/status/gate/metric naming reviewed against the current
+  Lab 3 code. New runner/filter capabilities are explicitly marked as increments.
+
+Original workspace hash preservation and final staged-diff check are verified
+before commit/push. No Lab 4 feature tests, migration, SQL triggers or runtime
+gate/metrics have been executed; their matrix stays Planned. Builds validate
+the unchanged application baseline, not the proposed feature implementation.
+
+This block is kept as recorded on 2026-10-05, before PR #74 was reviewed. "Planned" and "proposed" here
+describe that date; the results since then are in [tests.md](tests.md).
+
 ## Reviews received and responses
 
 Each row is one formal review. "Response" is the change made before the next reviewed commit.
@@ -98,7 +122,7 @@ Each row is one formal review. "Response" is the change made before the next rev
 | `a982ad5` | Ticket Status History area missing in the client; tests that could not fail; `aria-required` and blue focus; PERF in plain `npm test`; `tests.md` overclaims; missing screenshots and checklist. | Added `TicketStatusHistory`, tests that fail without their fix, Zen Green focus, opt-in `npm run test:perf`, corrected docs and screenshots (`c764d20`). | CHANGES_REQUESTED |
 | `c764d20` | Status History Retry/paging/401 untested; theme focus and checkboxes still blue; PERF database and plans; stale docs. | Tests and 401 handling, theme fixes, per-run PERF database with EXPLAIN plans (`95f844a`). | CHANGES_REQUESTED |
 | `95f844a` | README code fence; CREATEDB note; long-text wrapping spots; grey Dashboard badges; `tests.md` mapping. | Fixed each, with a rendered badge check (`7e5df01`). | CHANGES_REQUESTED |
-| `7e5df01` | REG-01 counts; attachment and author wrapping; status badges; Dashboard priority badge; PATCH `performedById`. | One badge per Ticket status and priority in `statusBadge.ts` (the Dashboard IT-priority badge now uses it), wrapping for attachment and author names, a PATCH `performedById` test, client counts 23/128 (`3f6c05f`). | CHANGES_REQUESTED |
+| `7e5df01` | REG-01 counts; attachment name wrapping; status badges; Dashboard priority badge; PATCH `performedById`. | One badge per Ticket status and priority in `statusBadge.ts` (the Dashboard IT-priority badge now uses it), wrapping for attachment and author names, a PATCH `performedById` test, client counts 23/128 (`3f6c05f`). | CHANGES_REQUESTED |
 | `3f6c05f` | Long names pushed Queue columns off-screen at 1280 px; RESP-01 measured before rows loaded; AUTH-02 `/assignee` case could not fail; CONC-02 had no timeout. | Wrapping and row waits; AUTH-02 with exact `fieldErrors`; 60 s timeout; root cause of server flakes found and fixed (Supertest bound to 127.0.0.1) (`280ee72`, then a self-check in `92d64ec`). | CHANGES_REQUESTED |
 | `92d64ec` | Apply filters cleared the scope before the scoped screenshots; `ui-spec.md` wording; a wrong repeat count. | Scoped view measured before searching; Queue fits at 992 px; wording and count fixed (`aef48ff`). | CHANGES_REQUESTED |
 | `aef48ff` | The WAITING row appeared by luck; My Tickets WAITING badge never measured; console-error checklist item open. | Own WAITING/IN_PROGRESS fixtures; shared badge wrap in My Tickets; `guardedTest.ts` console/page-error check (`005dd8e`). | CHANGES_REQUESTED |
@@ -110,14 +134,15 @@ Each row is one formal review. "Response" is the change made before the next rev
 | Reviewed commit | Concern | Response | State |
 |---|---|---|---|
 | `6909619` | `ai-use.md` My Reflection a placeholder and a local path; formal prompts adding wording never asked, count 8 vs 9; README seeds without a password first; `tests.md` checker note, lost `)`, "Planned" headings; stale text in `specification.md` and `issue-plan.md`; PR #79 "Ready to resolve." unfixed. | My Reflection written; prompts labelled as a summary; README seed carries the password; `tests.md` note, `)` and headings fixed; stale text fixed; "Ready to resolve." fixed in `741c12f` and `bb67a29`. | CHANGES_REQUESTED |
-| `bb67a29` | `ai-use.md` merge wording, AC-12 timing, rerun claim, Codex prompts and unquoted prompts; README malee/kittipong cannot sign in and five requesters; `role="group"`, the "To resolve..." hint on CLOSED/CANCELLED and a client test; `reviewer.md` partner responses, #83 transaction finding, Author verification, #95 merged, round 1; stale text in several files; PR body. | `ai-use.md`: merge wording, AC-12 timing and counts fixed, the two Codex prompts and every prompt quoted exactly; README: five Requesters and the Lab 4 seed now gives the password to the two fixture users still on the placeholder (DB-03c); `StaffTicketDetail.tsx`: `role="group"`, no resolve hint on CLOSED/CANCELLED, client tests; this file: partner responses, the #83 transaction finding, Author verification, #95 merged, round 1 and the `7e5df01` row; stale text fixed in `issue-plan.md`, `specification.md`, `api-spec.md`, `tests.md`; `tests.md` 4.1 rerun on this branch. | CHANGES_REQUESTED |
+| `bb67a29` | `ai-use.md` merge wording, AC-12 timing, rerun claim, Codex prompts and unquoted prompts; README malee/kittipong cannot sign in and five requesters; `role="group"`, the "To resolve..." hint on CLOSED/CANCELLED and a client test; `reviewer.md` partner responses, #83 transaction finding, Author verification, #95 merged, round 1; stale text in several files; PR body. | `ai-use.md`: merge wording, AC-12 timing and counts fixed, the two Codex prompts added and the prompts quoted; README: five Requesters and the Lab 4 seed now gives the password to the two fixture users still on the placeholder (DB-03j); `StaffTicketDetail.tsx`: `role="group"`, no resolve hint on CLOSED/CANCELLED, client tests; this file: partner responses, the #83 transaction finding, Author verification, #95 merged, round 1 and the `7e5df01` row; stale text fixed in `issue-plan.md`, `specification.md`, `api-spec.md`, `tests.md`; `tests.md` 4.1 rerun on this branch. | CHANGES_REQUESTED |
+| `847a465` | My Reflection AI-drafted and missing the spec agent; ai-use "exact" while #2/#8 were excerpt/description, missing outcomes for #1/#3/#6/#7, a local path; ai-use 4.1 SHA disagreed with tests.md; issue-plan future tense; a second DB-03c test id; the `7e5df01` row named author wrapping; the #65 Author verification block dropped. | Prompt table marks its exceptions, #8 quotes the pasted review, outcomes added, path removed; SHA `bfc9e87` in both files; issue-plan tense fixed; new test renamed DB-03j; row corrected; #65 block restored. My Reflection is left for the author to rewrite. | CHANGES_REQUESTED |
 
 ## Reviews performed for partner
 
 All on [stickkersz/toktickit](https://github.com/stickkersz/toktickit), posted from the songt888
 account after I read and agreed with each comment. I read the code and the diff and checked every fix
 commit against my own comment; in most reviews I say that I did not rerun the suites and relied on the
-counts in the PR (see "Author verification" below).
+counts in the PR (see "How I verified partner fixes" below).
 
 | PR | Reviewed commit | My finding | Partner response | My recheck and outcome |
 |---|---|---|---|---|
@@ -138,7 +163,7 @@ counts in the PR (see "Author verification" below).
 | [#96](https://github.com/stickkersz/toktickit/pull/96) Final screen pass | `e72c227` | `ChangePassword.tsx` did not fully reset after success, leaving field errors under the success banner; the UI-20 row did not say what its test checks. | Fixed in `b2c17ba`: full reset, a test that fails without it, UI-20 row corrected. | Rechecked `b2c17ba`; APPROVED; merged as `4d2a481`. |
 | [#95](https://github.com/stickkersz/toktickit/pull/95) Final audit | `4933bd0`, `5af3a6f`, `0d71f75` | Round 1: my #83 row out of date, #96 missing, client count 341 vs 345, comment placement. Round 2: the #83 fix-commit list counted `92d64ec`, a QA commit, as an answer. Round 3: #83 had merged, so the row was stale again. | Fixed in `5af3a6f`, `0d71f75` and `e7a3813`. | Rechecked `e7a3813`; APPROVED; merged as `7e8e56e` (2026-11-01). |
 
-### Author verification
+### How I verified partner fixes
 
 - Every row above was checked against the GitHub review, comment and merge data for that PR (reviewed commit, state, merge SHA).
 - For each fix I read the new commit against the comment I had made. Most of my reviews say "I did not rerun the suites" and rely on the counts the author reported in the PR; I did not rerun them.
@@ -146,7 +171,7 @@ counts in the PR (see "Author verification" below).
 
 ## Pending for #73
 
-- This documentation PR (#84) into `lab4-staging`: two rounds of changes requested so far; approval pending.
+- This documentation PR (#84) into `lab4-staging`: three rounds of changes requested so far; approval pending.
 - Release PR `lab4-staging` -> `main`: not yet opened.
 - Final-main verification follow-up PR: not yet opened.
 

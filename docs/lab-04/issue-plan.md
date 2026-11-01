@@ -70,8 +70,8 @@ Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
 
 ## Verification and evidence plan
 
-Tests will live in `server/tests/lab-04/`, `client/tests/lab-04/` and
-`e2e/lab-04/`. Required baseline files include:
+Tests live in `server/tests/lab-04/`, `client/tests/lab-04/` and
+`e2e/lab-04/`. The required baseline files all exist:
 
 - `server/tests/lab-04/actions-taken.api.test.ts`
 - `server/tests/lab-04/ticket-workflow.api.test.ts`
@@ -85,17 +85,16 @@ Tests will live in `server/tests/lab-04/`, `client/tests/lab-04/` and
 - `e2e/lab-04/ticket-resolution.spec.ts`
 - `e2e/lab-04/dashboards.spec.ts`
 
-The Issues additionally plan migration/seed preservation, independent transition
+The Issues also added migration/seed preservation, independent transition
 tests, authorization, concurrent/stale writes, retry/double-submit,
-performance-smoke, responsive and accessibility checks. The paths were planned in
-this index; the results that exist are recorded in [tests.md](tests.md), where only DOC-01 and
+performance-smoke, responsive and accessibility checks. The results that exist are recorded in [tests.md](tests.md), where only DOC-01 and
 RELEASE-01 are still Pending.
 
-Keep screenshots under `artifacts/lab-04/screenshots/`, grouped by
-`staff-dashboard/`, `requester-dashboard/` and `actions-taken/`, and index
-workflow/regression evidence accurately. Capture meaningful states and network /
-requester context rather than filenames alone. Inspect all major screens at
-1280px, 820px and 390px with keyboard access and overflow checks.
+Screenshots are kept under `artifacts/lab-04/screenshots/`, grouped by screen
+(for example `staff-dashboard/`, `requester-dashboard/` and `actions-taken/`), with a captioned index in
+[`artifacts/lab-04/screenshots/README.md`](../../artifacts/lab-04/screenshots/README.md) that names role,
+viewport and state. Every major screen is checked at 1280px, 820px and 390px for keyboard access and
+overflow (RESP-01, A11Y-01).
 
 ## Branch and release rules
 

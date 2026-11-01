@@ -37,7 +37,7 @@ describe("Lab 4 seed (DB-03)", () => {
     }
   });
 
-  it("DB-03c a Lab 4 fixture user left on the placeholder hash gets the initial password on the next seed", async () => {
+  it("DB-03j a Lab 4 fixture user left on the placeholder hash gets the initial password on the next seed", async () => {
     const original = await prisma.user.findUniqueOrThrow({ where: { email: emptyRequesterSeed.email } });
     try {
       await prisma.user.update({ where: { id: original.id }, data: { passwordHash: MIGRATION_PLACEHOLDER_HASH } });

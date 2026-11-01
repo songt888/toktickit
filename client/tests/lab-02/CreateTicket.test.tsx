@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { openMyTickets } from "../openMyTickets.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -51,6 +52,7 @@ async function openCreateTicket() {
   });
 
   render(<App />);
+  await openMyTickets();
   await screen.findByRole("heading", { name: "My Tickets" });
   await user.click(screen.getByRole("link", { name: "Create Ticket" }));
   await screen.findByRole("heading", { name: "Create Ticket" });

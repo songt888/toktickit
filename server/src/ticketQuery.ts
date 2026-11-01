@@ -1,4 +1,5 @@
 import type { Prisma, TicketPriority, TicketStatus } from "@prisma/client";
+import { parseOffsetDate } from "./actionValidation.js";
 
 export const ticketSortFields = [
   "ticketNumber",
@@ -12,12 +13,25 @@ export type TicketPageSize = (typeof ticketPageSizes)[number];
 
 const MAX_SIGNED_INT32 = 2_147_483_647;
 
-export type TicketListQuery = {
+// Lab 4 drill-down filters (api-spec section 6); shared by the Requester list and the Staff Queue.
+export type DrillDownQuery = {
+  currentStatus?: TicketStatus;
+  statusGroup?: "active" | "resolved";
+  updatedFrom?: Date;
+  updatedTo?: Date;
+  resolvedFrom?: Date;
+  resolvedTo?: Date;
+};
+
+// BR-21 active set; "resolved" is RESOLVED/CLOSED (specification section 7).
+export const activeTicketStatuses: TicketStatus[] = ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "REOPENED"];
+export const resolvedTicketStatuses: TicketStatus[] = ["RESOLVED", "CLOSED"];
+
+export type TicketListQuery = DrillDownQuery & {
   search?: string;
   categoryId?: number;
   relatedSystemId?: number;
   requestedPriority?: TicketPriority;
-  currentStatus?: "NEW";
   sort: TicketSortField;
   order: "asc" | "desc";
   page: number;
@@ -47,6 +61,45 @@ function readPositiveInteger(query: Record<string, unknown>, key: string): numbe
   return Number.isSafeInteger(value) && value > 0 && value <= MAX_SIGNED_INT32 ? value : null;
 }
 
+// Null means the query is invalid (400); unknown/conflicting values never fall back silently.
+export function parseDrillDown(query: Record<string, unknown>): DrillDownQuery | null {
+  const currentStatus = readString(query, "currentStatus");
+  const statusGroup = readString(query, "statusGroup");
+  if (currentStatus === null || statusGroup === null) return null;
+  if (currentStatus !== undefined && !ticketStatuses.includes(currentStatus as TicketStatus)) return null;
+  if (statusGroup !== undefined && statusGroup !== "active" && statusGroup !== "resolved") return null;
+  if (currentStatus !== undefined && statusGroup !== undefined) return null;
+
+  const dates: Partial<Record<"updatedFrom" | "updatedTo" | "resolvedFrom" | "resolvedTo", Date>> = {};
+  for (const key of ["updatedFrom", "updatedTo", "resolvedFrom", "resolvedTo"] as const) {
+    if (query[key] === undefined) continue;
+    const date = parseOffsetDate(query[key]);
+    if (!date) return null;
+    dates[key] = date;
+  }
+  if (dates.updatedFrom && dates.updatedTo && dates.updatedFrom > dates.updatedTo) return null;
+  if (dates.resolvedFrom && dates.resolvedTo && dates.resolvedFrom > dates.resolvedTo) return null;
+
+  return {
+    ...(currentStatus !== undefined ? { currentStatus: currentStatus as TicketStatus } : {}),
+    ...(statusGroup !== undefined ? { statusGroup: statusGroup as "active" | "resolved" } : {}),
+    ...dates,
+  };
+}
+
+// Both bounds inclusive; a null lastResolvedAt never matches a resolved bound.
+export function drillDownWhere(options: DrillDownQuery): Prisma.TicketWhereInput {
+  const range = (from?: Date, to?: Date) => ({ ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) });
+  return {
+    ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
+    ...(options.statusGroup
+      ? { currentStatus: { in: options.statusGroup === "active" ? activeTicketStatuses : resolvedTicketStatuses } }
+      : {}),
+    ...(options.updatedFrom || options.updatedTo ? { updatedAt: range(options.updatedFrom, options.updatedTo) } : {}),
+    ...(options.resolvedFrom || options.resolvedTo ? { lastResolvedAt: range(options.resolvedFrom, options.resolvedTo) } : {}),
+  };
+}
+
 function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, "\\$&");
 }
@@ -60,7 +113,7 @@ export function parseTicketListQuery(query: Record<string, unknown>): QueryParse
   const sort = readString(query, "sort");
   const order = readString(query, "order");
   const requestedPriority = readString(query, "requestedPriority");
-  const currentStatus = readString(query, "currentStatus");
+  const drillDown = parseDrillDown(query);
 
   if (
     search === null ||
@@ -71,7 +124,7 @@ export function parseTicketListQuery(query: Record<string, unknown>): QueryParse
     sort === null ||
     order === null ||
     requestedPriority === null ||
-    currentStatus === null
+    drillDown === null
   ) {
     return { error: "Invalid query parameters" };
   }
@@ -91,10 +144,6 @@ export function parseTicketListQuery(query: Record<string, unknown>): QueryParse
   ) {
     return { error: "Invalid query parameters" };
   }
-  if (currentStatus !== undefined && currentStatus !== "NEW") {
-    return { error: "Invalid query parameters" };
-  }
-
   return {
     value: {
       ...(search ? { search: search.trim() } : {}),
@@ -103,7 +152,7 @@ export function parseTicketListQuery(query: Record<string, unknown>): QueryParse
       ...(requestedPriority !== undefined
         ? { requestedPriority: requestedPriority as TicketPriority }
         : {}),
-      ...(currentStatus !== undefined ? { currentStatus } : {}),
+      ...drillDown,
       sort: (sort ?? "updatedAt") as TicketSortField,
       order: (order ?? "desc") as "asc" | "desc",
       page: page ?? 1,
@@ -123,7 +172,7 @@ export function buildTicketWhere(
     ...(options.categoryId ? { categoryId: options.categoryId } : {}),
     ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
     ...(options.requestedPriority ? { requestedPriority: options.requestedPriority } : {}),
-    ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
+    ...drillDownWhere(options),
     ...(search
       ? {
           OR: [
@@ -152,13 +201,12 @@ export const staffTicketSortFields = [
 ] as const;
 export type StaffTicketSortField = (typeof staffTicketSortFields)[number];
 
-export type StaffTicketListQuery = {
+export type StaffTicketListQuery = DrillDownQuery & {
   search?: string;
   categoryId?: number;
   relatedSystemId?: number;
   requestedPriority?: TicketPriority;
   itPriority?: TicketPriority;
-  currentStatus?: TicketStatus;
   ownerId?: number | null;
   sort: StaffTicketSortField;
   order: "asc" | "desc";
@@ -166,8 +214,8 @@ export type StaffTicketListQuery = {
   pageSize: TicketPageSize;
 };
 
-const ticketPriorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
-const ticketStatuses: TicketStatus[] = [
+export const ticketPriorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+export const ticketStatuses: TicketStatus[] = [
   "NEW",
   "OPEN",
   "IN_PROGRESS",
@@ -188,8 +236,8 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
   const order = readString(query, "order");
   const requestedPriority = readString(query, "requestedPriority");
   const itPriority = readString(query, "itPriority");
-  const currentStatus = readString(query, "currentStatus");
   const ownerId = readString(query, "ownerId");
+  const drillDown = parseDrillDown(query);
 
   if (
     search === null ||
@@ -201,8 +249,8 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
     order === null ||
     requestedPriority === null ||
     itPriority === null ||
-    currentStatus === null ||
-    ownerId === null
+    ownerId === null ||
+    drillDown === null
   ) {
     return { error: "Invalid query parameters" };
   }
@@ -218,8 +266,7 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
   }
   if (
     (requestedPriority !== undefined && !ticketPriorities.includes(requestedPriority as TicketPriority)) ||
-    (itPriority !== undefined && !ticketPriorities.includes(itPriority as TicketPriority)) ||
-    (currentStatus !== undefined && !ticketStatuses.includes(currentStatus as TicketStatus))
+    (itPriority !== undefined && !ticketPriorities.includes(itPriority as TicketPriority))
   ) {
     return { error: "Invalid query parameters" };
   }
@@ -249,7 +296,7 @@ export function parseStaffTicketListQuery(query: Record<string, unknown>): Staff
         ? { requestedPriority: requestedPriority as TicketPriority }
         : {}),
       ...(itPriority !== undefined ? { itPriority: itPriority as TicketPriority } : {}),
-      ...(currentStatus !== undefined ? { currentStatus: currentStatus as TicketStatus } : {}),
+      ...drillDown,
       ...(parsedOwnerId !== undefined ? { ownerId: parsedOwnerId } : {}),
       sort: (sort ?? "updatedAt") as StaffTicketSortField,
       order: (order ?? "desc") as "asc" | "desc",
@@ -269,7 +316,7 @@ export function buildStaffTicketWhere(
     ...(options.relatedSystemId ? { relatedSystemId: options.relatedSystemId } : {}),
     ...(options.requestedPriority ? { requestedPriority: options.requestedPriority } : {}),
     ...(options.itPriority ? { itPriority: options.itPriority } : {}),
-    ...(options.currentStatus ? { currentStatus: options.currentStatus } : {}),
+    ...drillDownWhere(options),
     ...(options.ownerId !== undefined ? { ownerId: options.ownerId } : {}),
     ...(search
       ? {

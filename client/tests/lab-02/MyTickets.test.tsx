@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { openMyTickets as leaveDashboard } from "../openMyTickets.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -79,11 +80,12 @@ function mockReferences() {
   vi.spyOn(api, "getTicketComments").mockResolvedValue([]);
 }
 
-async function openMyTickets() {
+async function openMyTickets(options?: { waitForList?: boolean }) {
   const user = userEvent.setup();
   mockReferences();
 
   render(<App />);
+  await leaveDashboard(options);
   await screen.findByRole("heading", { name: "My Tickets" });
 
   return user;
@@ -100,7 +102,7 @@ describe("My Tickets UI", () => {
     expect((await screen.findAllByText("Hardware")).length).toBeGreaterThan(0);
     expect((await screen.findAllByText("Campus Wi-Fi")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("HIGH", { selector: "span.badge.text-bg-warning" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("NEW", { selector: "span.badge.text-bg-primary" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("NEW", { selector: "span.badge.bg-success-subtle" }).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Create Ticket" })).toBeInTheDocument();
 
     await user.click(screen.getAllByRole("button", { name: "View details" })[0]);
@@ -224,7 +226,7 @@ describe("My Tickets UI", () => {
     const getTickets = vi.spyOn(api, "getMyTickets")
       .mockReturnValueOnce(firstRequest.promise)
       .mockReturnValueOnce(secondRequest.promise);
-    const user = await openMyTickets();
+    const user = await openMyTickets({ waitForList: false });
 
     await waitFor(() => expect(getTickets).toHaveBeenCalledTimes(1));
     await user.type(screen.getByLabelText("Search Tickets"), "vpn");

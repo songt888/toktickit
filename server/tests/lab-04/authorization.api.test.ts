@@ -1,0 +1,217 @@
+import { randomUUID } from "node:crypto";
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { app } from "../../src/app.js";
+import { getPrisma } from "../../src/prisma.js";
+import { createAction, createBody, createWorld, send, ticketStamp } from "./actionFixtures.js";
+
+const prisma = getPrisma();
+const world = await createWorld("auth");
+let staff: { id: number; cookie: string };
+let owner: { id: number; cookie: string };
+let other: { id: number; cookie: string };
+
+beforeAll(async () => {
+  [staff, owner, other] = await Promise.all([
+    world.user("staff", "IT_STAFF"), world.user("owner", "REQUESTER"), world.user("other", "REQUESTER"),
+  ]);
+});
+afterAll(() => world.cleanup());
+
+describe("Actions Taken authorization (AUTH-01, Action endpoints)", () => {
+  it("requires a valid session and a completed password change", async () => {
+    const ticket = await world.ticket(owner.id);
+    expect((await request(app).get(`/api/tickets/${ticket.id}/actions-taken`)).status).toBe(401);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: true } });
+    expect((await send("get", `/api/tickets/${ticket.id}/actions-taken`, other.cookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: false } });
+  });
+
+  it("lets the owning Requester read all shared work, but every write is 403 and writes nothing", async () => {
+    const ticket = await world.ticket(owner.id);
+    const { action } = await createAction(ticket.id, staff.cookie, { followUpRequired: true, followUpNote: "Call back" });
+    await prisma.internalNote.create({ data: { ticketId: ticket.id, authorId: staff.id, content: "PRIVATE-STAFF-NOTE" } });
+
+    for (const url of ["/actions-taken", `/actions-taken/${action.id}`, `/actions-taken/${action.id}/revisions`, "/status-history"]) {
+      const response = await send("get", `/api/tickets/${ticket.id}${url}`, owner.cookie);
+      expect(response.status, url).toBe(200);
+      expect(JSON.stringify(response.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|storedName/);
+    }
+    const stamp = await ticketStamp(ticket.id);
+    const writes: Array<[string, Record<string, unknown>]> = [
+      ["post:", createBody(stamp)],
+      [`patch:/${action.id}`, { mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1, description: "Requester edit" }],
+      [`patch:/${action.id}/assignee`, { mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1, assigneeId: staff.id }],
+      [`patch:/${action.id}/status`, { mutationId: randomUUID(), ticketUpdatedAt: stamp, version: 1, status: "COMPLETED", result: "Done" }],
+    ];
+    for (const [key, body] of writes) {
+      const [method, rest] = key.split(":") as ["post" | "patch", string];
+      const response = await send(method, `/api/tickets/${ticket.id}/actions-taken${rest}`, owner.cookie, body);
+      expect(response.status, key).toBe(403);
+    }
+    expect(await prisma.actionTakenRevision.count({ where: { actionId: action.id } })).toBe(1);
+    expect(await ticketStamp(ticket.id)).toBe(stamp);
+  });
+
+  it("answers another Requester's reads and writes with 404, exactly like a missing Ticket", async () => {
+    const ticket = await world.ticket(owner.id);
+    const { action } = await createAction(ticket.id, staff.cookie);
+    const missing = 2_147_483_000;
+    for (const url of ["/actions-taken", `/actions-taken/${action.id}`, `/actions-taken/${action.id}/revisions`, "/status-history"]) {
+      const cross = await send("get", `/api/tickets/${ticket.id}${url}`, other.cookie);
+      const absent = await send("get", `/api/tickets/${missing}${url}`, other.cookie);
+      expect([cross.status, cross.body]).toEqual([absent.status, absent.body]);
+      expect(cross.status).toBe(404);
+    }
+    const write = await send("post", `/api/tickets/${ticket.id}/actions-taken`, other.cookie, createBody(await ticketStamp(ticket.id)));
+    expect(write.status).toBe(404);
+    expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(1);
+    expect((await send("get", `/api/tickets/abc/actions-taken`, staff.cookie)).status).toBe(400);
+  });
+
+  it("rejects a deactivated Staff session before any write", async () => {
+    const ticket = await world.ticket(owner.id);
+    const leaving = await world.user("leaving", "IT_STAFF");
+    await prisma.user.update({ where: { id: leaving.id }, data: { isActive: false } });
+    const response = await send("post", `/api/tickets/${ticket.id}/actions-taken`, leaving.cookie, createBody(await ticketStamp(ticket.id)));
+    expect(response.status).toBe(401);
+    expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(0);
+  });
+});
+
+describe("Requester Dashboard authorization (AUTH-01, Requester Dashboard)", () => {
+  it("needs a session, a completed password change and the Requester role", async () => {
+    const admin = await world.user("admin", "ADMINISTRATOR");
+    expect((await request(app).get("/api/dashboard/requester")).status).toBe(401);
+    for (const user of [staff, admin]) expect((await send("get", "/api/dashboard/requester", user.cookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: true } });
+    expect((await send("get", "/api/dashboard/requester", other.cookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: other.id }, data: { mustChangePassword: false } });
+  });
+
+  it("scopes counts and lists to the session, ignores or rejects another Requester's id, and leaks no private fields", async () => {
+    const requester = await world.user("dash-owner", "REQUESTER");
+    const mine = await world.ticket(requester.id);
+    const theirs = await world.ticket(other.id);
+    await prisma.internalNote.create({ data: { ticketId: mine.id, authorId: staff.id, content: "PRIVATE-STAFF-NOTE" } });
+
+    const dashboard = await send("get", "/api/dashboard/requester", requester.cookie);
+    expect(dashboard.body.metrics.openTickets).toBe(1);
+    expect(dashboard.body.recentTickets.map((item: { id: number }) => item.id)).toEqual([mine.id]);
+    expect(JSON.stringify(dashboard.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|description/);
+    expect((await send("get", `/api/dashboard/requester?requesterId=${other.id}`, requester.cookie)).status).toBe(400);
+
+    const list = await send("get", `/api/tickets?requesterId=${other.id}&pageSize=50`, requester.cookie);
+    expect(list.body.items.map((item: { id: number }) => item.id)).toEqual([mine.id]);
+    expect(list.body.items.map((item: { id: number }) => item.id)).not.toContain(theirs.id);
+  });
+
+  it("rejects a deactivated Requester session", async () => {
+    const requester = await world.user("dash-inactive", "REQUESTER");
+    await prisma.user.update({ where: { id: requester.id }, data: { isActive: false } });
+    expect((await send("get", "/api/dashboard/requester", requester.cookie)).status).toBe(401);
+  });
+});
+
+describe("Staff Dashboard authorization (AUTH-01, Staff Dashboard)", () => {
+  const endpoints = ["/api/dashboard/staff", "/api/staff/actions-taken"];
+
+  it("needs a session, a completed password change and a Staff or Administrator role", async () => {
+    const fresh = await world.user("dash-staff-gate", "IT_STAFF");
+    for (const url of endpoints) {
+      expect((await request(app).get(url)).status, url).toBe(401);
+      expect((await send("get", url, owner.cookie)).status, url).toBe(403);
+    }
+    await prisma.user.update({ where: { id: fresh.id }, data: { mustChangePassword: true } });
+    for (const url of endpoints) expect((await send("get", url, fresh.cookie)).status, url).toBe(403);
+    await prisma.user.update({ where: { id: fresh.id }, data: { isActive: false } });
+    for (const url of endpoints) expect((await send("get", url, fresh.cookie)).status, url).toBe(401);
+  });
+
+  it("shows only the session user's Actions, rejects another user's id, and leaks no private fields", async () => {
+    const admin = await world.user("dash-admin", "ADMINISTRATOR");
+    const ticket = await world.ticket(owner.id);
+    await createAction(ticket.id, staff.cookie, { description: "Staff task", assigneeId: staff.id });
+    await prisma.internalNote.create({ data: { ticketId: ticket.id, authorId: staff.id, content: "PRIVATE-STAFF-NOTE" } });
+
+    const adminView = await send("get", "/api/dashboard/staff", admin.cookie);
+    expect([adminView.body.metrics.myActions, adminView.body.myActions]).toEqual([0, []]);
+    expect((await send("get", "/api/staff/actions-taken", admin.cookie)).body.items).toEqual([]);
+    expect((await send("get", `/api/staff/actions-taken?assigneeId=${staff.id}`, admin.cookie)).status).toBe(400);
+    expect((await send("get", `/api/dashboard/staff?assigneeId=${staff.id}`, admin.cookie)).status).toBe(400);
+
+    const staffView = await send("get", "/api/dashboard/staff", staff.cookie);
+    expect(staffView.body.myActions.map((item: { ticketId: number }) => item.ticketId)).toContain(ticket.id);
+    expect(JSON.stringify(staffView.body)).not.toMatch(/PRIVATE-STAFF-NOTE|email|passwordHash|tokenHash|storedName/);
+  });
+});
+
+describe("Session-derived scope cannot be forged (AUTH-02)", () => {
+  it("a Requester cannot widen their scope or reach operational data by sending someone else's id", async () => {
+    const mine = await world.ticket(owner.id);
+    const theirs = await world.ticket(other.id);
+    for (const key of ["requesterId", "userId", "ownerId", "assigneeId"]) {
+      expect((await send("get", `/api/dashboard/requester?${key}=${other.id}`, owner.cookie)).status, key).toBe(400);
+      const list = await send("get", `/api/tickets?${key}=${other.id}&pageSize=50`, owner.cookie);
+      const ids = list.body.items.map((item: { id: number }) => item.id);
+      expect(ids, key).toContain(mine.id);
+      expect(ids, key).not.toContain(theirs.id);
+    }
+    for (const url of ["/api/dashboard/staff", "/api/staff/actions-taken", "/api/staff/tickets", `/api/staff/tickets/${theirs.id}`]) {
+      expect((await send("get", url, owner.cookie)).status, url).toBe(403);
+    }
+  });
+
+  it("Staff and Administrators cannot read another user's Dashboard or My Actions by sending their id", async () => {
+    const admin = await world.user("forge-admin", "ADMINISTRATOR");
+    for (const user of [staff, admin]) {
+      for (const key of ["userId", "ownerId", "assigneeId", "requesterId"]) {
+        for (const url of [`/api/dashboard/staff?${key}=${other.id}`, `/api/staff/actions-taken?${key}=${other.id}`]) {
+          expect((await send("get", url, user.cookie)).status, url).toBe(400);
+        }
+      }
+    }
+  });
+
+  it("a new Ticket belongs to the session Requester whatever requesterId the body carries", async () => {
+    const category = await prisma.category.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });
+    const system = await prisma.relatedSystem.findFirstOrThrow({ where: { isActive: true }, orderBy: { id: "asc" } });
+    const response = await send("post", "/api/tickets", owner.cookie, {
+      requesterId: other.id, categoryId: category.id, relatedSystemId: system.id, summary: "Forged owner", description: "Body names another Requester.", requestedPriority: "LOW",
+    });
+    // The body field is ignored; ownership is taken from the session.
+    expect(response.status).toBe(201);
+    world.track(response.body.id);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: response.body.id } })).requesterId).toBe(owner.id);
+  });
+
+  it("an Action's performer comes from the session; a forged performer or another user's Action list is refused", async () => {
+    const ticket = await world.ticket(owner.id);
+    const forged = await send("post", `/api/tickets/${ticket.id}/actions-taken`, staff.cookie, createBody(await ticketStamp(ticket.id), { performedById: other.id }));
+    expect(forged.status).toBe(400);
+    expect(forged.body.fieldErrors).toEqual({ performedById: "This field cannot be set here." });
+    expect(await prisma.actionTaken.count({ where: { ticketId: ticket.id } })).toBe(0);
+
+    const { action } = await createAction(ticket.id, staff.cookie);
+    expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById).toBe(staff.id);
+    // Every PATCH route refuses a forged performer, for that field alone: the same request without it succeeds.
+    const otherStaff = await world.user("forge-staff-2", "IT_STAFF");
+    for (const [route, extra] of [["", { description: "Edited by staff" }], ["/assignee", { assigneeId: otherStaff.id }], ["/status", { status: "IN_PROGRESS" }]] as const) {
+      const name = route || "edit";
+      const before = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
+      const url = `/api/tickets/${ticket.id}/actions-taken/${action.id}${route}`;
+      const body = { ticketUpdatedAt: await ticketStamp(ticket.id), version: before.version, ...extra };
+      const forgedPatch = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID(), performedById: other.id });
+      expect(forgedPatch.status, name).toBe(400);
+      expect(forgedPatch.body.fieldErrors, name).toEqual({ performedById: "This field cannot be set here." });
+      const after = await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } });
+      expect(after, name).toEqual(before);
+
+      const honest = await send("patch", url, staff.cookie, { ...body, mutationId: randomUUID() });
+      expect(honest.status, `${name} without performedById`).toBe(200);
+      expect((await prisma.actionTaken.findUniqueOrThrow({ where: { id: action.id } })).performedById, name).toBe(staff.id);
+    }
+    expect((await send("get", `/api/staff/actions-taken?assigneeId=${staff.id}`, staff.cookie)).status).toBe(400);
+    expect((await send("get", "/api/dashboard/requester", staff.cookie)).status).toBe(403);
+  });
+});

@@ -144,6 +144,86 @@ Final submission evidence uses the exact headings `Answer Part 1` through
 Kanban evidence, traceable test results from `main`, and the completed visual
 checklist.
 
+## Lab 4 - Actions Taken, Dashboards, and Final Regression
+
+Lab 4 extends the completed authenticated Lab 3 product with multiple Actions
+Taken per Ticket, final Ticket workflow/resolution rules and role-specific
+dashboards. Existing Users, Tickets, Attachments, Public Comments and Internal
+Notes must remain valid, and earlier permitted behavior must keep working.
+
+Start by updating this workflow, defining every Issue and adding every Issue to
+the GitHub Project in `Backlog`. Each Issue must include Scope (and exclusions),
+Acceptance Criteria, Dependencies, Planned tests, Branch name and Definition of
+Done. Complete the engineering contract and obtain teammate approval before
+feature implementation; the issue plan is not an approved engineering contract.
+
+The planned Lab 4 Issue sequence is:
+
+```text
+Issue 1: Engineering contract and test plan
+-> Issue 2: Actions Taken data foundation, migration and seed
+-> Issue 3: Actions Taken API, authorization and lifecycle
+-> Issue 4: Actions Taken UI and requester read-only visibility
+-> Issue 5: Final Ticket workflow and resolution gate
+-> Issue 6: Requester Dashboard API and UI
+-> Issue 7: Staff/Admin Dashboard API and UI
+-> Issue 8: Final regression, E2E, responsive and accessibility hardening
+-> Issue 9: Documentation, evidence and reviewed release
+```
+
+Follow the numbered sequence and each Issue's dependencies. Wait for the
+teammate's formal approval and merge before starting the next implementation
+Issue. All cards start in Backlog; move only the active Issue through the
+existing Kanban statuses and update it as work progresses.
+
+Contract decisions that must be resolved before coding:
+
+- Action creator/performed-by versus assignee, eligible active assignees,
+  assignment, editing, Action statuses, completion and cancellation.
+- The precise append-only scope: reconcile editable Actions with the rubric's
+  immutable-history requirement rather than silently choosing an audit model.
+- The full permitted Ticket transition matrix, exact backend resolution gate,
+  legacy Tickets with zero Actions and concurrent Action/workflow changes.
+- Authoritative dashboard metric queries, current-user Actions Taken scope,
+  timezone/date boundaries, zero states, bounded lists and drill-down queries.
+- Server-side authorization, Requester-owned read-only Actions, safe errors,
+  stale conflicts, duplicate/retry behavior and recoverable draft preservation.
+
+At least two database decisions require justification. Migrations and recovery
+must be tested on isolated populated fixtures; never reset the user's database
+to produce migration evidence. Seeds must remain idempotent without resetting
+real passwords, rewinding sequences or needlessly modifying existing Tickets.
+
+Use `feature/lab4-*` branches and reviewed PRs into `lab4-staging`, based on the
+latest released `main`. Do not work or commit directly on `main`. After feature
+integration, open a reviewed release PR from `lab4-staging` to `main`. Rerun the
+complete suites, builds, migration/seed checks and E2E from released main.
+Record the real release SHA/results in a separate branch and reviewed follow-up
+PR; do not mark release checks Passed before execution.
+
+Required documentation is under `docs/lab-04/`: `specification.md`,
+`api-spec.md`, `ui-spec.md`, `tests.md`, `reviewer.md` and `ai-use.md`.
+The planning index is `docs/lab-04/issue-plan.md`. Keep tests in
+`server/tests/lab-04/`, `client/tests/lab-04/` and `e2e/lab-04/`.
+Store readable PNG evidence under `artifacts/lab-04/screenshots/`, grouped into
+`staff-dashboard/`, `requester-dashboard/` and `actions-taken/`, with a captioned
+index mapping evidence to submission parts.
+
+Verification covers unit/API/UI, authorization, migration preservation,
+concurrency, workflow, metric calculations, performance-smoke, regression,
+E2E, responsive and accessibility behavior. Inspect each major screen at
+1280px, 820px and 390px, including overflow, labels and visible keyboard focus.
+Unexecuted checks remain Planned/Pending, never Passed.
+
+Prepare concise evidence for `Answer Part 1` through `Answer Part 9`:
+Git/reviews/Kanban, Spec DD, Test DD, AI use, Staff Dashboard, Actions Taken,
+Ticket workflow, Requester Dashboard/regression and Zen Green/accessibility.
+AI-use includes 6-10 real selected prompts and a `My Reflection` heading.
+Do not create or edit the submission PDF until the user requests it.
+
+SLA/escalation, external notifications, inventory/costing, payroll, advanced BI,
+multitenancy and unapproved features are outside this sprint.
+
 ## Kanban Flow
 
 ```text

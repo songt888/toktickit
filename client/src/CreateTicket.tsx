@@ -313,6 +313,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                   className={`form-select${errors.categoryId ? " is-invalid" : ""}`}
                   value={values.categoryId}
                   onChange={(event) => updateValue("categoryId", event.target.value)}
+                  aria-required="true"
                   aria-invalid={Boolean(errors.categoryId)}
                   aria-describedby={errors.categoryId ? "categoryId-error" : undefined}
                 >
@@ -332,6 +333,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                   className={`form-select${errors.relatedSystemId ? " is-invalid" : ""}`}
                   value={values.relatedSystemId}
                   onChange={(event) => updateValue("relatedSystemId", event.target.value)}
+                  aria-required="true"
                   aria-invalid={Boolean(errors.relatedSystemId)}
                   aria-describedby={errors.relatedSystemId ? "relatedSystemId-error" : undefined}
                 >
@@ -352,6 +354,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 className={`form-control${errors.summary ? " is-invalid" : ""}`}
                 value={values.summary}
                 onChange={(event) => updateValue("summary", event.target.value)}
+                aria-required="true"
                 aria-invalid={Boolean(errors.summary)}
                 aria-describedby={errors.summary ? "summary-error" : undefined}
               />
@@ -369,6 +372,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 rows={5}
                 value={values.description}
                 onChange={(event) => updateValue("description", event.target.value)}
+                aria-required="true"
                 aria-invalid={Boolean(errors.description)}
                 aria-describedby={errors.description ? "description-error" : undefined}
               />
@@ -385,6 +389,7 @@ export default function CreateTicket({ requester }: CreateTicketProps) {
                 className={`form-select${errors.requestedPriority ? " is-invalid" : ""}`}
                 value={values.requestedPriority}
                 onChange={(event) => updateValue("requestedPriority", event.target.value)}
+                aria-required="true"
                 aria-invalid={Boolean(errors.requestedPriority)}
                 aria-describedby={errors.requestedPriority ? "requestedPriority-error" : undefined}
               >

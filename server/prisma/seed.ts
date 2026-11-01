@@ -11,6 +11,7 @@ import {
   seedCategories,
   seedInactiveCategories,
 } from "../src/categorySeed.js";
+import { seedLab4Data } from "./seedLab4.js";
 
 export const relatedSystemNames = [
   "Email and Collaboration",
@@ -249,6 +250,7 @@ export async function seedLab3Data(database: Lab3SeedClient) {
 
 async function main() {
   await seedLab3Data(getPrisma());
+  await seedLab4Data(getPrisma());
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

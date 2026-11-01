@@ -24,17 +24,17 @@ export default defineConfig({
     {
       name: "responsive",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
-      testMatch: /responsive\.spec\.ts$/,
+      testMatch: /lab-0[23]\/responsive\.spec\.ts$/,
     },
     {
       name: "tablet",
       use: { ...devices["Desktop Chrome"], viewport: { width: 820, height: 1000 } },
-      testMatch: /responsive\.spec\.ts$/,
+      testMatch: /lab-0[23]\/responsive\.spec\.ts$/,
     },
     {
       name: "mobile",
       use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } },
-      testMatch: /responsive\.spec\.ts$/,
+      testMatch: /lab-0[23]\/responsive\.spec\.ts$/,
     },
     {
       name: "auth-desktop",
@@ -70,6 +70,11 @@ export default defineConfig({
       name: "admin-desktop",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
       testMatch: /user-administration\.spec\.ts$/,
+    },
+    {
+      name: "lab4-desktop",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } },
+      testMatch: /lab-04\/.*\.spec\.ts$/,
     },
   ],
   webServer: [

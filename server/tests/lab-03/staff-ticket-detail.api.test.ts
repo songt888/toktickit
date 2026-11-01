@@ -7,6 +7,7 @@ import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
 import { createTestUser, removeTestUsers, sessionCookieFor } from "./testSession.js";
+import { deleteTestTickets } from "../ticketCleanup.js";
 
 const prisma = getPrisma();
 const createdUserIds: number[] = [];
@@ -91,7 +92,7 @@ describe("IT Staff Ticket workflow API", () => {
 
   afterAll(async () => {
     if (attachmentId) await prisma.attachment.deleteMany({ where: { id: attachmentId } });
-    if (ticketId) await prisma.ticket.deleteMany({ where: { id: ticketId } });
+    if (ticketId) await deleteTestTickets({ id: ticketId });
     await removeTestUsers(createdUserIds);
     if (attachmentPath) await unlink(attachmentPath).catch(() => undefined);
     await prisma.$disconnect();

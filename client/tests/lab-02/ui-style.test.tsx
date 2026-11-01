@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import { openMyTickets } from "../openMyTickets.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -32,6 +33,7 @@ describe("TokTickIT UI style and accessibility contract", () => {
     const user = userEvent.setup();
 
     render(<App />);
+    await openMyTickets();
     await screen.findByRole("heading", { name: "My Tickets" });
     await user.click(screen.getByRole("link", { name: "Create Ticket" }));
 

@@ -4,6 +4,7 @@ import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
 import { createTestUser, removeTestUsers, sessionCookieFor } from "./testSession.js";
+import { deleteTestTickets } from "../ticketCleanup.js";
 
 const prisma = getPrisma();
 const createdTicketIds: number[] = [];
@@ -72,7 +73,7 @@ describe("GET /api/staff/tickets", () => {
 
   afterAll(async () => {
     if (createdTicketIds.length > 0) {
-      await prisma.ticket.deleteMany({ where: { id: { in: createdTicketIds } } });
+      await deleteTestTickets({ id: { in: createdTicketIds } });
     }
     await removeTestUsers([staffId, administratorId, requesterId]);
     await prisma.$disconnect();

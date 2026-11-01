@@ -192,6 +192,10 @@ export interface StaffTicketListOptions {
   requestedPriority?: TicketPriority;
   itPriority?: TicketPriority;
   currentStatus?: TicketStatus;
+  // Lab 4 Dashboard drill-down (api-spec section 6); dates are the Dashboard's returned ISO values.
+  statusGroup?: "active" | "resolved";
+  updatedFrom?: string;
+  updatedTo?: string;
   ownerId?: number | "unassigned";
   sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority" | "itPriority" | "currentStatus";
   order?: "asc" | "desc";
@@ -211,6 +215,16 @@ export interface StaffTicketDetailData extends StaffTicketListItem {
   attachments: AttachmentMetadata[];
   publicComments: PublicComment[];
   internalNotes: InternalNote[];
+  // Lab 4: the server always sends these; optional so Lab 3 fixtures stay valid.
+  lastResolvedAt?: string | null;
+  resolutionGate?: ResolutionGate;
+}
+
+export interface ResolutionGate {
+  canResolve: boolean;
+  completedActions: number;
+  pendingActions: number;
+  unsettledFollowUpActions: number;
 }
 
 export interface StaffTicketMutationResponse {
@@ -220,6 +234,7 @@ export interface StaffTicketMutationResponse {
   itPriority: TicketPriority;
   currentStatus: TicketStatus;
   problemAppearsResolved: boolean;
+  lastResolvedAt?: string | null;
   updatedAt: string;
 }
 
@@ -228,7 +243,13 @@ export interface TicketListOptions {
   categoryId?: number;
   relatedSystemId?: number;
   requestedPriority?: TicketPriority;
-  currentStatus?: "NEW";
+  currentStatus?: TicketStatus;
+  // Lab 4 Dashboard drill-down (api-spec section 6); dates are the Dashboard's returned ISO values.
+  statusGroup?: "active" | "resolved";
+  updatedFrom?: string;
+  updatedTo?: string;
+  resolvedFrom?: string;
+  resolvedTo?: string;
   sort?: "ticketNumber" | "ticketDate" | "updatedAt" | "requestedPriority";
   order?: "asc" | "desc";
   page?: number;
@@ -241,7 +262,12 @@ export interface SystemStatus {
 }
 
 export class ApiRequestError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+    public readonly body?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "ApiRequestError";
   }
@@ -249,8 +275,8 @@ export class ApiRequestError extends Error {
 
 async function authError(response: Response, fallback: string): Promise<ApiRequestError> {
   try {
-    const body = (await response.json()) as { error?: string };
-    return new ApiRequestError(body.error || fallback, response.status);
+    const body = (await response.json()) as { error?: string; code?: string };
+    return new ApiRequestError(body.error || fallback, response.status, body.code, body);
   } catch {
     return new ApiRequestError(fallback, response.status);
   }
@@ -625,4 +651,165 @@ export async function checkSystem(): Promise<SystemStatus> {
 
   const categories = (await categoriesResponse.json()) as Category[];
   return { online: true, categories };
+}
+
+// Lab 4 Actions Taken (api-spec section 4).
+export type ActionStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface ActionTaken {
+  id: number;
+  ticketId: number;
+  actionAt: string;
+  description: string;
+  result: string;
+  performedBy: { id: number; name: string };
+  assignee: { id: number; name: string; role: UserRole; isActive: boolean };
+  status: ActionStatus;
+  followUpRequired: boolean;
+  followUpNote: string | null;
+  attachmentNotes: string | null;
+  cancellationReason: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Pagination {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export interface ActionListResponse {
+  items: ActionTaken[];
+  pagination: Pagination;
+  ticketUpdatedAt: string;
+}
+
+export interface ActionRevision {
+  version: number;
+  operation: "CREATE" | "EDIT" | "ASSIGN" | "STATUS";
+  actor: { id: number; name: string };
+  createdAt: string;
+  snapshot: ActionTaken;
+}
+
+export interface ActionWriteResponse {
+  action: ActionTaken;
+  ticketUpdatedAt: string;
+  replayed: boolean;
+}
+
+export async function getActionsTaken(ticketId: number, page = 1): Promise<ActionListResponse> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/actions-taken?page=${page}&pageSize=10`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load Actions Taken.");
+  return (await response.json()) as ActionListResponse;
+}
+
+export async function getActionRevisions(
+  ticketId: number,
+  actionId: number,
+  page = 1,
+): Promise<{ items: ActionRevision[]; pagination: Pagination }> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/actions-taken/${actionId}/revisions?page=${page}&pageSize=10`, {
+    credentials: "include",
+  });
+  if (!response.ok) throw await authError(response, "Unable to load the Action history.");
+  return (await response.json()) as { items: ActionRevision[]; pagination: Pagination };
+}
+
+export interface TicketStatusEvent {
+  id: number;
+  fromStatus: TicketStatus | null;
+  toStatus: TicketStatus;
+  createdAt: string;
+  actor: { id: number; name: string };
+}
+
+export async function getTicketStatusHistory(ticketId: number, page = 1): Promise<{ items: TicketStatusEvent[]; pagination: Pagination }> {
+  const response = await fetch(`${API_URL}/api/tickets/${ticketId}/status-history?page=${page}&pageSize=10`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Ticket Status History.");
+  return (await response.json()) as { items: TicketStatusEvent[]; pagination: Pagination };
+}
+
+// One request body per command; the caller keeps mutationId stable across retries of the same draft.
+export async function writeActionTaken(
+  method: "POST" | "PATCH",
+  path: string,
+  body: Record<string, unknown>,
+): Promise<ActionWriteResponse> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw await authError(response, "Unable to save the Action.");
+  return (await response.json()) as ActionWriteResponse;
+}
+
+// Lab 4 Requester Dashboard (api-spec section 5).
+export interface DashboardTicket {
+  id: number;
+  ticketNumber: string;
+  summary: string;
+  currentStatus: TicketStatus;
+  itPriority: TicketPriority;
+  owner: { id: number; name: string } | null;
+  updatedAt: string;
+  lastResolvedAt: string | null;
+}
+
+export interface RequesterDashboardData {
+  asOf: string;
+  recentFrom: string;
+  displayTimeZone: string;
+  metrics: { openTickets: number; waitingForRequester: number; recentlyResolved: number };
+  recentTickets: DashboardTicket[];
+}
+
+export async function getRequesterDashboard(): Promise<RequesterDashboardData> {
+  const response = await fetch(`${API_URL}/api/dashboard/requester`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Dashboard.");
+  return (await response.json()) as RequesterDashboardData;
+}
+
+// Lab 4 Staff and Administrator Dashboard (api-spec sections 5-6).
+export interface ActionSummary {
+  id: number;
+  ticketId: number;
+  ticketNumber: string;
+  description: string;
+  status: ActionStatus;
+  updatedAt: string;
+}
+
+export interface StaffDashboardData {
+  asOf: string;
+  recentFrom: string;
+  displayTimeZone: string;
+  metrics: {
+    unassignedTickets: number;
+    myTickets: number;
+    myActions: number;
+    byStatus: Record<TicketStatus, number>;
+    byItPriority: Record<TicketPriority, number>;
+  };
+  myActions: ActionSummary[];
+  recentTickets: DashboardTicket[];
+  urgentTickets: DashboardTicket[];
+}
+
+export async function getStaffDashboard(): Promise<StaffDashboardData> {
+  const response = await fetch(`${API_URL}/api/dashboard/staff`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load the Dashboard.");
+  return (await response.json()) as StaffDashboardData;
+}
+
+export async function getMyPendingActions(page = 1, pageSize: 10 | 25 | 50 = 10): Promise<{ items: ActionSummary[]; pagination: Pagination }> {
+  const query = new URLSearchParams({ assigneeId: "me", statusGroup: "pending", ticketStatusGroup: "active", page: String(page), pageSize: String(pageSize) });
+  const response = await fetch(`${API_URL}/api/staff/actions-taken?${query}`, { credentials: "include" });
+  if (!response.ok) throw await authError(response, "Unable to load your pending Actions.");
+  return (await response.json()) as { items: ActionSummary[]; pagination: Pagination };
 }

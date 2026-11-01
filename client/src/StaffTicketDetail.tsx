@@ -1,4 +1,7 @@
+import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import ActionsTaken from "./ActionsTaken.js";
+import TicketStatusHistory from "./TicketStatusHistory.js";
 import {
   addInternalNote,
   addPublicComment,
@@ -7,6 +10,7 @@ import {
   type AttachmentMetadata,
   getStaffAssignees,
   getStaffTicketDetail,
+  type ResolutionGate,
   StaffTicketDetailData,
   StaffUser,
   TicketPriority,
@@ -23,6 +27,8 @@ export interface StaffTicketDetailProps {
   ticketId: number;
   currentUserId: number;
   onBack: () => void;
+  backLabel?: string;
+  focusActionId?: number;
 }
 
 const priorities: TicketPriority[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -41,27 +47,24 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleString();
 }
 
-function priorityBadgeClass(priority: TicketPriority): string {
-  switch (priority) {
-    case "LOW": return "text-bg-secondary";
-    case "MEDIUM": return "text-bg-info";
-    case "HIGH": return "text-bg-warning text-dark";
-    case "URGENT": return "text-bg-danger";
-  }
-}
 
-function statusBadgeClass(status: TicketStatus): string {
-  switch (status) {
-    case "NEW": return "text-bg-primary";
-    case "IN_PROGRESS": return "text-bg-warning text-dark";
-    case "RESOLVED": return "text-bg-success";
-    case "CLOSED": return "text-bg-dark";
-    case "CANCELLED": return "text-bg-danger";
-    default: return "text-bg-secondary";
+
+// What is still needed before Resolved is allowed (specification BR-13).
+function resolutionGateText(gate: ResolutionGate): string {
+  const needed: string[] = [];
+  if (gate.completedActions === 0) needed.push("complete at least one Action");
+  if (gate.pendingActions > 0) needed.push(`finish or cancel ${gate.pendingActions} pending Action${gate.pendingActions === 1 ? "" : "s"}`);
+  if (gate.unsettledFollowUpActions > 0) {
+    needed.push(`settle the follow-up on ${gate.unsettledFollowUpActions} completed Action${gate.unsettledFollowUpActions === 1 ? "" : "s"}`);
   }
+  return `To resolve this Ticket, ${needed.join("; ")}.`;
 }
 
 function errorFeedback(error: unknown): Feedback {
+  if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED") {
+    const gate = error.body?.resolutionGate as ResolutionGate | undefined;
+    return { kind: "error", message: gate ? `${error.message} ${resolutionGateText(gate)}` : error.message };
+  }
   if (error instanceof ApiRequestError && error.status === 409) {
     return {
       kind: "error",
@@ -75,8 +78,10 @@ function errorFeedback(error: unknown): Feedback {
   };
 }
 
-export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: StaffTicketDetailProps) {
+export default function StaffTicketDetail({ ticketId, currentUserId, onBack, backLabel = "Back to Ticket Queue", focusActionId }: StaffTicketDetailProps) {
   const requestSequence = useRef(0);
+  const refreshSequence = useRef(0);
+  const refreshPending = useRef(false);
   const [ticket, setTicket] = useState<StaffTicketDetailData | null>(null);
   const [assignees, setAssignees] = useState<StaffUser[]>([]);
   const [assigneesError, setAssigneesError] = useState("");
@@ -155,6 +160,40 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setState("success");
   }
 
+  // Quiet reload after an Action write: new Ticket timestamp and gate, without resetting the screen.
+  async function refreshTicket() {
+    const sequence = requestSequence.current;
+    // Only the newest refresh may land; an older one would roll updatedAt back and make the next write 409.
+    const refresh = ++refreshSequence.current;
+    refreshPending.current = true;
+    try {
+      const fresh = await getStaffTicketDetail(ticketId);
+      if (sequence === requestSequence.current && refresh === refreshSequence.current) setTicket(fresh);
+    } catch {
+      // The next write or Refresh reports the problem; the current values stay visible.
+    } finally {
+      if (refresh === refreshSequence.current) refreshPending.current = false;
+    }
+  }
+
+  // After a local Ticket update, a refresh already in flight would bring back older values, but it also
+  // carries the new resolution gate. Replace it with one that starts after this update.
+  function restartPendingRefresh() {
+    if (refreshPending.current) void refreshTicket();
+  }
+
+  async function retryAssignees() {
+    const sequence = requestSequence.current;
+    try {
+      const loaded = await getStaffAssignees();
+      if (sequence !== requestSequence.current) return;
+      setAssignees(loaded);
+      setAssigneesError("");
+    } catch {
+      if (sequence === requestSequence.current) setAssigneesError("Eligible assignees could not be loaded. You can still claim or unassign this Ticket.");
+    }
+  }
+
   useEffect(() => {
     void loadDetail();
     return () => {
@@ -171,6 +210,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setFeedback(null);
     try {
       const updated = await operation();
+      restartPendingRefresh();
       setTicket((current) => current ? { ...current, ...updated } : current);
       setSelectedOwnerId(updated.ownerId === null ? "" : String(updated.ownerId));
       setSelectedPriority(updated.itPriority);
@@ -178,6 +218,14 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
       setFeedback({ kind: "success", message: successMessage });
     } catch (error) {
       setFeedback(errorFeedback(error));
+      // Keep the selection and show the server's current gate, so the user can see what to fix.
+      if (error instanceof ApiRequestError && error.code === "RESOLUTION_GATE_FAILED" && error.body?.resolutionGate) {
+        const gate = error.body.resolutionGate as ResolutionGate;
+        restartPendingRefresh();
+        setTicket((current) => current ? { ...current, resolutionGate: gate } : current);
+        // Resolved is no longer a valid choice, so return the control to the current status.
+        setSelectedStatus(ticket.currentStatus);
+      }
     } finally {
       setSaving(false);
     }
@@ -226,6 +274,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setPublicCommentFeedback(null);
     try {
       const comment = await addPublicComment(ticket.id, content);
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, publicComments: [...current.publicComments, comment] }
         : current);
@@ -258,6 +307,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
     setInternalNoteFeedback(null);
     try {
       const note = await addInternalNote(ticket.id, content);
+      restartPendingRefresh();
       setTicket((current) => current
         ? { ...current, internalNotes: [...current.internalNotes, note] }
         : current);
@@ -275,11 +325,16 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
 
   const currentOwnerIsListed = ticket?.owner && assignees.some((user) => user.id === ticket.owner?.id);
 
+  // The matrix decides whether Resolved is offered; the gate decides whether it can be chosen now.
+  const resolveBlocked = Boolean(
+    ticket && permittedNextStatuses[ticket.currentStatus].includes("RESOLVED") && ticket.resolutionGate && !ticket.resolutionGate.canResolve,
+  );
+
   return (
     <section id="staff-ticket-detail" className="card border-0 shadow-sm mb-4" aria-labelledby="staff-ticket-detail-title">
       <div className="card-body">
         <button className="btn btn-outline-secondary mb-3" type="button" onClick={onBack}>
-          Back to Ticket Queue
+          {backLabel}
         </button>
         <h2 id="staff-ticket-detail-title" className="h4 mb-3">Operational Ticket Detail</h2>
 
@@ -336,10 +391,12 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                 <dd className="col-sm-8"><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></dd>
                 <dt className="col-sm-4">Problem Appears Resolved</dt>
                 <dd className="col-sm-8">{ticket.problemAppearsResolved ? "Yes" : "No"}</dd>
+                <dt className="col-sm-4">Last Resolved</dt>
+                <dd className="col-sm-8">{ticket.lastResolvedAt ? formatDate(ticket.lastResolvedAt) : "Not recorded"}</dd>
                 <dt className="col-sm-4">Summary</dt>
-                <dd className="col-sm-8">{ticket.summary}</dd>
+                <dd className="col-sm-8 text-break">{ticket.summary}</dd>
                 <dt className="col-sm-4">Description</dt>
-                <dd className="col-sm-8" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
+                <dd className="col-sm-8 text-break" style={{ whiteSpace: "pre-wrap" }}>{ticket.description}</dd>
                 <dt className="col-sm-4">Last Updated</dt>
                 <dd className="col-sm-8">{formatDate(ticket.updatedAt)}</dd>
               </dl>
@@ -414,12 +471,32 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                     className="form-select"
                     value={selectedStatus}
                     disabled={saving}
+                    aria-describedby={resolveBlocked ? "staff-resolution-gate" : undefined}
                     onChange={(event) => setSelectedStatus(event.target.value as TicketStatus)}
                   >
                     <option value={ticket.currentStatus}>{ticket.currentStatus} (current)</option>
-                    {permittedNextStatuses[ticket.currentStatus].map((status) => <option key={status} value={status}>{status}</option>)}
+                    {permittedNextStatuses[ticket.currentStatus].map((status) => (
+                      <option key={status} value={status} disabled={status === "RESOLVED" && resolveBlocked}>
+                        {status === "RESOLVED" && resolveBlocked ? "RESOLVED (work not complete)" : status}
+                      </option>
+                    ))}
                   </select>
-                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus} onClick={changeStatus}>
+                  {ticket.resolutionGate && (
+                    <div className="mt-2" role="group" aria-labelledby="staff-resolution-readiness">
+                      <p id="staff-resolution-readiness" className="small fw-semibold mb-1">Resolution readiness</p>
+                      <ul className="small list-unstyled mb-1">
+                        <li>Completed Actions: {ticket.resolutionGate.completedActions}</li>
+                        <li>Pending Actions: {ticket.resolutionGate.pendingActions}</li>
+                        <li>Unsettled follow-up: {ticket.resolutionGate.unsettledFollowUpActions}</li>
+                      </ul>
+                      {permittedNextStatuses[ticket.currentStatus].includes("RESOLVED") && (
+                        <p id="staff-resolution-gate" className="form-text text-body mb-0">
+                          {ticket.resolutionGate.canResolve ? "Ready to resolve." : resolutionGateText(ticket.resolutionGate)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <button className="btn btn-outline-success mt-2" type="button" disabled={saving || selectedStatus === ticket.currentStatus || (selectedStatus === "RESOLVED" && resolveBlocked)} onClick={changeStatus}>
                     Update Status
                   </button>
                 </div>
@@ -427,7 +504,27 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
               {saving && <p className="small text-secondary mt-3 mb-0" role="status">Saving Ticket changes…</p>}
             </section>
 
-            <section className="border border-primary rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
+            <ActionsTaken
+              key={ticket.id}
+              ticketId={ticket.id}
+              ticketStatus={ticket.currentStatus}
+              focusActionId={focusActionId}
+              editable={{
+                currentUserId,
+                ticketUpdatedAt: ticket.updatedAt,
+                assignees,
+                assigneesError,
+                onRetryAssignees: () => void retryAssignees(),
+                onChanged: (updatedAt) => {
+                  setTicket((current) => (current ? { ...current, updatedAt } : current));
+                  void refreshTicket();
+                },
+              }}
+            />
+
+            <TicketStatusHistory key={`status-${ticket.id}`} ticketId={ticket.id} refreshKey={ticket.updatedAt} />
+
+            <section className="border border-success rounded p-3 mb-4" aria-labelledby="staff-public-comments-title">
               <h3 id="staff-public-comments-title" className="h5">Public Comments</h3>
               <p className="text-secondary">Visible to the requester and support staff.</p>
               {ticket.publicComments.length === 0
@@ -436,9 +533,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <ol className="list-group list-group-numbered">
                     {ticket.publicComments.map((comment) => (
                       <li className="list-group-item" key={comment.id}>
-                        <strong>{comment.author.name}</strong>
+                        <strong className="text-break">{comment.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={comment.createdAt}>{formatDate(comment.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{comment.content}</p>
                       </li>
                     ))}
                   </ol>
@@ -455,7 +552,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   disabled={publicCommentSaving}
                   onChange={(event) => setPublicCommentDraft(event.target.value)}
                 />
-                <button className="btn btn-outline-primary mt-2" type="submit" disabled={publicCommentSaving}>
+                <button className="btn btn-outline-success mt-2" type="submit" disabled={publicCommentSaving}>
                   {publicCommentSaving ? "Posting comment…" : "Post Public Comment"}
                 </button>
                 {publicCommentFeedback && (
@@ -475,9 +572,9 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <ol className="list-group list-group-numbered">
                     {ticket.internalNotes.map((note) => (
                       <li className="list-group-item" key={note.id}>
-                        <strong>{note.author.name}</strong>
+                        <strong className="text-break">{note.author.name}</strong>
                         <time className="small text-secondary ms-2" dateTime={note.createdAt}>{formatDate(note.createdAt)}</time>
-                        <p className="mb-0 mt-2" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
+                        <p className="mb-0 mt-2 text-break" style={{ whiteSpace: "pre-wrap" }}>{note.content}</p>
                       </li>
                     ))}
                   </ol>
@@ -513,12 +610,12 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack }: S
                   <ul className="list-group">
                     {ticket.attachments.map((attachment) => (
                       <li className="list-group-item d-flex flex-wrap justify-content-between gap-2" key={attachment.id}>
-                        <span>{attachment.originalName}</span>
+                        <span className="text-break">{attachment.originalName}</span>
                         <span className="small text-secondary">
                           {attachment.removedAt ? "Removed" : "Active"} · {attachment.sizeBytes} bytes
                         </span>
                         {!attachment.removedAt && (
-                          <button type="button" className="btn btn-outline-primary btn-sm"
+                          <button type="button" className="btn btn-outline-success btn-sm"
                             disabled={downloadingId !== null}
                             aria-label={`Download ${attachment.originalName}`}
                             onClick={() => void handleDownload(attachment)}>

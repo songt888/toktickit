@@ -39,11 +39,13 @@ test("keyboard navigation, labels, active navigation, and feedback are accessibl
   await expect(page.getByLabel("Email")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
 
-  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "My Tickets");
+  await signIn(page, "e2e.requester.a@example.com", requesterPassword, "Dashboard");
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "My Tickets" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
   await page.getByRole("link", { name: "Create Ticket" }).click();
   await expectLabeledFields(page);
+  // The form stays disabled until reference data loads; Tab would skip a disabled Category.
+  await expect(page.locator("#ticket-category")).toBeEnabled();
   await page.locator("#ticket-requester").focus();
   await page.keyboard.press("Tab");
   await expect(page.locator("#ticket-category")).toBeFocused();
@@ -58,12 +60,18 @@ test("keyboard navigation, labels, active navigation, and feedback are accessibl
   });
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await signIn(page, "e2e.staff@example.com", staffPassword, "Ticket Queue");
+  await signIn(page, "e2e.staff@example.com", staffPassword, "Dashboard");
+  // Lab 4: Staff land on the Dashboard; the Ticket Queue is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "Ticket Queue" }).click();
   await expect(page.getByRole("link", { name: "Ticket Queue" })).toHaveAttribute("aria-current", "page");
   await expectLabeledFields(page);
 
   await page.getByRole("button", { name: "Logout" }).click();
-  await signIn(page, "e2e.admin@example.com", adminPassword, "User Management");
+  await signIn(page, "e2e.admin@example.com", adminPassword, "Dashboard");
+  // Lab 4: Administrators land on the Dashboard; User Management is one click away.
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("link", { name: "User Management" }).click();
   await expect(page.getByRole("link", { name: "User Management" })).toHaveAttribute("aria-current", "page");
   await expectLabeledFields(page);
   await expect(page.getByRole("button", { name: "Add user" })).toBeVisible();

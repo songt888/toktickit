@@ -4,6 +4,7 @@ import { app } from "../../src/app.js";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab2Data } from "../../prisma/seed.js";
 import { createTestUser, removeTestUsers, sessionCookieFor } from "./testSession.js";
+import { deleteTestTickets } from "../ticketCleanup.js";
 
 const prisma = getPrisma();
 
@@ -44,7 +45,7 @@ describe("Requester session regression coverage", () => {
   });
 
   afterAll(async () => {
-    await prisma.ticket.deleteMany({ where: { id: ticketId } });
+    await deleteTestTickets({ id: ticketId });
     await removeTestUsers([requesterId, otherRequesterId]);
     await prisma.$disconnect();
   });

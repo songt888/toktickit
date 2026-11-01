@@ -107,7 +107,7 @@ Rows not listed passed as written in the matrix, with no extra notes.
 - **E2E-01**: #72: fresh users per run, no seeded accounts
 - **E2E-02**: #72: fresh users per test; the shared Ticket Status History lists the same ordered transitions with actor for Staff and the Requester; plus a deactivated-assignee case (flagged, work disabled, server 400)
 - **E2E-03**: all three roles' metrics vs database (Staff: all cards and all 12 buckets); every card, bucket and View all drill-down; Open Detail/Open Action and isolation (#70, #71); injected 500 shows the error with Retry, the zero state, a failed refresh keeping older data, and an injected 403 showing the forbidden state for both Dashboards (#72); each drill-down waits for the response carrying its own scope
-- **REG-01**: #72: server 45 files, 185 tests (PERF-01 skipped, run separately; includes the harness test), client 23 files/128 tests (Lab 1 client test re-enabled), Playwright 26 tests in 14 files, each run at least twice
+- **REG-01**: #72: server 45 files, 185 tests (PERF-01 skipped, run separately; includes the harness test), client 23 files/128 tests (Lab 1 client test re-enabled; 132 and server 186 after #73, section 4.1), Playwright 26 tests in 14 files, each run at least twice
 - **E2E-04**: #72: fresh users per test; covers Lab 1-3 sign-in, password change and logout, Tickets with attachments and comments, Queue owner and IT priority with a stale 409, Internal Notes and Administrator safety rules.
 - **PERF-01**: #72: opt-in with `npm run test:perf` in `server/` (skipped by plain `npm test`), own database per run; conditions and results in `artifacts/lab-04/performance/perf-01.md`
 
@@ -164,29 +164,26 @@ changes update the matrix and tests together. Required skips are release failure
 PERF-01 is skipped inside `npm test` by design, so a release that does not run
 `npm run test:perf`, or where it fails, does not pass.
 
-### 4.1 Run on `lab4-staging` for #73 (2026-11-01)
+### 4.1 Pre-release run for #73 (2026-11-01)
 
-Run on branch `feature/lab4-09-docs-release` at `0512c04` (the merge of PR #83 into `lab4-staging`), local Docker PostgreSQL 16, Node v24.19.0:
+Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 into `lab4-staging` as `0512c04`, plus the #73 docs, one client change, one seed change and their tests), local Docker PostgreSQL 16, Node v24.19.0. Only `tests.md` and `reviewer.md` change after this commit.
 
 | Command | Result |
 |---|---|
 | `server: npx prisma migrate status` | Database schema is up to date |
-| `server: npm run prisma:seed` (twice) | Lab 4 fixture Tickets, Actions, revisions, status events and users unchanged by both reruns (11 / 935 / 1,955 / 1,530 / 2,245) |
-| `server: npm test` | 44 files passed, 1 skipped (PERF-01); 185 tests passed, 1 skipped |
+| `server: npm run prisma:seed` (twice) | Table counts unchanged by both reruns: Lab 4 fixture Tickets 11; whole-table Actions 947, revisions 1,978, status events 1,572, Users 2,277 |
+| `server: npm test` | 44 files passed, 1 skipped (PERF-01); 186 tests passed, 1 skipped |
 | `server: npm run test:perf` | 1 passed (PERF-01) |
 | `server: npm run build` | Passed |
-| `client: npm test` | 23 files, 128 tests passed |
+| `client: npm test` | 23 files, 132 tests passed |
 | `client: npm run build` | Passed |
 | `root: npx playwright test --list` | 26 tests in 14 files |
 | `root: npx playwright test` | 26 passed |
 | `root: python3 scripts/check-lab4-contract.py` | 24 ACs, 44 test IDs, 69 bidirectional mappings; local links valid |
 | `root: git diff --check` | Clean |
 
-The contract checker did not pass at `0512c04` itself: its rows still said `Pass`. The table above is the
-run on the #73 docs branch after the rows were changed to `Passed`. That branch also changes one client line
-(the "Ready to resolve." readiness text, PR #79 note) with a new assertion in `ticket-resolution.spec.ts`;
-`ticket-resolution.spec.ts` passed 2/2 and `client: npm test` passed 23 files / 128 tests after the change.
-The full server and Playwright counts above are from `0512c04` and are rerun in the follow-up on `main`.
+
+The contract checker did not pass at `0512c04` itself, because its rows still said `Pass`; it passes on this branch. Compared with `0512c04` (server 185, client 128), this branch adds one server test (DB-03c) and four client tests (UI-03), and one E2E assertion (no "Ready to resolve." once RESOLVED); the Playwright count stays 26. These are the counts that REG-01 should read after #73.
 
 This is the pre-release run. RELEASE-01 needs the same commands from the released `main` SHA, recorded in the follow-up PR.
 

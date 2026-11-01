@@ -1,9 +1,9 @@
 # Lab 4 Test DD and Traceability Plan
 
 Status: every feature row is **Passed**: it ran green in the Issue that owns it (#66 to #72, merged into
-`lab4-staging` through PRs #77 to #83) and again before release on the #73 branch (section 4.1). DOC-01 and
-RELEASE-01 stay **Pending** until the reviewed release to `main` and the final-main verification
-follow-up are merged. Per-test notes are in section 2.1.
+`lab4-staging` through PRs #77 to #83), again before release on the #73 branch (section 4.1) and on the
+released `main` SHA `991b254` (section 4.2). DOC-01 and RELEASE-01 are **Passed** from that final-main run,
+recorded through this reviewed follow-up PR. Per-test notes are in section 2.1.
 Do not copy Lab 3 totals or claim unimplemented test paths already exist.
 The specification's AC table and this matrix must agree in both directions.
 
@@ -81,8 +81,8 @@ All IDs are local to Lab 4. Final is exactly Passed, Pending, Planned or Failed,
 | REG-01 | Regression | AC-21 | Run all existing Lab 1-3 server/client checks plus preserved root E2E projects; independently assert critical security/business behavior | Existing `server/tests/lab-01/`, `server/tests/lab-02/`, `server/tests/lab-03/`, `client/tests/lab-01/`, `client/tests/lab-02/`, `client/tests/lab-03/`, `e2e/lab-02/`, `e2e/lab-03/` | Passed |
 | E2E-04 | E2E regression | AC-21 | Auth/password/logout, tickets/attachments/comments, queue/owner/priority/notes and Admin safety all remain functional | `e2e/lab-04/regression.spec.ts` | Passed |
 | PERF-01 | Performance-smoke | AC-22 | 10,000 Tickets/30,000 Actions, <=12 data SQL statements/request, no N+1, <=32KiB body, warm 5-run median<=1s and max<=2s | `server/tests/lab-04/dashboard-performance.test.ts` | Passed |
-| DOC-01 | Document/workflow | AC-23, AC-24 | Bidirectional traceability/local links, rubric/design/API/UI/schema decisions, honest prompts/reviews, actual approval/release state | `scripts/check-lab4-contract.py`; manual source/GitHub review | Pending |
-| RELEASE-01 | Release | AC-24 | Reviewed staging/main integration and full final-main suites/builds/migration/seed/E2E with exact SHA/logs, no required skips | Commands/evidence in section 4 | Pending |
+| DOC-01 | Document/workflow | AC-23, AC-24 | Bidirectional traceability/local links, rubric/design/API/UI/schema decisions, honest prompts/reviews, actual approval/release state | `scripts/check-lab4-contract.py`; manual source/GitHub review | Passed |
+| RELEASE-01 | Release | AC-24 | Reviewed staging/main integration and full final-main suites/builds/migration/seed/E2E with exact SHA/logs, no required skips | Commands/evidence in section 4 | Passed |
 
 Performance conditions: local Node/PostgreSQL versions, machine resources,
 connection configuration, dataset and query plans are recorded with sanitized
@@ -185,7 +185,36 @@ Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 i
 
 The contract checker did not pass at `0512c04` itself, because its rows still said `Pass`; it passes on this branch. Compared with `0512c04` (server 185, client 128), this branch adds one server test (DB-03j) and four client tests (UI-03), and one E2E assertion (no "Ready to resolve." once RESOLVED); the Playwright count stays 26. These are the counts that REG-01 should read after #73.
 
-This is the pre-release run. RELEASE-01 needs the same commands from the released `main` SHA, recorded in the follow-up PR.
+This is the pre-release run. RELEASE-01 is recorded from the released `main` SHA in section 4.2.
+
+### 4.2 Final-main run for #73 (2026-11-01)
+
+Release PR #85 (`lab4-staging` -> `main`) was approved by stickkersz at `a4db420` and merged as `991b254`
+on 2026-11-01 12:24 UTC. The run below used a checkout at exactly `991b254` with no local changes (the tree
+equals `b10c7dc`, the commit the 4.1 counts were last taken from), local Docker PostgreSQL 16, Node v24.19.0,
+from 12:25:58 to 12:27:21 UTC. Every command's output, start and finish time and exit code is in
+[`artifacts/lab-04/verification-2026-11-01/`](../../artifacts/lab-04/verification-2026-11-01/README.md);
+local paths are replaced with `<repo>`. All 13 steps exited 0.
+
+| Command | Result |
+|---|---|
+| `server: npm exec -- prisma migrate deploy` | No pending migrations |
+| `server: npm exec -- prisma migrate status` | Database schema is up to date |
+| `server: npm run prisma:seed` (twice) | Counts before and after each run unchanged: Lab 4 fixture Tickets 11; whole-table Actions 956, revisions 1,995, status events 1,607, Users 2,304 (higher than in 4.1 because E2E runs since then added their own rows) |
+| `server: npm test -- --reporter=verbose` | 44 files passed, 1 skipped (PERF-01); 186 tests passed, 1 skipped |
+| `server: npm run test:perf` | 1 passed (PERF-01) |
+| `server: npm run build` | Passed |
+| `client: npm test -- --reporter=verbose` | 23 files, 132 tests passed |
+| `client: npm run build` | Passed |
+| `root: npm run test:e2e -- --list` | 26 tests in 14 files |
+| `root: npm run test:e2e -- --workers=1 --reporter=list` | 26 passed |
+| `root: python3 scripts/check-lab4-contract.py` | 24 ACs, 44 test IDs, 69 bidirectional mappings; local links valid |
+| `root: git diff --check` | Clean |
+
+The counts match 4.1 exactly. The only required skip inside `npm test` is PERF-01, which passed in its own
+step, so there is no required skip. The E2E run rewrites tracked screenshots under `artifacts/lab-02`,
+`artifacts/lab-03` and `artifacts/lab-04/screenshots`; those were restored with `git checkout` afterwards,
+so the committed screenshots are the reviewed ones.
 
 ## 5. Answer Part 1-9 evidence
 

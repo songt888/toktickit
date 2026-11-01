@@ -60,8 +60,10 @@ so the migration adds none and DB-02 tests that no rows appear. My partner's
 reviews also caught test rows marked Passed without a test behind them (PRs #78,
 #79, #80 and #82) and tests that could not fail; each was fixed with a test that
 fails without the change, or the row was narrowed. Counts in `tests.md` come from
-recorded runs, final `main` verification stays pending until the release merges,
-and no PDF was created.
+recorded runs, and the final `main` verification was run on the released SHA
+`991b254` after the release merged. Claude Code also wrote the script that
+assembles the report PDF outside the repository from the committed documents and
+screenshots; the PDF is not committed.
 
 ## My Reflection
 
@@ -89,5 +91,5 @@ For Issue #73, I compared the documents with GitHub and the actual test output.
 My partner found places where the records claimed more than they showed, such as
 prompts described as exact and stale "planned" wording, and I corrected them.
 Generated code and documents are a draft; review and real runs are the
-verification. Final `main` verification stays pending until the release is
-merged, and I did not generate a PDF.
+verification. Final `main` verification was run only after the release was
+merged, on the released SHA.

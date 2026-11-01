@@ -87,8 +87,8 @@ Tests live in `server/tests/lab-04/`, `client/tests/lab-04/` and
 
 The Issues also added migration/seed preservation, independent transition
 tests, authorization, concurrent/stale writes, retry/double-submit,
-performance-smoke, responsive and accessibility checks. The results that exist are recorded in [tests.md](tests.md), where only DOC-01 and
-RELEASE-01 are still Pending.
+performance-smoke, responsive and accessibility checks. The results that exist are recorded in [tests.md](tests.md), where every row, including
+DOC-01 and RELEASE-01 after the final-main run on `991b254`, is Passed.
 
 Screenshots are kept under `artifacts/lab-04/screenshots/`, grouped by screen
 (for example `staff-dashboard/`, `requester-dashboard/` and `actions-taken/`), with a captioned index in

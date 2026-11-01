@@ -313,7 +313,7 @@ rules and token styles. No coding or production UI change occurs in Issue #65.
 ## 9. Acceptance criteria and test mapping
 
 The test identifiers are defined in [tests.md](tests.md); every feature check
-is Passed except DOC-01 and RELEASE-01, which stay Pending until the release. This table and the test matrix are checked in both directions.
+is Passed, and DOC-01 and RELEASE-01 are Passed from the final-main run on `991b254`. This table and the test matrix are checked in both directions.
 
 | AC | Observable acceptance criterion | FR / BR | Tests |
 |---|---|---|---|
@@ -345,21 +345,24 @@ is Passed except DOC-01 and RELEASE-01, which stay Pending until the release. Th
 ## 10. Product Definition of Done
 
 - [x] Contract approved and merged before dependent implementation.
-- [ ] AC-01 through AC-24 implemented and verified against the approved contract.
+- [x] AC-01 through AC-24 implemented and verified against the approved contract.
 - [x] PostgreSQL/Prisma migration, preservation, recovery and repeatable seed tested.
 - [x] Resolution predicate and cross-row concurrency verified by direct API/race tests.
 - [x] All required unit/API/UI/style/auth/workflow/migration/regression/performance/E2E checks pass without required skips.
 - [x] Zen Green checklist verified at all three widths, with captioned screenshots for Parts 5-9.
-- [ ] README setup/run/migration/seed/test/demo/recovery is current; no unfinished controls, broken links or unintended console errors.
-- [ ] Reviewer records contain real comments/responses/approval and merge SHAs; AI-use contains 6-10 real prompts and a personal My Reflection.
+- [x] README setup/run/migration/seed/test/demo/recovery is current; no unfinished controls, broken links or unintended console errors.
+- [x] Reviewer records contain real comments/responses/approval and merge SHAs; AI-use contains 6-10 real prompts and a personal My Reflection.
 - [x] No credentials, session secrets, real uploads or generated runtime output committed.
 - [x] Each feature PR approved/merged into lab4-staging before its Issue is closed/Done.
-- [ ] Reviewed lab4-staging -> main release followed by full verification on the actual released SHA.
+- [x] Reviewed lab4-staging -> main release followed by full verification on the actual released SHA.
 - [ ] Final verification evidence corrected through a reviewed follow-up PR; #73 closes only after that follow-up merges.
 
-Ticked items are checked by the pre-release run on the #73 branch at `bfc9e87` ([tests.md](tests.md)
-sections 2 and 4.1, [reviewer.md](reviewer.md)). AC-23/AC-24, the README, AI-use and the release items stay open
-until #73's docs PR, release PR and final-main follow-up are reviewed and merged.
+The feature items were checked by the pre-release run on the #73 branch at `bfc9e87` ([tests.md](tests.md)
+sections 2 and 4.1). The documentation PR #84 was approved and merged as `a4db420`, the release PR #85 was
+approved and merged into `main` as `991b254`, and every suite, build, migration, seed and E2E step passed on
+`991b254` ([tests.md](tests.md) section 4.2, [reviewer.md](reviewer.md)). The last item is recorded by this
+follow-up PR; it stays open here because it is completed by this PR's approval and merge on
+GitHub, after which #73 is closed and set to Done.
 
 ## 11. Assumptions and decisions requiring review
 

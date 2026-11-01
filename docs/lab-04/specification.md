@@ -31,7 +31,9 @@ email/SMS/LINE/push services, inventory/spare parts/purchasing/cost accounting,
 timesheet billing/payroll/labor costing, multi-level approvals/e-signatures,
 advanced BI/report builders/export warehouses, multitenancy/production cloud
 operations and unapproved features. Action Attachment Notes are plain text;
-there is no new Action file-upload system. No submission PDF is authorized.
+there is no new Action file-upload system. The concise report PDF required by
+the handout (section 14) is a submission deliverable, not part of the product
+or the repository: no feature produces it and it is not committed.
 
 ## 3. Functional requirements
 
@@ -355,14 +357,14 @@ is Passed, and DOC-01 and RELEASE-01 are Passed from the final-main run on `991b
 - [x] No credentials, session secrets, real uploads or generated runtime output committed.
 - [x] Each feature PR approved/merged into lab4-staging before its Issue is closed/Done.
 - [x] Reviewed lab4-staging -> main release followed by full verification on the actual released SHA.
-- [ ] Final verification evidence corrected through a reviewed follow-up PR; #73 closes only after that follow-up merges.
+- [x] Final verification evidence corrected through a reviewed follow-up PR; #73 closes only after that follow-up merges.
 
 The feature items were checked by the pre-release run on the #73 branch at `bfc9e87` ([tests.md](tests.md)
 sections 2 and 4.1). The documentation PR #84 was approved and merged as `a4db420`, the release PR #85 was
 approved and merged into `main` as `991b254`, and every suite, build, migration, seed and E2E step passed on
-`991b254` ([tests.md](tests.md) section 4.2, [reviewer.md](reviewer.md)). The last item is recorded by this
-follow-up PR; it stays open here because it is completed by this PR's approval and merge on
-GitHub, after which #73 is closed and set to Done.
+`991b254` ([tests.md](tests.md) section 4.2, [reviewer.md](reviewer.md)). The last item was completed by
+follow-up PR #86, approved at `d1e5933` and merged as `4673a1a`; #73 was closed and set to Done
+after that merge.
 
 ## 11. Assumptions and decisions requiring review
 

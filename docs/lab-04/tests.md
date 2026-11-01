@@ -230,4 +230,5 @@ so the committed screenshots are the reviewed ones.
 | Answer Part 8 | Owned Requester metrics/attention/recent/drill-down/isolation and representative Labs 1-3 regression |
 | Answer Part 9 | Rendered UI spec, all three widths, keyboard/focus/labels/overflow evidence and verified checklist |
 
-No PDF is created, and nothing here is a fabricated passing screenshot or review.
+The report PDF required by the handout (section 14) is assembled from this evidence outside the
+repository and is not committed; nothing here is a fabricated passing screenshot or review.

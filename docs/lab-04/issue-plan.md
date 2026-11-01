@@ -45,9 +45,9 @@ documents now exist on `feature/lab4-01-contract` for peer review. `lab4-staging
 was created from released main `9313209d224592c9265bb8595aa7cc0f1336b9db`.
 The original planning edits were copied from `docs/lab4-planning` into an
 isolated worktree; other local changes remain in the original workspace.
-Proposed decisions are recorded in [specification.md](specification.md), not
-approved by this index. Consult [reviewer.md](reviewer.md) and the live Project
-for the actual PR/review state; #66 remains Backlog until approval/merge.
+Decisions are recorded in [specification.md](specification.md), approved in PR #74
+(`6a36b0a`). Consult [reviewer.md](reviewer.md) and the live Project for the actual
+PR/review state; #65 to #72 are Done and #73 is the remaining release Issue.
 Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
 `lab4-staging`. Formal approval/merge is pending.
 

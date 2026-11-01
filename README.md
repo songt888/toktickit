@@ -54,7 +54,8 @@ cp client/.env.example client/.env
 
 The default `DATABASE_URL` connects to the Docker database above. Keep `server/.env` private; it is ignored by Git.
 
-Initialize Prisma, apply the Lab 2/Lab 3 migrations, and seed reference data and Lab 3 demo users:
+Initialize Prisma, apply the Lab 2, Lab 3 and Lab 4 migrations, and seed reference data, demo users and
+the Lab 4 fixtures:
 
 ```bash
 cd server
@@ -101,6 +102,11 @@ If a deploy fails, the transactional DDL rolls back; fix the migration and redep
 
 Seed: `npm run prisma:seed` also adds the Lab 4 fixtures (create-if-missing, safe to rerun). Application code that writes an Action must insert its revision in the same transaction; call `SET CONSTRAINTS "ActionTaken_revision_check" IMMEDIATE` before returning, because Prisma 5 does not surface an error raised by the final COMMIT.
 
+Lab 4 also seeds `malee.newcomer@example.com` (a Requester with no Tickets) and
+`kittipong.fresh@example.com` (IT Staff with no assignments) to show zero Dashboards. With
+`LAB3_SEED_INITIAL_PASSWORD` set, the Lab 4 accounts and the other seeded Requesters and Staff
+(for example `suda.servicedesk@example.com`) use that same private initial password.
+
 ## Run the application
 
 Start the backend in one terminal:
@@ -134,6 +140,22 @@ The main requester workflow is:
 IT Staff can use Ticket Queue to work with ticket ownership, IT Priority, status, comments, internal
 notes, and attachment metadata. Administrators can use User Management to search, create, edit,
 activate/deactivate accounts, and set initial passwords.
+
+Lab 4 demo walkthrough (sign in after seeding):
+
+1. Sign in as a Requester such as `ari.suksan@example.com`. Dashboard is the first page: Open
+   Tickets, Waiting for You and Recently Resolved counts each open the matching My Tickets list.
+   Ticket Detail shows read-only Actions Taken and Ticket Status History.
+2. Sign in as IT Staff (`nattakit.support@example.com`). The Staff Dashboard shows Unassigned
+   Tickets, My Tickets, My Pending Actions, status and IT Priority breakdowns; each opens the
+   filtered Ticket Queue or the My Pending Actions list.
+3. In a Ticket, open Actions Taken to add, edit, reassign, start, complete or cancel an Action and
+   view its revision history. Resolve stays disabled until at least one Action is completed, none
+   is pending and no follow-up is unsettled; the readiness summary explains why.
+4. Sign in as the Administrator (`lab.admin@example.com`) to see the same Staff Dashboard for
+   the Administrator's own assignments, plus User Management.
+5. Sign in as `malee.newcomer@example.com` or `kittipong.fresh@example.com` to see zero counts and
+   empty-state messages.
 
 Attachments accept JPG/JPEG, PNG, WEBP, and PDF files up to 5 MB each, with no more than five
 active files per ticket. Files are stored locally under `server/uploads/`, which is ignored by
@@ -186,6 +208,6 @@ npm run test:e2e
 npm run test:e2e:headed
 ```
 
-Lab 2 and Lab 3 specifications and evidence are in [`docs/lab-02/`](docs/lab-02/) and
-[`docs/lab-03/`](docs/lab-03/), including API/UI contracts, test traceability, peer-review records,
+Lab 2, Lab 3 and Lab 4 specifications and evidence are in [`docs/lab-02/`](docs/lab-02/),
+[`docs/lab-03/`](docs/lab-03/) and [`docs/lab-04/`](docs/lab-04/), including API/UI contracts, test traceability, peer-review records,
 and AI-use reflections.

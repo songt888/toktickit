@@ -1,9 +1,9 @@
 # Lab 4 Engineering Specification
 
-Status: Proposed contract for [Issue #65](https://github.com/songt888/toktickit/issues/65),
-awaiting formal peer approval. Date: 2026-10-05 (Asia/Bangkok).
+Status: Approved contract for [Issue #65](https://github.com/songt888/toktickit/issues/65)
+(PR #74, merged into `lab4-staging` as `6a36b0a` on 2026-10-30), implemented in PRs #75 and
+#77 to #83 (Issues #66 to #72). Contract date: 2026-10-05 (Asia/Bangkok).
 Baseline: released `main` at `9313209d224592c9265bb8595aa7cc0f1336b9db`.
-No Lab 4 feature or migration is implemented by this PR.
 
 Source: CPE334 Lab 4 handout, sections 1-13 and Answer Parts 1-9, supplied as
 `SE+Lab+4.pdf`. This contract extends [Lab 3](../lab-03/specification.md).
@@ -344,18 +344,22 @@ are Planned. This table and the test matrix are checked in both directions.
 
 ## 10. Product Definition of Done
 
-- [ ] Contract approved and merged before dependent implementation.
+- [x] Contract approved and merged before dependent implementation.
 - [ ] AC-01 through AC-24 implemented and verified against the approved contract.
-- [ ] PostgreSQL/Prisma migration, preservation, recovery and repeatable seed tested.
-- [ ] Resolution predicate and cross-row concurrency verified by direct API/race tests.
-- [ ] All required unit/API/UI/style/auth/workflow/migration/regression/performance/E2E checks pass without required skips.
-- [ ] Zen Green checklist verified at all three widths, with captioned screenshots for Parts 5-9.
+- [x] PostgreSQL/Prisma migration, preservation, recovery and repeatable seed tested.
+- [x] Resolution predicate and cross-row concurrency verified by direct API/race tests.
+- [x] All required unit/API/UI/style/auth/workflow/migration/regression/performance/E2E checks pass without required skips.
+- [x] Zen Green checklist verified at all three widths, with captioned screenshots for Parts 5-9.
 - [ ] README setup/run/migration/seed/test/demo/recovery is current; no unfinished controls, broken links or unintended console errors.
 - [ ] Reviewer records contain real comments/responses/approval and merge SHAs; AI-use contains 6-10 real prompts and a personal My Reflection.
-- [ ] No credentials, session secrets, real uploads or generated runtime output committed.
-- [ ] Each feature PR approved/merged into lab4-staging before its Issue is closed/Done.
+- [x] No credentials, session secrets, real uploads or generated runtime output committed.
+- [x] Each feature PR approved/merged into lab4-staging before its Issue is closed/Done.
 - [ ] Reviewed lab4-staging -> main release followed by full verification on the actual released SHA.
 - [ ] Final verification evidence corrected through a reviewed follow-up PR; #73 closes only after that follow-up merges.
+
+Ticked items are checked on `lab4-staging` at `0512c04` ([tests.md](tests.md) sections 2 and 4.1,
+[reviewer.md](reviewer.md)). AC-23/AC-24, the README, AI-use and the release items stay open
+until #73's docs PR, release PR and final-main follow-up are reviewed and merged.
 
 ## 11. Assumptions and decisions requiring review
 

@@ -99,11 +99,11 @@ Rows not listed passed as written in the matrix, with no extra notes.
 - **CONC-02**: #72: 12 raced rounds, 60 s test timeout like CONC-01
 - **UI-02**: Ticket Status History added in #72: ordered from/to events with actor, empty and legacy note, Retry, paging both ways, 401 sign-in message, and a late earlier response never replacing a newer one
 - **UI-07**: Dashboard first page, navigation and earlier screens for all three roles (#70, #71); logout clears a Create Ticket draft; a late Dashboard response for the previous user is dropped by the request guard itself (same component instance, user id changes), and the test fails if the guard is removed (#72)
-- **STYLE-01**: #72: tokens in `client/src/theme.css`, text labels for status/priority/owner/metrics, `aria-required` on every field marked `*` (Action form including Result when editing a completed Action and the cancel confirmation, Create Ticket), no Bootstrap blue `primary` class left in `client/src`; one shared badge mapping in `statusBadge.ts`: all 8 Ticket statuses and all 4 priorities have their own badge, used on every screen including both Dashboards (IT priority too); green focus glow and checked boxes in `theme.css`; the rendered badges on both Dashboards and Requester Detail carry each status's own class (CANCELLED is never the RESOLVED green
+- **STYLE-01**: #72: tokens in `client/src/theme.css`, text labels for status/priority/owner/metrics, `aria-required` on every field marked `*` (Action form including Result when editing a completed Action and the cancel confirmation, Create Ticket), no Bootstrap blue `primary` class left in `client/src`; one shared badge mapping in `statusBadge.ts`: all 8 Ticket statuses and all 4 priorities have their own badge, used on every screen including both Dashboards (IT priority too); green focus glow and checked boxes in `theme.css`; the rendered badges on both Dashboards and Requester Detail carry each status's own class (CANCELLED is never the RESOLVED green)
 - **RESP-01**: #72: 14 screens x 3 widths (including the Requester's My Tickets list and Administrator User Management); each screen is measured only after its loading status is gone. The Queue is measured twice: the Dashboard drill-down with its scope banner and its first page of rows (`queue-scoped`), then after searching for the fixture Ticket (`queue-search`), since Apply filters clears the scope. Both are also measured at 992 px, the narrowest width that shows the Queue table. Unassigned WAITING_FOR_REQUESTER and IN_PROGRESS Tickets are created through the Staff status API (and raised in IT priority right before the drill-down loads; that bumps their Last updated time, and the Queue sorts by Last updated, so they are on its first page), and the run asserts their badges in My Tickets and in the scoped Queue. Each screen also fails on a link with no target, a visible button or link with no name, or TODO/placeholder text. Page overflow, a table that scrolls sideways inside its own box, a short word (such as Unassigned) split across two lines in a table cell, controls cut off at the edge and text wider than its own box all fail the run. An unbroken 60-character word is in the summary, description, public comment, Internal Note and Action; the fresh Staff and Requester names are 100+ unbroken characters, and an attachment has a long unbroken name. It found and fixed overflows in the mobile Queue card, the desktop Queue table (a long requester name pushed Owner, Updated and Open Detail out of view at 1280 px; at 992 px a page of mixed rows was 1013 px wide, fixed by showing the extra Requester column from 1200 px, compact `table-sm` cells and letting status badges such as WAITING_FOR_REQUESTER wrap after an underscore, so the ten listed columns fit; Owner keeps Unassigned on one line), the desktop My Tickets table with a WAITING_FOR_REQUESTER row (732 px in 704 px; fixed with the same `table-sm` and status-badge wrapping), the desktop My Tickets table (View details pushed off-screen), the header user name, the My Tickets heading, the Staff attachment name and User Management at 820 px; a failure names the offending elements; screenshots in `artifacts/lab-04/screenshots/responsive/`
 - **A11Y-01**: #72: keyboard-only path through Dashboard, Queue, Detail, Action form, cancel panel, history and My Pending Actions. The cancel panel is inline, not a modal: focus moves into it on open and returns to the same Action on Discard. Computed focus glow and checked-box colour are the Zen Green.
 - **E2E-01**: #72: fresh users per run, no seeded accounts
-- **E2E-02**: #72: fresh users per test; the shared Ticket Status History lists the same ordered transitions with actor for Staff and the Requester; plus a deactivated-assignee case (flagged, work disabled, server 400
+- **E2E-02**: #72: fresh users per test; the shared Ticket Status History lists the same ordered transitions with actor for Staff and the Requester; plus a deactivated-assignee case (flagged, work disabled, server 400)
 - **E2E-03**: all three roles' metrics vs database (Staff: all cards and all 12 buckets); every card, bucket and View all drill-down; Open Detail/Open Action and isolation (#70, #71); injected 500 shows the error with Retry, the zero state, a failed refresh keeping older data, and an injected 403 showing the forbidden state for both Dashboards (#72); each drill-down waits for the response carrying its own scope
 - **REG-01**: #72: server 45 files, 185 tests (PERF-01 skipped, run separately; includes the harness test), client 23 files/128 tests (Lab 1 client test re-enabled), Playwright 26 tests in 14 files, each run at least twice
 - **E2E-04**: #72: fresh users per test; covers Lab 1-3 sign-in, password change and logout, Tickets with attachments and comments, Queue owner and IT priority with a stale 409, Internal Notes and Administrator safety rules.
@@ -134,16 +134,11 @@ Every Lab 4 Playwright test uses `e2e/lab-04/guardedTest.ts` (labsheet 8.5): it 
 
 Server API tests bind each Supertest app to 127.0.0.1 (`server/tests/setup.ts`; `server/tests/harness.test.ts` fails if the patch stops applying). Supertest's default listens on every interface and then calls 127.0.0.1, so on macOS a port already held by another local program on 127.0.0.1 answered instead of the app (random 401/404 and 5 s timeouts, about 1 run in 8). Fixture cleanup also skips an undefined id (Prisma would read `{ id: undefined }` as every Ticket) and removes notes and comments before their Tickets and users. Lab 4 E2E fixture text uses `uniqueTag()` (time plus a random part, `e2e/lab-04/freshUser.ts`), since `Date.now()` repeated across parallel workers, and the Action order check is polled while the list reloads; `--project=lab4-desktop --repeat-each 4` passes 44/44 (11 tests x 4).
 
-## 4. Planned verification commands and evidence
+## 4. Verification commands and evidence
 
-For this documentation PR, run `python3 scripts/check-lab4-contract.py`,
-`git diff --check`, validate a temporary schema assembled from the proposed
-models/inverse relations and existing Prisma schema, and run existing server
-and client production builds in the isolated checkout. These checks do not
-execute or certify any Lab 4 feature test. Record actual results in reviewer.md.
-
-For implementation/final release, using isolated explicit DATABASE_URL and
-E2E ports, record the actual output of:
+The contract checker (`python3 scripts/check-lab4-contract.py`) validates references only; it does not
+execute or certify any feature test. For each Issue and for the release, using isolated explicit
+DATABASE_URL and E2E ports, record the actual output of:
 
 ```text
 server: npm exec -- prisma migrate deploy
@@ -189,11 +184,17 @@ Run on branch `feature/lab4-09-docs-release` at `0512c04` (the merge of PR #83 i
 | `root: python3 scripts/check-lab4-contract.py` | 24 ACs, 44 test IDs, 69 bidirectional mappings; local links valid |
 | `root: git diff --check` | Clean |
 
+The contract checker did not pass at `0512c04` itself: its rows still said `Pass`. The table above is the
+run on the #73 docs branch after the rows were changed to `Passed`. That branch also changes one client line
+(the "Ready to resolve." readiness text, PR #79 note) with a new assertion in `ticket-resolution.spec.ts`;
+`ticket-resolution.spec.ts` passed 2/2 and `client: npm test` passed 23 files / 128 tests after the change.
+The full server and Playwright counts above are from `0512c04` and are rerun in the follow-up on `main`.
+
 This is the pre-release run. RELEASE-01 needs the same commands from the released `main` SHA, recorded in the follow-up PR.
 
-## 5. Answer Part 1-9 evidence plan
+## 5. Answer Part 1-9 evidence
 
-| Part | Planned evidence |
+| Part | Evidence |
 |---|---|
 | Answer Part 1 | Feature -> lab4-staging -> main graph, all Issues Done at completion, real reviewer/PR records, README/.gitignore and repository tree |
 | Answer Part 2 | specification/API/UI links and rendering, pre-implementation contract commit/approval, decisions and Product DoD |
@@ -205,4 +206,4 @@ This is the pre-release run. RELEASE-01 needs the same commands from the release
 | Answer Part 8 | Owned Requester metrics/attention/recent/drill-down/isolation and representative Labs 1-3 regression |
 | Answer Part 9 | Rendered UI spec, all three widths, keyboard/focus/labels/overflow evidence and verified checklist |
 
-Evidence is planned here; no PDF or fabricated passing screenshot/review is created.
+No PDF is created, and nothing here is a fabricated passing screenshot or review.

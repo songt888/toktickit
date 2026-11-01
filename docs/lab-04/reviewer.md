@@ -63,7 +63,7 @@ Each row is one formal review. "Response" is the change made before the next rev
 | Reviewed commit | Concern | Response | State |
 |---|---|---|---|
 | `c9cf216` | A race accepted a 500 loser; CONC-01 lacked the barrier and priority/status races it claimed; UI-03 claimed a confirmation test; readiness summary missing; select stayed on a disabled RESOLVED after a gate 409. | Loser asserted as 409 STALE_STATE; barrier-controlled races added; confirmation test; readiness summary with counts; select reset after 409. | CHANGES_REQUESTED |
-| `cae2076` | Approved, with non-blocking notes: hide "Ready to resolve." when RESOLVED is not a next move, add `role="group"`, update PR body counts. | No further commit: `cae2076` is the merged head, so the code notes were not applied in this PR. | APPROVED |
+| `cae2076` | Approved, with non-blocking notes: hide "Ready to resolve." when RESOLVED is not a next move, add `role="group"`, update PR body counts. | No further commit: `cae2076` is the merged head, so the code notes were not applied in PR #79. The "Ready to resolve." note is fixed in PR #84 (`StaffTicketDetail.tsx`). | APPROVED |
 
 ### #80 Actions Taken UI
 

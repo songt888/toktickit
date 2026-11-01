@@ -49,7 +49,7 @@ Decisions are recorded in [specification.md](specification.md), approved in PR #
 (`6a36b0a`). Consult [reviewer.md](reviewer.md) and the live Project for the actual
 PR/review state; #65 to #72 are Done and #73 is the remaining release Issue.
 Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
-`lab4-staging`. Formal approval/merge is pending.
+`lab4-staging`; approved and merged as `6a36b0a` on 2026-10-30.
 
 1. **Action actor and assignee:** distinguish backend-attributed creator /
    performed-by from approved active assignee and the primary Ticket Owner.

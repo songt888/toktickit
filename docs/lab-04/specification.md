@@ -79,7 +79,7 @@ there is no new Action file-upload system. No submission PDF is authorized.
 | BR-23 | Additive migration preserves existing ids, FKs, content, timestamps, hashes, sessions, files and sequence state. Legacy `lastResolvedAt` is null (unknown), never guessed from `updatedAt`. Seed never rewinds sequences or overwrites real passwords/work. |
 | BR-24 | Loading/saving/validation/success/empty/no-results/401/403/404/409/safe-500 states are distinct. A 400/409/500/network failure retains the non-secret form draft; refresh never silently overwrites it. Logout/identity change clears prior user's draft/data. |
 | BR-25 | Prevent double-clicks while saving, ignore obsolete responses, use returned versions for subsequent writes, refresh dashboard on entry/explicit Refresh and after successful relevant writes. A 409 clears previous confirmation and requires review before retry. |
-| BR-26 | At 1280/820/390px every major screen retains labels, visible focus, meaningful status text and reachable actions without unintended page overflow. Required tests remain Planned until executed; peer approval and reviewed main release are completion gates. |
+| BR-26 | At 1280/820/390px every major screen retains labels, visible focus, meaningful status text and reachable actions without unintended page overflow. Required tests are recorded in tests.md; peer approval and reviewed main release are completion gates. |
 
 ### Ticket transition matrix (BR-12)
 
@@ -120,7 +120,7 @@ Requester-owner only; permitted operational downloads remain available.
 
 ## 6. Data contract and preservation
 
-Proposed Prisma increment for Issue #66, not a change to the current schema:
+Prisma increment added in Issue #66 (migration `20261030140000_lab4_actions_status_history`):
 
 ```prisma
 enum ActionStatus {
@@ -230,8 +230,8 @@ inside the locking transaction, since cross-row CHECK constraints are unsuitable
 1. **Separate current projection and append-only revisions:** assignment/editing
    in Answer Part 6 remains usable while committed evidence in Part 7 cannot
    be overwritten. A JSON full snapshot keeps one revision row per mutation
-   without duplicating another wide relational model. This is a proposed
-   reconciliation requiring peer approval, not a claim the handout fixed it.
+   without duplicating another wide relational model. This is a design
+   reconciliation approved in PR #74, not a claim the handout fixed it.
 2. **Separate Ticket ownership, performer and assignee FKs:** one coordinator
    never prevents multiple people recording/receiving work. Restrict deletes
    preserves the historical identities; current role changes do not rewrite FKs.
@@ -312,8 +312,8 @@ rules and token styles. No coding or production UI change occurs in Issue #65.
 
 ## 9. Acceptance criteria and test mapping
 
-The test identifiers are defined in [tests.md](tests.md); all feature checks
-are Planned. This table and the test matrix are checked in both directions.
+The test identifiers are defined in [tests.md](tests.md); every feature check
+is Passed except DOC-01 and RELEASE-01, which stay Pending until the release. This table and the test matrix are checked in both directions.
 
 | AC | Observable acceptance criterion | FR / BR | Tests |
 |---|---|---|---|
@@ -364,7 +364,7 @@ until #73's docs PR, release PR and final-main follow-up are reviewed and merged
 ## 11. Assumptions and decisions requiring review
 
 The handout leaves lifecycle states, precise gate, editable-versus-append-only
-scope and metrics open. BR-03/BR-07 to BR-17 and section 7 are concrete proposed
+scope and metrics open. BR-03/BR-07 to BR-17 and section 7 are concrete approved
 choices. In particular: mandatory Action assignment; shared Action revisions;
 audited completed-field corrections; at least one completed, no pending or
 unsettled-follow-up Action for resolution; 7-day rolling UTC windows; assignment

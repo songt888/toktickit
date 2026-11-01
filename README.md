@@ -55,21 +55,19 @@ cp client/.env.example client/.env
 The default `DATABASE_URL` connects to the Docker database above. Keep `server/.env` private; it is ignored by Git.
 
 Initialize Prisma, apply the Lab 2, Lab 3 and Lab 4 migrations, and seed reference data, demo users and
-the Lab 4 fixtures:
+the Lab 4 fixtures. To sign in as a seeded user, supply a private initial password **on the first seed**:
+the seed creates each account once and never resets an existing account's password. Use a local
+password of at least 12 characters and do not commit it:
 
 ```bash
 cd server
 npx prisma generate
 npx prisma migrate deploy
-npm run prisma:seed
-```
-
-To sign in as a seeded Lab 3 user, supply a private initial password when seeding. Replace the
-sample value with a local password that meets the 12-character minimum; do not commit it:
-
-```bash
 LAB3_SEED_INITIAL_PASSWORD="<YOUR_LOCAL_PASSWORD>" npm run prisma:seed
 ```
+
+If you already seeded without a password, either reset the database and seed again with the command
+above, or have an Administrator set each user's password in User Management.
 
 The local demo accounts are `ari.suksan@example.com` (Requester),
 `nattakit.support@example.com` (IT Staff), and `lab.admin@example.com` (Administrator). They use the

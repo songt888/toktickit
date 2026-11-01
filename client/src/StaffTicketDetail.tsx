@@ -490,7 +490,7 @@ export default function StaffTicketDetail({ ticketId, currentUserId, onBack, bac
                         <li>Unsettled follow-up: {ticket.resolutionGate.unsettledFollowUpActions}</li>
                       </ul>
                       <p id="staff-resolution-gate" className="form-text text-body mb-0">
-                        {ticket.resolutionGate.canResolve ? "Ready to resolve." : resolutionGateText(ticket.resolutionGate)}
+                        {ticket.resolutionGate.canResolve ? (permittedNextStatuses[ticket.currentStatus].includes("RESOLVED") ? "Ready to resolve." : "Resolution is not a next step from this status.") : resolutionGateText(ticket.resolutionGate)}
                       </p>
                     </div>
                   )}

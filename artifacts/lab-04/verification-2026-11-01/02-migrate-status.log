@@ -1,0 +1,12 @@
+# command: (cd server ) npm exec -- prisma migrate status
+# sha: 991b254  at 991b254  started: 2026-11-01T12:25:59Z  node: v24.19.0
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "toktickit", schema "public" at "localhost:5432"
+
+5 migrations found in prisma/migrations
+
+Database schema is up to date!
+
+# exit: 0  finished: 2026-11-01T12:25:59Z

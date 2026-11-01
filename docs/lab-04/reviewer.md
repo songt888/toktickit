@@ -21,6 +21,13 @@ counted as approval.
 | [#81](https://github.com/songt888/toktickit/pull/81) Requester Dashboard API and UI | [#70](https://github.com/songt888/toktickit/issues/70) | 2 | `9422cfd` | `07bc662` |
 | [#82](https://github.com/songt888/toktickit/pull/82) Staff and Administrator Dashboard | [#71](https://github.com/songt888/toktickit/issues/71) | 3 | `f507afe` | `0bc02e5` |
 | [#83](https://github.com/songt888/toktickit/pull/83) Final regression, E2E, responsive, accessibility and performance | [#72](https://github.com/songt888/toktickit/issues/72) | 8 | `13dceb5` | `0512c04` |
+| [#84](https://github.com/songt888/toktickit/pull/84) Documentation, evidence and review record | [#73](https://github.com/songt888/toktickit/issues/73) | 5 | `b10c7dc` | `a4db420` |
+
+## Release into `main`
+
+| PR | Issue | Rounds of changes requested | Approved at | Merge SHA |
+|---|---|---|---|---|
+| [#85](https://github.com/songt888/toktickit/pull/85) Release Lab 4: `lab4-staging` -> `main` | [#73](https://github.com/songt888/toktickit/issues/73) | 1 | `a4db420` | `991b254` |
 
 ## Author verification (Issue #65)
 
@@ -139,7 +146,18 @@ Each row is one formal review. "Response" is the change made before the next rev
 | `bb67a29` | `ai-use.md` merge wording, AC-12 timing, rerun claim, Codex prompts and unquoted prompts; README malee/kittipong cannot sign in and five requesters; `role="group"`, the "To resolve..." hint on CLOSED/CANCELLED and a client test; `reviewer.md` partner responses, #83 transaction finding, Author verification, #95 merged, round 1; stale text in several files; PR body. | `ai-use.md`: merge wording, AC-12 timing and counts fixed, the two Codex prompts added and the prompts quoted; README: five Requesters and the Lab 4 seed now gives the password to the two fixture users still on the placeholder (DB-03j); `StaffTicketDetail.tsx`: `role="group"`, no resolve hint on CLOSED/CANCELLED, client tests; this file: partner responses, the #83 transaction finding, Author verification, #95 merged, round 1 and the `7e5df01` row; stale text fixed in `issue-plan.md`, `specification.md`, `api-spec.md`, `tests.md`; `tests.md` 4.1 rerun on this branch. | CHANGES_REQUESTED |
 | `847a465` | My Reflection AI-drafted and missing the spec agent; ai-use "exact" while #2/#8 were excerpt/description, missing outcomes for #1/#3/#6/#7, a local path; ai-use 4.1 SHA disagreed with tests.md; issue-plan future tense; a second DB-03c test id; the `7e5df01` row named author wrapping; the #65 Author verification block dropped. | `ai-use.md` rewritten in the Lab 3 format: prompts labelled as lightly normalized summaries of what was asked (no exact-quote claim, no local path), Codex covered in LLM Used, How I Used AI Critically and My Reflection; SHA `bfc9e87` in `tests.md`; issue-plan tense fixed; new test renamed DB-03j; row corrected; #65 block restored. | CHANGES_REQUESTED |
 | `d5e2277` | `tests.md` said only two files change after `bfc9e87` and still named DB-03c; `specification.md` said 4.1 ran at `0512c04`; PR body out of date; the #65 Author verification restored from `f67233e` instead of the `0512c04` version; `role="group"` missing from the #79 row; `ai-use.md` did not say the Thai prompts were translated; a test title said "hides" but checked the shown case. | The `0512c04` block restored as it stood; the 4.1 scope sentence and DB-03j fixed; spec matched to `bfc9e87`; PR body rewritten; `role="group"` added to the #79 row; Thai prompts 2, 5, 6 and 10 marked translated; test title corrected. | CHANGES_REQUESTED |
-| `fa95675` | The 4.1 scope sentence and PR body said one test name changed after `bfc9e87`, but two did (the DB-03j rename and a `TicketWorkflow.test.tsx` title); a missing period in `specification.md` before "AC-23/AC-24". Optional: return the partner section to its `6909619` form. | Both test titles listed with their commits in `tests.md` and the PR body; period added. The optional change was not taken: round 2 asked for the partner responses and verification notes in that section. | CHANGES_REQUESTED |
+| `25008b6` (the review says it checked `fa95675`; only docs changed in between) | The 4.1 scope sentence and PR body said one test name changed after `bfc9e87`, but two did (the DB-03j rename and a `TicketWorkflow.test.tsx` title); a missing period in `specification.md` before "AC-23/AC-24". Optional: return the partner section to its `6909619` form. | Both test titles listed with their commits in `tests.md` and the PR body; period added. The optional change was not taken: round 2 asked for the partner responses and verification notes in that section. | CHANGES_REQUESTED |
+| `b10c7dc` | Both test titles listed, spec period fixed, docs match. | Merged by stickkersz as `a4db420`. | APPROVED |
+
+GitHub shows the `847a465` review submitted before the `bb67a29` one (each review keeps the commit it was
+started on); the rows are in the order of the rounds they answer.
+
+### #85 release into `main`
+
+| Reviewed commit | Concern | Response | State |
+|---|---|---|---|
+| `a4db420` | The PR body's "Files outside the feature folders" missed about 35 files (README, the contract checker, Lab 1-3 client and E2E test edits, Prisma schema and seed, server test setup/harness/cleanup, Lab 2/3 server test edits); the 10 PRs, merge SHAs and tree `b10c7dc` checked out. | Body now lists all 42 files outside the Lab 4 folders and app source, with the PRs that changed each; a recheck then corrected four of the stated reasons. No code change. | CHANGES_REQUESTED |
+| `a4db420` | Body lists all 42 files; 10 PRs and merge SHAs match; tree is `b10c7dc`. | Merged by stickkersz as `991b254`. | APPROVED |
 
 ## Reviews performed for partner
 
@@ -173,17 +191,24 @@ counts in the PR (see "How I verified partner fixes" below).
 - For each fix I read the new commit against the comment I had made. Most of my reviews say "I did not rerun the suites" and rely on the counts the author reported in the PR; I did not rerun them.
 - Where I recorded a deliberate decision rather than a defect (the "files" clause in #88, the status matrix in #81), I checked that the contract text and the PR body agree.
 
-## Pending for #73
+## Final-main follow-up for #73
 
-- This documentation PR (#84) into `lab4-staging`: five rounds of changes requested so far; approval pending.
-- Release PR `lab4-staging` -> `main`: not yet opened.
-- Final-main verification follow-up PR: not yet opened.
+- The full final-main run on `991b254` is in [tests.md](tests.md) section 4.2, with logs under
+  `artifacts/lab-04/verification-2026-11-01/`. It is recorded through follow-up PR
+  [#86](https://github.com/songt888/toktickit/pull/86) into `main`; #73 is closed and set to Done
+  only after it is approved and merged.
+
+### #86 final-main follow-up
+
+| Reviewed commit | Concern | Response | State |
+|---|---|---|---|
+| `057a891` | The 01 to 12 `.log` files were not in the PR: `.gitignore` `*.log` skipped them, only the README and `03-seed-counts.txt` were committed; `ai-use.md` should say the report PDF script came from a separate request, since #73 allows no PDF work otherwise. SHAs, rounds, counts and the `b10c7dc` tree checked out. | All 13 logs force-added as in Lab 3; `ai-use.md` says the PDF was a separate request outside #73. | CHANGES_REQUESTED |
 
 ## Review and release checklist
 
 - [x] Every Lab 4 feature PR formally APPROVED by stickkersz before merge (#74, #75, #77 to #83).
 - [x] Each Issue #65 to #72 closed and its card set to Done only after its PR merged.
 - [x] Reviews performed for the partner recorded with real commits and outcomes.
-- [ ] This #73 documentation PR approved and merged into `lab4-staging`.
-- [ ] Release PR into `main` separately reviewed and merged.
+- [x] #73 documentation PR #84 approved at `b10c7dc` and merged into `lab4-staging` as `a4db420`.
+- [x] Release PR #85 into `main` separately reviewed (approved at `a4db420`) and merged as `991b254`.
 - [ ] Final-main verification follow-up reviewed and merged before #73 is Done.

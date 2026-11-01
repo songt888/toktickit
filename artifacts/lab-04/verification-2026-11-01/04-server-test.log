@@ -1,0 +1,334 @@
+# command: (cd server ) npm test -- --reporter=verbose
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:00Z  node: v24.19.0
+
+
+> toktickit-server@1.0.0 test
+> vitest run --reporter=verbose
+
+
+ RUN  v2.1.9 <repo>/server
+
+stdout | tests/lab-04/authorization.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/actions-taken.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/concurrency.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/staff-dashboard.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/ticket-workflow.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/dashboard-drilldown.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-04/authorization.api.test.ts > Actions Taken authorization (AUTH-01, Action endpoints) > requires a valid session and a completed password change
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > returns every metric and bucket for a user with no work, including zeros
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > lists only active Staff and Administrators as safe assignees
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > serves ordered Public Comments to their owner, Staff, and Administrators
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-01 creates under the Ticket with the session performer, an eligible assignee and one revision
+ ✓ tests/lab-04/authorization.api.test.ts > Actions Taken authorization (AUTH-01, Action endpoints) > lets the owning Requester read all shared work, but every write is 403 and writes nothing
+ ✓ tests/lab-04/concurrency.api.test.ts > Actions Taken concurrency > CONC-03 runs simultaneous same-id retries exactly once and blocks cross-Ticket reuse
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > keeps operational attachment metadata and download available to Staff
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > restricts Internal Notes to Staff and Administrators without leaking them
+ ✓ tests/lab-04/concurrency.api.test.ts > Actions Taken concurrency > CONC-01 serializes competing writes on one Ticket: one wins, the other conflicts, nothing partial
+ ✓ tests/lab-04/authorization.api.test.ts > Actions Taken authorization (AUTH-01, Action endpoints) > answers another Requester's reads and writes with 404, exactly like a missing Ticket
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Requester list drill-down filters (API-13, Requester part) > filters each of the eight statuses exactly and never shows another Requester's Tickets
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > supports claiming, assigning, reassigning, and unassigning with fresh versions
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > rejects blank and oversized public comments and internal notes without inserting rows
+ ✓ tests/lab-04/authorization.api.test.ts > Actions Taken authorization (AUTH-01, Action endpoints) > rejects a deactivated Staff session before any write
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > rejects invalid or inactive owners without changing the Ticket
+ ✓ tests/lab-03/comments-notes.api.test.ts > Public Comments and Internal Notes API > keeps comments and notes append-only
+ ✓ tests/lab-04/authorization.api.test.ts > Requester Dashboard authorization (AUTH-01, Requester Dashboard) > needs a session, a completed password change and the Requester role
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Requester list drill-down filters (API-13, Requester part) > supports active and resolved groups and rejects bad or conflicting filters
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > updates only IT Priority and rejects Requester mutations
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-02 rejects invalid input with 400 and writes nothing; boundaries and literal text work
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Requester list drill-down filters (API-13, Requester part) > applies inclusive date bounds and skips unknown resolution dates
+ ✓ tests/lab-04/authorization.api.test.ts > Requester Dashboard authorization (AUTH-01, Requester Dashboard) > scopes counts and lists to the session, ignores or rejects another Requester's id, and leaks no private fields
+ ✓ tests/lab-04/authorization.api.test.ts > Requester Dashboard authorization (AUTH-01, Requester Dashboard) > rejects a deactivated Requester session
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > enforces allowed transitions and requires confirmation for terminal changes
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > rejects stale concurrent mutations and leaves the winner intact
+ ✓ tests/lab-04/authorization.api.test.ts > Staff Dashboard authorization (AUTH-01, Staff Dashboard) > needs a session, a completed password change and a Staff or Administrator role
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Requester list drill-down filters (API-13, Requester part) > each Dashboard metric equals the total of its drill-down list using the returned asOf and recentFrom
+ ✓ tests/lab-03/staff-ticket-detail.api.test.ts > IT Staff Ticket workflow API > returns safe missing and stale responses
+ ✓ tests/lab-04/authorization.api.test.ts > Staff Dashboard authorization (AUTH-01, Staff Dashboard) > shows only the session user's Actions, rejects another user's id, and leaks no private fields
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-03 assigns only active Staff or Administrators and keeps performer and owner
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Staff Queue drill-down filters and My Pending Actions list (API-13, Staff part) > filters the Queue by active group, owner, status, IT priority and inclusive updated bounds
+ ✓ tests/lab-04/authorization.api.test.ts > Session-derived scope cannot be forged (AUTH-02) > a Requester cannot widen their scope or reach operational data by sending someone else's id
+ ✓ tests/lab-04/authorization.api.test.ts > Session-derived scope cannot be forged (AUTH-02) > Staff and Administrators cannot read another user's Dashboard or My Actions by sending their id
+ ✓ tests/lab-04/authorization.api.test.ts > Session-derived scope cannot be forged (AUTH-02) > a new Ticket belongs to the session Requester whatever requesterId the body carries
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Staff Queue drill-down filters and My Pending Actions list (API-13, Staff part) > lists only the session user's pending Actions on active Tickets, paged and ordered by updatedAt then id
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Staff Queue drill-down filters and My Pending Actions list (API-13, Staff part) > rejects any other user, scope, page size or parameter and is for Staff and Administrators only
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-04 follows the lifecycle, needs result, reason and confirmation, and locks finished Tickets
+ ✓ tests/lab-04/authorization.api.test.ts > Session-derived scope cannot be forged (AUTH-02) > an Action's performer comes from the session; a forged performer or another user's Action list is refused
+stdout | tests/lab-04/seed.test.ts > Lab 4 seed (DB-03)
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/seed.test.ts > Lab 4 seed (DB-03)
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+stdout | tests/lab-04/seed.test.ts > Lab 4 seed (DB-03)
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-05 appends exactly one revision per edit, allows completed corrections, and rejects no-op edits
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03a keeps Lab 3 tickets untouched: no invented history or resolution time
+stdout | tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03j a Lab 4 fixture user left on the placeholder hash gets the initial password on the next seed
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03j a Lab 4 fixture user left on the placeholder hash gets the initial password on the next seed
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-09 rejects stale Ticket timestamps and Action versions without partial writes
+stdout | tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03b a second run changes nothing: rows, hashes, timestamps, app edits (sequences: DB-02)
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-04/ticket-workflow.api.test.ts > Ticket workflow API > API-07 allows exactly the matrix for all 64 direct calls and appends one event only on success 834ms
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03b a second run changes nothing: rows, hashes, timestamps, app edits (sequences: DB-02)
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03h Action timestamps follow the status path (BR-13 history)
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03i fixtures span the 7-day window and Ticket Numbers match their dates
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03c seed covers every status, priority, ownership and 0/1/many Actions
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03d resolved tickets satisfy the resolution gate and carry lastResolvedAt
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03e status events follow the matrix and end at the current status
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03f every Action has one matching creation revision and a stable mutation id
+ ✓ tests/lab-04/seed.test.ts > Lab 4 seed (DB-03) > DB-03g dashboard fixtures: a Requester and Staff user with no work
+ ✓ tests/lab-04/actions-taken.api.test.ts > Actions Taken API > API-10 replays a lost-response retry exactly and rejects a reused id for another change
+stdout | tests/lab-02/attachments.api.test.ts > Attachment lifecycle API
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > validates input and returns the same safe failure for invalid or inactive accounts
+ ✓ tests/lab-04/ticket-workflow.api.test.ts > Ticket workflow API > API-08 enforces the resolution gate on direct calls and explains it
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > uploads a permitted file with generated storage and retrievable metadata
+ ✓ tests/lab-04/ticket-workflow.api.test.ts > Ticket workflow API > API-08 grandfathers legacy resolved and closed Tickets but gates a reopened zero-Action Ticket
+ ✓ tests/lab-04/ticket-workflow.api.test.ts > Ticket workflow API > keeps lastResolvedAt through close and reopen, and resets it only on a new resolution
+ ✓ tests/lab-04/ticket-workflow.api.test.ts > Ticket workflow API > records the creation event with the Ticket and advances timestamps on advisory writes
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > rejects unsupported, oversized, and sixth active files safely
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > allows owner download but rejects cross-requester and removed-file access
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > soft-removes an attachment with a reason and keeps metadata
+ ✓ tests/lab-02/attachments.api.test.ts > Attachment lifecycle API > requires a session and ignores requester headers before attachment access
+stdout | tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > creates a safe session, exposes current user, changes the initial password, and logs out 315ms
+stdout | tests/lab-04/migration-preservation.test.ts > Lab 4 migration on a populated Lab 3 database (DB-02) > DB-02 upgrades, preserves every old row and sequence, restores a snapshot, and reseeds safely
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > rejects an expired session
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > revokes a session when its user becomes inactive
+ ✓ tests/lab-03/auth.api.test.ts > Lab 3 authentication API > rejects credentialed state-changing requests from an unknown origin
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > allows Staff and Administrators while rejecting other roles
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > supports search, filters, stable sorting, owner display, and pagination metadata
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > uses the default sort and id tiebreaker for equal updatedAt values
+ ✓ tests/lab-04/concurrency.api.test.ts > Actions Taken concurrency > CONC-01 never resolves past the gate when barrier-held Action, owner, priority, status or advisory writes race the Resolve 1251ms
+stdout | tests/lab-04/migration-preservation.test.ts > Lab 4 migration on a populated Lab 3 database (DB-02) > DB-02 upgrades, preserves every old row and sequence, restores a snapshot, and reseeds safely
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+stdout | tests/lab-04/requester-dashboard.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > requires Administrator role and returns only safe, stable user data
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > rejects invalid filters and treats wildcard characters as literal search text
+stdout | tests/lab-03/data-foundation.test.ts > Lab 3 database foundation
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > searches ticket fields and requester names while treating wildcards literally
+ ✓ tests/lab-04/requester-dashboard.api.test.ts > Requester Dashboard API (API-11) > returns a zero snapshot with every metric present
+stdout | tests/lab-03/data-foundation.test.ts > Lab 3 database foundation
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > rejects unsupported query values with a safe 400 response
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > creates normalized users with a hashed initial password and rejects duplicate email
+ ✓ tests/lab-03/staff-queue.api.test.ts > GET /api/staff/tickets > opens safe operational Ticket Detail and protects the route by role
+ ✓ tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > creates the role-based user model and preserves ticket data structures
+stdout | tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > preserves seeded user IDs, ticket ownership, attachments, and real hashes across reseeding
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/migration-preservation.test.ts > Lab 4 migration on a populated Lab 3 database (DB-02) > DB-02 upgrades, preserves every old row and sequence, restores a snapshot, and reseeds safely
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > validates create and edit values, normalizes email, and prevents duplicate email
+stdout | tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > preserves seeded user IDs, ticket ownership, attachments, and real hashes across reseeding
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+stdout | tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/data-foundation.test.ts > Lab 3 database foundation > preserves seeded user IDs, ticket ownership, attachments, and real hashes across reseeding
+ ✓ tests/lab-04/requester-dashboard.api.test.ts > Requester Dashboard API (API-11) > counts only the session Requester's Tickets, with inclusive 7-day bounds, no future dates and no unknown legacy resolution
+stdout | tests/lab-04/migration-preservation.test.ts > Lab 4 migration on a populated Lab 3 database (DB-02) > DB-02 upgrades, preserves every old row and sequence, restores a snapshot, and reseeds safely
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > resets a user's password without returning it and requires a change at next login
+ ✓ tests/lab-03/users-admin.api.test.ts > Administrator user management API > rejects self-deactivation and evaluates the last-active-Administrator rule
+ ✓ tests/lab-04/requester-dashboard.api.test.ts > Requester Dashboard API (API-11) > lists recent own Tickets inside the inclusive window by updatedAt then id, with the summary shape only
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > requires an authenticated session for requester-owned routes
+ ✓ tests/lab-04/requester-dashboard.api.test.ts > Requester Dashboard API (API-11) > returns at most five recent Tickets, the newest ones
+ ✓ tests/lab-04/requester-dashboard.api.test.ts > Requester Dashboard API (API-11) > is for Requesters only, needs a session and takes no query parameters
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > enforces requester roles while allowing Staff operational attachment reads
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > derives ownership from the session and hides another requester's ticket
+ ✓ tests/lab-03/authorization.api.test.ts > Lab 3 requester authorization > permits authenticated reference-data reads without exposing credentials
+ ✓ tests/lab-04/concurrency.api.test.ts > Actions Taken concurrency > CONC-02 never commits a fresh assignment, create or completion for a user deactivated or demoted first 465ms
+stdout | tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01)
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-02/create-ticket.api.test.ts > Create Ticket API
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01)
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > returns active related systems in id order
+stdout | tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01)
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > creates append-only comments with backend author/time and safe text
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > creates one owned ticket with an official number and NEW status
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects invalid payloads without creating a ticket
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects reference IDs above the PostgreSQL integer limit with 400
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01a revisions and status events are append-only, even through raw SQL
+ ✓ tests/lab-02/create-ticket.api.test.ts > Create Ticket API > rejects missing requester context and inactive reference records safely
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > protects comments and resolution by authenticated ownership
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > rejects empty, whitespace-only, and oversized comments
+stdout | tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/requester-comments.api.test.ts > Requester public comments and problem resolution > updates only the requester resolution indication and never the Ticket status
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01b database checks reject invalid Action rows
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01c Action identity is immutable and versions increase by one
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01d a projection-only write cannot commit without a matching revision
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01e a revision whose snapshot differs from the Action never commits
+ ✓ tests/lab-04/data-foundation.test.ts > Lab 4 database guards (DB-01) > DB-01f foreign keys and unique versions or mutation ids reject bad rows
+stdout | tests/lab-04/action-history.api.test.ts
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > returns read-only ticket fields and attachment metadata for the owner
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > does not reveal a ticket to another requester or an unknown ticket id
+ ✓ tests/lab-02/ticket-detail.api.test.ts > GET /api/tickets/:id > requires a session and ignores requester headers before looking up the ticket
+stdout | tests/lab-02/my-tickets.api.test.ts > GET /api/tickets
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > accepts text at the length limits and rejects one character over
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > trims text, keeps literal markup, and treats blank optional notes as none
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > requires a result only when completed
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > ties the follow-up note to follow-up required
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > keeps actionAt between the Ticket date and now, inclusive
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > parses only offset-qualified ISO timestamps and normalizes them to UTC
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > rejects unknown and protected fields instead of ignoring them
+ ✓ tests/lab-04/action-validation.test.ts > Action field validation (UNIT-01) > checks cancellation reasons, request ids, and command hashes
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > counts match independent SQL: active-only owner and priority scope, all-status breakdown, assignee-not-performer Actions 2128ms
+ ✓ tests/lab-04/dashboard-dates.test.ts > Dashboard date rules (UNIT-05) > uses a rolling 7 x 24 h UTC window ending at the captured asOf, not Bangkok midnight
+ ✓ tests/lab-04/dashboard-dates.test.ts > Dashboard date rules (UNIT-05) > turns returned bounds into inclusive filters, so a null legacy resolution time never matches
+ ✓ tests/lab-04/dashboard-dates.test.ts > Dashboard date rules (UNIT-05) > accepts only ISO times with an explicit offset and rejects reversed bounds
+ ✓ tests/lab-04/dashboard-dates.test.ts > Dashboard date rules (UNIT-05) > includes both exact bounds and excludes 1 ms either side, evaluated by PostgreSQL's own comparison
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > lists recent Tickets inside the inclusive window by updatedAt then id, with the summary shape only
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > returns only the selected requester's tickets with pagination metadata
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > lists at most five active URGENT Tickets, newest first with an id tie-break
+stdout | tests/lab-03/requester-regression.api.test.ts > Requester session regression coverage
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > applies search, filters, sorting, and page-size options
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > rejects invalid query parameters safely
+ ✓ tests/lab-02/my-tickets.api.test.ts > GET /api/tickets > requires a session and ignores a spoofed requester header
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > lists at most five of the user's pending Actions by updatedAt then id, while the count covers all of them
+ ✓ tests/lab-02/data-foundation.test.ts > Lab 2 database foundation > creates the required tables, columns, unique constraints, and ticket sequence
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/requester-regression.api.test.ts > Requester session regression coverage > keeps create, list, detail, and attachment APIs on session identity
+ ✓ tests/lab-03/requester-regression.api.test.ts > Requester session regression coverage > returns a safe 404 for another requester's session
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+ ✓ tests/lab-03/seed.test.ts > Lab 3 seed > seeds every role, active/inactive split, workflow data, and safe password state
+ ✓ tests/lab-04/action-history.api.test.ts > Action and status history ordering (API-06) > orders equal Action dates by id and pages them deterministically 402ms
+stdout | tests/lab-02/seed.test.ts > Lab 2 seed
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-02/seed.test.ts > Lab 2 seed > seeds the required reference data and active/inactive reference split
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > provides the documented defaults
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > parses search, filters, sorting, and pagination
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > rejects unsupported query values
+ ✓ tests/lab-02/query-options.test.ts > My Tickets query options > always scopes the database filter to the selected requester
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > trims and accepts a valid ticket payload
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > rejects missing, short, and unsupported values
+ ✓ tests/lab-02/validation.test.ts > Create Ticket validation > enforces the permitted attachment type and size boundaries
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+stdout | tests/lab-02/seed.test.ts > Lab 2 seed > is safe to run repeatedly without creating duplicates
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-03/status-transition.test.ts > Staff Ticket status transition rules > allows exactly the documented transition matrix
+ ✓ tests/lab-03/status-transition.test.ts > Staff Ticket status transition rules > requires explicit confirmation only for Closed and Cancelled
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+stdout | tests/lab-02/seed.test.ts > Lab 2 seed > is safe to run repeatedly without creating duplicates
+Seeded 5 categories, 7 related systems, and 5 requesters.
+
+ ✓ tests/lab-02/seed.test.ts > Lab 2 seed > is safe to run repeatedly without creating duplicates
+stdout | tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+
+ ✓ tests/lab-03/seed.test.ts > Lab 3 seed > is safe to run repeatedly without creating duplicate seed records
+ ✓ tests/lab-04/migration-preservation.test.ts > Lab 4 migration on a populated Lab 3 database (DB-02) > DB-02 upgrades, preserves every old row and sequence, restores a snapshot, and reseeds safely 2841ms
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > no Actions (legacy or new)
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > only cancelled Actions
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > a planned Action
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > an in-progress Action
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > a completed Action with unsettled follow-up
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > completed work with a cancelled Action
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > several completed, settled Actions
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > reports the counts the UI explains
+ ✓ tests/lab-04/resolution-gate.test.ts > Resolution gate truth table (UNIT-04) > takes no Requester input: the advisory flag cannot satisfy or block it
+ ✓ tests/lab-01/seed.test.ts > category seed > is safe to run twice without creating duplicates
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > accepts a password with the required length and character classes
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > rejects passwords outside the length and character rules
+ ✓ tests/lab-03/password-rules.test.ts > Lab 3 password rules > rejects non-string input
+ ✓ tests/lab-04/action-history.api.test.ts > Action and status history ordering (API-06) > lists revisions by version with the historical actor name and no internal keys 405ms
+ ✓ tests/lab-01/categories.test.ts > GET /api/categories > returns the four seeded categories in id order
+ ✓ tests/lab-04/status-transition.test.ts > Ticket transition matrix (UNIT-03) > permits exactly the approved pairs among all 64, with no same-status move
+ ✓ tests/lab-04/status-transition.test.ts > Ticket transition matrix (UNIT-03) > requires confirmation exactly for Closed and Cancelled
+ ✓ tests/lab-04/action-history.api.test.ts > Action and status history ordering (API-06) > orders status events by time then id, including equal times
+ ✓ tests/lab-02/requesters.api.test.ts > GET /api/requesters > returns only the authenticated requester for compatibility
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: undefined
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: null
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 42
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content:    
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > rejects invalid or blank content: 
+	
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > accepts content up to 4000 characters and rejects longer content
+ ✓ tests/lab-03/comment-validation.test.ts > comment and internal-note content validation > allows markup-like text under the approved plain-text rendering policy
+ ✓ tests/lab-01/health.test.ts > GET /api/health > returns 200 with status ok and the service name
+ ✓ tests/lab-01/health.test.ts > GET /api/health > returns 200 even when the client sends a cache validator
+ ✓ tests/lab-04/action-status-transition.test.ts > Action lifecycle pairs (UNIT-02) > permits exactly the specified moves among all 16 pairs, including no same-status move
+ ✓ tests/lab-03/password-hash.test.ts > Lab 3 password hashing > creates salted scrypt hashes that verify without storing plaintext
+ ✓ tests/lab-03/password-hash.test.ts > Lab 3 password hashing > does not treat the migration marker as a usable password hash
+ ✓ tests/lab-02/ticket-number.test.ts > Ticket Number generation > formats the database sequence value with the UTC ticket date
+ ✓ tests/lab-02/ticket-number.test.ts > Ticket Number generation > keeps different sequence values unique
+ ✓ tests/harness.test.ts > Test harness > serves Supertest requests from a server listening on 127.0.0.1
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > reads every metric from one snapshot while Tickets move in and out of the active set 954ms
+ ✓ tests/lab-04/staff-dashboard.api.test.ts > Staff and Administrator Dashboard API (API-12) > is for Staff and Administrators only, needs a session and takes no query parameters
+ ✓ tests/lab-04/dashboard-drilldown.api.test.ts > Staff Queue drill-down filters and My Pending Actions list (API-13, Staff part) > each Staff metric equals the total of its Queue drill-down using the returned asOf and recentFrom 3138ms
+
+ Test Files  44 passed | 1 skipped (45)
+      Tests  186 passed | 1 skipped (187)
+   Start at  19:26:00
+   Duration  4.24s (transform 583ms, setup 1.66s, collect 4.44s, tests 21.14s, environment 5ms, prepare 1.69s)
+
+
+# exit: 0  finished: 2026-11-01T12:26:05Z

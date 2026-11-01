@@ -1,0 +1,12 @@
+# command: (cd server ) npm run prisma:seed
+# sha: 991b254  at 991b254  started: 2026-11-01T12:26:00Z  node: v24.19.0
+
+
+> toktickit-server@1.0.0 prisma:seed
+> tsx prisma/seed.ts
+
+Seeded 5 categories, 7 related systems, and 5 requesters.
+Seeded Lab 3 users, realistic tickets, comments, and internal notes.
+Seeded Lab 4 Tickets, Actions Taken, revisions, and status events.
+
+# exit: 0  finished: 2026-11-01T12:26:00Z

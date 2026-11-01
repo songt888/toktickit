@@ -28,6 +28,7 @@ counted as approval.
 | PR | Issue | Rounds of changes requested | Approved at | Merge SHA |
 |---|---|---|---|---|
 | [#85](https://github.com/songt888/toktickit/pull/85) Release Lab 4: `lab4-staging` -> `main` | [#73](https://github.com/songt888/toktickit/issues/73) | 1 | `a4db420` | `991b254` |
+| [#86](https://github.com/songt888/toktickit/pull/86) Final-main verification follow-up | [#73](https://github.com/songt888/toktickit/issues/73) | 1 | `d1e5933` | `4673a1a` |
 
 ## Author verification (Issue #65)
 
@@ -194,15 +195,16 @@ counts in the PR (see "How I verified partner fixes" below).
 ## Final-main follow-up for #73
 
 - The full final-main run on `991b254` is in [tests.md](tests.md) section 4.2, with logs under
-  `artifacts/lab-04/verification-2026-11-01/`. It is recorded through follow-up PR
-  [#86](https://github.com/songt888/toktickit/pull/86) into `main`; #73 is closed and set to Done
-  only after it is approved and merged.
+  `artifacts/lab-04/verification-2026-11-01/`. It was recorded through follow-up PR
+  [#86](https://github.com/songt888/toktickit/pull/86) into `main`, approved by stickkersz at
+  `d1e5933` and merged as `4673a1a`; only then was #73 closed and its card set to Done.
 
 ### #86 final-main follow-up
 
 | Reviewed commit | Concern | Response | State |
 |---|---|---|---|
 | `057a891` | The 01 to 12 `.log` files were not in the PR: `.gitignore` `*.log` skipped them, only the README and `03-seed-counts.txt` were committed; `ai-use.md` should say the report PDF script came from a separate request, since #73 allows no PDF work otherwise. SHAs, rounds, counts and the `b10c7dc` tree checked out. | All 13 logs force-added as in Lab 3; `ai-use.md` says the PDF was a separate request outside #73. | CHANGES_REQUESTED |
+| `d1e5933` | All 13 logs in the folder (SHA `991b254`, exit 0, counts match); ai-use PDF line fixed; reviewer.md and PR body updated. | Merged by stickkersz as `4673a1a`; #73 then closed and set to Done. | APPROVED |
 
 ## Review and release checklist
 
@@ -211,4 +213,4 @@ counts in the PR (see "How I verified partner fixes" below).
 - [x] Reviews performed for the partner recorded with real commits and outcomes.
 - [x] #73 documentation PR #84 approved at `b10c7dc` and merged into `lab4-staging` as `a4db420`.
 - [x] Release PR #85 into `main` separately reviewed (approved at `a4db420`) and merged as `991b254`.
-- [ ] Final-main verification follow-up reviewed and merged before #73 is Done.
+- [x] Final-main verification follow-up PR #86 approved at `d1e5933` and merged as `4673a1a` before #73 was closed and set to Done.

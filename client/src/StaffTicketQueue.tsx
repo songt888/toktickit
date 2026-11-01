@@ -1,5 +1,6 @@
 import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
-import { FormEvent, Fragment, useEffect, useRef, useState } from "react";
+import { breakAtUnderscores } from "./statusText.js";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
   Category,
@@ -83,13 +84,6 @@ export interface StaffTicketQueueProps {
   onOpenTicket: (ticketId: number) => void;
   visible?: boolean;
   initialScope?: QueueScope | null;
-}
-
-// Lets WAITING_FOR_REQUESTER wrap in a narrow table cell; the text itself is unchanged.
-function breakAtUnderscores(value: string) {
-  return value.split("_").map((part, index, parts) => (
-    <Fragment key={index}>{part}{index < parts.length - 1 && <>_<wbr /></>}</Fragment>
-  ));
 }
 
 export default function StaffTicketQueue({ onOpenTicket, visible = true, initialScope = null }: StaffTicketQueueProps) {

@@ -1,4 +1,5 @@
-import { expect, request, test, type APIRequestContext, type Page } from "@playwright/test";
+import { request, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test } from "./guardedTest.js";
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
 import { hashPassword } from "../../server/src/password.js";

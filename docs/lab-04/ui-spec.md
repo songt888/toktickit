@@ -171,10 +171,10 @@ accessible metric/action names and standard keyboard activation.
 - [x] Required fields, errors, inactive assignee and gate failure are clear.
 - [x] Conflict/retry preserves draft and clears stale confirmations.
 - [x] Keyboard order, focus restoration, labels and announcements are verified.
-- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow (RESP-01 measures 14 screens after they load. The Queue is measured with its Dashboard scope banner and a page of mixed rows, and again with the fixture Ticket's long summary and long requester name, at 1280 px and at 992 px, where the Requester column is hidden until 1200 px. A table that scrolls sideways or a short word split across lines fails the run.)
-- [ ] No unintended console errors, broken links, placeholder or unfinished controls.
+- [x] Every major screen at 1280/820/390px has no clipping/overlap/page overflow (RESP-01 measures 14 screens after they load. The Requester's My Tickets and the Queue's Dashboard drill-down include unassigned WAITING_FOR_REQUESTER and IN_PROGRESS Tickets created for the check, so the longest status badges are measured on purpose. The Queue is measured with its scope banner and that page of mixed rows, and again with the fixture Ticket's long summary and long requester name, at 1280 px and at 992 px, where the Requester column is hidden until 1200 px. A table that scrolls sideways or a short word split across lines fails the run.)
+- [x] No unintended console errors, broken links, placeholder or unfinished controls. (Every Lab 4 E2E test fails on an uncaught page error or a browser console error, apart from failed requests it lists as `<status> <path>`, such as the injected Dashboard outages (`e2e/lab-04/guardedTest.ts`); RESP-01 fails on a link with no target, a visible button or link with no name, or TODO/placeholder text on any of its 14 screens.)
 
-Checked as built in #72 (evidence: `docs/lab-04/tests.md` UI-07, STYLE-01, RESP-01, A11Y-01, E2E-01 to E2E-03 and `artifacts/lab-04/screenshots/README.md`). The last item has no automated check yet, so it stays open.
+Checked as built in #72 (evidence: `docs/lab-04/tests.md` UI-07, STYLE-01, RESP-01, A11Y-01, E2E-01 to E2E-03 and `artifacts/lab-04/screenshots/README.md`). Every item now has an automated check.
 
 Keep unchecked until verified. Screenshot root is
 `artifacts/lab-04/screenshots/{staff-dashboard,requester-dashboard,actions-taken}/`.

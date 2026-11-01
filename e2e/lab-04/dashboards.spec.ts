@@ -1,4 +1,5 @@
-import { expect, request, test, type Page } from "@playwright/test";
+import { request, type Page } from "@playwright/test";
+import { expect, test } from "./guardedTest.js";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { getPrisma } from "../../server/src/prisma.js";
@@ -328,42 +329,46 @@ test("E2E-03 Staff and Administrator Dashboards match the database, drill down e
   await expect(page.getByRole("link", { name: "User Management" })).toBeVisible();
 });
 
-test("E2E-03 failure injection: a failed Dashboard load shows an error with Retry, and a failed refresh keeps older data", async ({ page }) => {
-  for (const [kind, user, card] of [
-    ["requester", await freshRequester("failure-requester"), "Open Tickets"],
-    ["staff", await freshRequester("failure-staff", "IT_STAFF"), "My Tickets"],
-  ] as const) {
-    const url = `**/api/dashboard/${kind}`;
-    await page.route(url, (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Injected failure" }) }));
-    await page.goto("/");
-    await page.getByLabel("Email").fill(user.email);
-    await page.getByLabel("Password").fill(user.password);
-    await page.getByRole("button", { name: "Sign In" }).click();
-    await expect(page.getByRole("alert")).toContainText("The Dashboard could not be loaded.");
-    await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
+test.describe(() => {
+  // These outages are injected on purpose.
+  test.use({ expectedHttpErrors: ["500 /api/dashboard/requester", "500 /api/dashboard/staff", "403 /api/dashboard/requester", "403 /api/dashboard/staff"] });
+  test("E2E-03 failure injection: a failed Dashboard load shows an error with Retry, and a failed refresh keeps older data", async ({ page }) => {
+    for (const [kind, user, card] of [
+      ["requester", await freshRequester("failure-requester"), "Open Tickets"],
+      ["staff", await freshRequester("failure-staff", "IT_STAFF"), "My Tickets"],
+    ] as const) {
+      const url = `**/api/dashboard/${kind}`;
+      await page.route(url, (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Injected failure" }) }));
+      await page.goto("/");
+      await page.getByLabel("Email").fill(user.email);
+      await page.getByLabel("Password").fill(user.password);
+      await page.getByRole("button", { name: "Sign In" }).click();
+      await expect(page.getByRole("alert")).toContainText("The Dashboard could not be loaded.");
+      await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
 
-    // The service recovers: Retry loads the real Dashboard.
-    await page.unroute(url);
-    await page.getByRole("button", { name: "Retry" }).click();
-    await expect(cardValue(page, card)).toHaveText("0");
-    await expect(page.getByRole("alert")).toHaveCount(0);
-    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/zero-state.png`), fullPage: true });
+      // The service recovers: Retry loads the real Dashboard.
+      await page.unroute(url);
+      await page.getByRole("button", { name: "Retry" }).click();
+      await expect(cardValue(page, card)).toHaveText("0");
+      await expect(page.getByRole("alert")).toHaveCount(0);
+      await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/zero-state.png`), fullPage: true });
 
-    // A later refresh fails: the last good numbers stay, labelled as older data.
-    await page.route(url, (route) => route.fulfill({ status: 500, body: "{}" }));
-    await page.getByRole("button", { name: "Refresh" }).click();
-    await expect(page.getByRole("alert")).toContainText("The Dashboard could not be refreshed. Showing older data from");
-    await expect(cardValue(page, card)).toHaveText("0");
-    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/refresh-failure.png`), fullPage: true });
-    await page.unroute(url);
+      // A later refresh fails: the last good numbers stay, labelled as older data.
+      await page.route(url, (route) => route.fulfill({ status: 500, body: "{}" }));
+      await page.getByRole("button", { name: "Refresh" }).click();
+      await expect(page.getByRole("alert")).toContainText("The Dashboard could not be refreshed. Showing older data from");
+      await expect(cardValue(page, card)).toHaveText("0");
+      await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/refresh-failure.png`), fullPage: true });
+      await page.unroute(url);
 
-    // A 403 (role changed mid-session) shows the forbidden state and drops the old numbers.
-    await page.route(url, (route) => route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "Forbidden" }) }));
-    await page.getByRole("button", { name: "Refresh" }).click();
-    await expect(page.getByRole("alert")).toContainText(kind === "staff" ? "only available to IT Staff and Administrators" : "only available to Requesters");
-    await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
-    await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/forbidden.png`), fullPage: true });
-    await page.unroute(url);
-    await page.getByRole("button", { name: "Logout" }).click();
-  }
+      // A 403 (role changed mid-session) shows the forbidden state and drops the old numbers.
+      await page.route(url, (route) => route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "Forbidden" }) }));
+      await page.getByRole("button", { name: "Refresh" }).click();
+      await expect(page.getByRole("alert")).toContainText(kind === "staff" ? "only available to IT Staff and Administrators" : "only available to Requesters");
+      await expect(page.getByRole("heading", { name: card, exact: true })).toHaveCount(0);
+      await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/${kind}-dashboard/forbidden.png`), fullPage: true });
+      await page.unroute(url);
+      await page.getByRole("button", { name: "Logout" }).click();
+    }
+  });
 });

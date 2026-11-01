@@ -1,4 +1,5 @@
 import { priorityBadgeClass, statusBadgeClass } from "./statusBadge.js";
+import { breakAtUnderscores } from "./statusText.js";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Category,
@@ -195,7 +196,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
       <td className="text-break">{ticket.summary}</td>
       <td>{ticket.category.name}</td>
       <td>{ticket.relatedSystem.name}</td>
-      <td><span className={`badge ${statusBadgeClass(ticket.currentStatus)}`}>{ticket.currentStatus}</span></td>
+      <td><span className={`badge text-wrap ${statusBadgeClass(ticket.currentStatus)}`}>{breakAtUnderscores(ticket.currentStatus)}</span></td>
       <td><span className={`badge ${priorityBadgeClass(ticket.requestedPriority)}`}>{ticket.requestedPriority}</span></td>
       <td>{formatDate(ticket.updatedAt)}</td>
       <td>
@@ -369,7 +370,7 @@ export default function MyTickets({ requester, onCreateTicket, onOpenTicket, vis
         {canShowResults && items.length > 0 && (
           <>
             <div className="table-responsive d-none d-md-block">
-              <table className="table align-middle" aria-label="My Tickets list">
+              <table className="table table-sm align-middle" aria-label="My Tickets list">
                 <thead>
                   <tr>
                     <th scope="col">Ticket Number</th>

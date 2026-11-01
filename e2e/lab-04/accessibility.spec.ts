@@ -1,4 +1,5 @@
-import { expect, request, test, type Page } from "@playwright/test";
+import { request, type Page } from "@playwright/test";
+import { expect, test } from "./guardedTest.js";
 import path from "node:path";
 import { freshUser, uniqueTag } from "./freshUser.js";
 

@@ -1,4 +1,5 @@
-import { expect, request, test, type Page } from "@playwright/test";
+import { request, type Page } from "@playwright/test";
+import { expect, test } from "./guardedTest.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { freshUser, uniqueTag } from "./freshUser.js";
@@ -20,7 +21,7 @@ async function checkLayouts(page: Page, name: string, anchor: string, sizes = wi
     await page.setViewportSize({ width, height });
     // Measure the loaded screen, not a loading state.
     await expect(page.locator("main [role=status]:visible").filter({ hasText: /^Loading/ })).toHaveCount(0);
-    const { offenders, wideTables, splitWords, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
+    const { offenders, wideTables, splitWords, unfinished, scrollWidth, clientWidth, clipped, spilled } = await page.evaluate(() => {
       const viewport = document.documentElement.clientWidth;
       const controls = [...document.querySelectorAll<HTMLElement>("main button, main a, main input, main select, main textarea, main .badge")];
       return {
@@ -43,6 +44,14 @@ async function checkLayouts(page: Page, name: string, anchor: string, sizes = wi
           const box = control.getBoundingClientRect();
           return box.width > 0 && (box.left < -1 || box.right > viewport + 1);
         }).map((control) => control.outerHTML.slice(0, 120)),
+        // Labsheet 8.5: no broken links, nameless controls or placeholder text.
+        unfinished: [
+          ...[...document.querySelectorAll<HTMLElement>('a:not([href]), a[href=""], a[href="#"], a[href^="javascript:"]')].map((el) => `link without a target: ${el.outerHTML.slice(0, 80)}`),
+          ...[...document.querySelectorAll<HTMLElement>("button, a")]
+            .filter((el) => el.offsetParent !== null && !el.textContent?.trim() && !el.getAttribute("aria-label") && !el.title)
+            .map((el) => `control without a name: ${el.outerHTML.slice(0, 80)}`),
+          ...(/\b(TODO|TBD|FIXME|lorem ipsum|coming soon|not implemented)\b/i.exec(document.body.innerText) ?? []).slice(0, 1).map((text) => `placeholder text: ${text}`),
+        ],
         // Text wider than its own box: a long word that does not wrap, even if a parent hides it.
         spilled: [...document.querySelectorAll<HTMLElement>("main p, main dd, main td, main li, main div")]
           .filter((el) => [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim()))
@@ -55,6 +64,7 @@ async function checkLayouts(page: Page, name: string, anchor: string, sizes = wi
     expect(splitWords, `${name} ${label} short words split across lines`).toEqual([]);
     expect(clipped, `${name} ${label} clipped controls`).toEqual([]);
     expect(spilled, `${name} ${label} text wider than its box`).toEqual([]);
+    expect(unfinished, `${name} ${label} broken links or unfinished controls`).toEqual([]);
     await page.getByText(anchor, { exact: true }).first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.resolve(`artifacts/lab-04/screenshots/responsive/${name}-${label}.png`), fullPage: true });
   }
@@ -86,15 +96,40 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   const staffApi = await request.newContext({ baseURL: apiURL });
   expect((await staffApi.post("/api/auth/login", { data: { email: staff.email, password: staff.password } })).ok()).toBe(true);
   expect((await staffApi.post(`/api/tickets/${ticketId}/internal-notes`, { data: { content: `Spooler log ${longWord}` } })).status()).toBe(201);
-  await staffApi.dispose();
+
+  // Unassigned Tickets in the two longest statuses, so their badges are measured on purpose in My Tickets and the Queue.
+  const statusTickets: Array<{ id: number; status: string; summary: string }> = [];
+  for (const [status, steps, words] of [["WAITING_FOR_REQUESTER", ["OPEN", "WAITING_FOR_REQUESTER"], "waiting for requester"], ["IN_PROGRESS", ["IN_PROGRESS"], "in progress"]] as const) {
+    const statusSummary = `E2E Lab 4 ${words} ${uniqueTag()}`;
+    const made = await requesterApi.post("/api/tickets", {
+      data: { categoryId: category.id, relatedSystemId: system.id, summary: statusSummary, description: "Status badge fixture.", requestedPriority: "LOW" },
+    });
+    expect(made.status()).toBe(201);
+    const id = (await made.json()).id as number;
+    for (const next of steps) {
+      const current = await (await staffApi.get(`/api/staff/tickets/${id}`)).json();
+      expect((await staffApi.patch(`/api/staff/tickets/${id}/status`, { data: { status: next, updatedAt: current.updatedAt } })).status()).toBe(200);
+    }
+    const moved = await (await staffApi.get(`/api/staff/tickets/${id}`)).json();
+    expect([moved.currentStatus, moved.owner]).toEqual([status, null]);
+    statusTickets.push({ id, status, summary: statusSummary });
+  }
 
   await signIn(page, requesterA);
   await expect(page.getByRole("heading", { name: "Open Tickets", exact: true })).toBeVisible();
   await checkLayouts(page, "requester-dashboard", "Open Tickets");
   await page.getByRole("link", { name: "My Tickets" }).click();
   await expect(page.getByText(summary).first()).toBeVisible();
+  for (const { status, summary: statusSummary } of statusTickets) await expect(page.getByRole("row").filter({ hasText: statusSummary })).toContainText(status);
   await checkLayouts(page, "requester-my-tickets", "My Tickets");
   await page.getByRole("button", { name: "Logout" }).click();
+
+  // Raise their IT priority now, which updates them last, so they sort first in the Unassigned drill-down whatever other specs did meanwhile.
+  for (const { id } of statusTickets) {
+    const current = await (await staffApi.get(`/api/staff/tickets/${id}`)).json();
+    expect((await staffApi.patch(`/api/staff/tickets/${id}/it-priority`, { data: { itPriority: "MEDIUM", updatedAt: current.updatedAt } })).status()).toBe(200);
+  }
+  await staffApi.dispose();
 
   await signIn(page, staff);
   await expect(page.getByRole("heading", { name: "Unassigned Tickets", exact: true })).toBeVisible();
@@ -103,7 +138,7 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   // The drill-down view itself: scope banner plus its rows. Apply filters clears the scope, so measure it first.
   const banner = page.getByText("Unassigned active Tickets");
   await expect(banner).toBeVisible();
-  await expect(page.locator("main table tbody tr").first()).toBeVisible();
+  for (const { status, summary: statusSummary } of statusTickets) await expect(page.getByRole("row").filter({ hasText: statusSummary })).toContainText(status);
   // 992 px is the narrowest width that shows the Queue table instead of cards.
   for (const sizes of [widths, [{ label: "table-992", width: 992, height: 900 }]]) await checkLayouts(page, "queue-scoped", "Ticket Queue", sizes);
   await expect(banner).toBeVisible();

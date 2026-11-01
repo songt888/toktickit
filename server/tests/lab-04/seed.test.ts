@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getPrisma } from "../../src/prisma.js";
 import { seedLab3Data } from "../../prisma/seed.js";
+import { MIGRATION_PLACEHOLDER_HASH } from "../../src/password.js";
 import {
   emptyRequesterSeed,
   emptyStaffSeed,
@@ -33,6 +34,22 @@ describe("Lab 4 seed (DB-03)", () => {
     for (const ticket of legacy) {
       expect(ticket.lastResolvedAt).toBeNull();
       expect(ticket.statusEvents).toHaveLength(0);
+    }
+  });
+
+  it("DB-03j a Lab 4 fixture user left on the placeholder hash gets the initial password on the next seed", async () => {
+    const original = await prisma.user.findUniqueOrThrow({ where: { email: emptyRequesterSeed.email } });
+    try {
+      await prisma.user.update({ where: { id: original.id }, data: { passwordHash: MIGRATION_PLACEHOLDER_HASH } });
+      await seedLab4Data(prisma);
+      const seeded = await prisma.user.findUniqueOrThrow({ where: { id: original.id } });
+      expect(seeded.passwordHash).not.toBe(MIGRATION_PLACEHOLDER_HASH);
+      expect(seeded.mustChangePassword).toBe(true);
+    } finally {
+      await prisma.user.update({
+        where: { id: original.id },
+        data: { passwordHash: original.passwordHash, mustChangePassword: original.mustChangePassword, passwordChangedAt: original.passwordChangedAt },
+      });
     }
   });
 

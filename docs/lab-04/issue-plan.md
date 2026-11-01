@@ -3,9 +3,9 @@
 Planning date: 2026-10-05. Plan accepted by Kirakit Kingkaew (@songt888).
 Peer reviewer: Nattakit Prasertsak (@stickkersz).
 
-Source: `/Users/song/Downloads/SE+Lab+4.pdf`, particularly sections 4-12 and
-the Answer Part 1-9 rubric. This index is a plan, not the approved Engineering
-Contract or evidence that any feature/test has been implemented.
+Source: the Lab 4 handout (SE+Lab+4.pdf, kept outside the repository), particularly sections 4-12 and
+the Answer Part 1-9 rubric. This index is the plan; the approved Engineering Contract is
+[specification.md](specification.md), and the evidence is in [tests.md](tests.md) and [reviewer.md](reviewer.md).
 
 ## GitHub Project and initial status
 
@@ -41,15 +41,13 @@ path permits it.
 ## Contract decisions to resolve in Issue #65
 
 Issue #65 contract work started on 2026-10-05; the six contract/evidence
-documents now exist on `feature/lab4-01-contract` for peer review. `lab4-staging`
+documents were reviewed and merged from `feature/lab4-01-contract` in PR #74. `lab4-staging`
 was created from released main `9313209d224592c9265bb8595aa7cc0f1336b9db`.
-The original planning edits were copied from `docs/lab4-planning` into an
-isolated worktree; other local changes remain in the original workspace.
-Proposed decisions are recorded in [specification.md](specification.md), not
-approved by this index. Consult [reviewer.md](reviewer.md) and the live Project
-for the actual PR/review state; #66 remains Backlog until approval/merge.
+Decisions are recorded in [specification.md](specification.md), approved in PR #74
+(`6a36b0a`). Consult [reviewer.md](reviewer.md) and the live Project for the actual
+PR/review state; #65 to #72 are Done and #73 is the remaining release Issue.
 Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
-`lab4-staging`. Formal approval/merge is pending.
+`lab4-staging`; approved and merged as `6a36b0a` on 2026-10-30.
 
 1. **Action actor and assignee:** distinguish backend-attributed creator /
    performed-by from approved active assignee and the primary Ticket Owner.
@@ -72,8 +70,8 @@ Contract PR: [#74](https://github.com/songt888/toktickit/pull/74), targeting
 
 ## Verification and evidence plan
 
-Tests will live in `server/tests/lab-04/`, `client/tests/lab-04/` and
-`e2e/lab-04/`. Required baseline files include:
+Tests live in `server/tests/lab-04/`, `client/tests/lab-04/` and
+`e2e/lab-04/`. The required baseline files all exist:
 
 - `server/tests/lab-04/actions-taken.api.test.ts`
 - `server/tests/lab-04/ticket-workflow.api.test.ts`
@@ -87,16 +85,16 @@ Tests will live in `server/tests/lab-04/`, `client/tests/lab-04/` and
 - `e2e/lab-04/ticket-resolution.spec.ts`
 - `e2e/lab-04/dashboards.spec.ts`
 
-The Issues additionally plan migration/seed preservation, independent transition
+The Issues also added migration/seed preservation, independent transition
 tests, authorization, concurrent/stale writes, retry/double-submit,
-performance-smoke, responsive and accessibility checks. These paths describe
-future tests, not existing passing evidence. All unexecuted tests remain Planned.
+performance-smoke, responsive and accessibility checks. The results that exist are recorded in [tests.md](tests.md), where only DOC-01 and
+RELEASE-01 are still Pending.
 
-Keep screenshots under `artifacts/lab-04/screenshots/`, grouped by
-`staff-dashboard/`, `requester-dashboard/` and `actions-taken/`, and index
-workflow/regression evidence accurately. Capture meaningful states and network /
-requester context rather than filenames alone. Inspect all major screens at
-1280px, 820px and 390px with keyboard access and overflow checks.
+Screenshots are kept under `artifacts/lab-04/screenshots/`, grouped by screen
+(for example `staff-dashboard/`, `requester-dashboard/` and `actions-taken/`), with a captioned index in
+[`artifacts/lab-04/screenshots/README.md`](../../artifacts/lab-04/screenshots/README.md) that names role,
+viewport and state. Every major screen is checked at 1280px, 820px and 390px for keyboard access and
+overflow (RESP-01, A11Y-01).
 
 ## Branch and release rules
 

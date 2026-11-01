@@ -128,6 +128,8 @@ test("E2E-02 records ordered work, blocks resolving until work and follow-up set
   await expect(page.getByText("Ready to resolve.")).toBeVisible();
 
   await changeStatus(page, "RESOLVED");
+  // Once RESOLVED, resolving is no longer a next move, so the readiness line must not offer it.
+  await expect(page.getByText("Ready to resolve.")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add Action" })).toHaveCount(0);
   await expect(page.getByText("Actions cannot change while the Ticket is RESOLVED.", { exact: false })).toBeVisible();
   await changeStatus(page, "CLOSED", true);

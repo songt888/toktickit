@@ -1,7 +1,7 @@
 # Lab 4 REST API Contract
 
-Status: Proposed, awaiting Issue #65 peer approval. [Specification](specification.md)
-is authoritative for business predicates; these endpoints are planned.
+Status: Approved in Issue #65 (PR #74, `6a36b0a`) and implemented in PRs #77 to #83. [Specification](specification.md)
+is authoritative for business predicates; these endpoints are implemented.
 Existing [Lab 3 APIs](../lab-03/api-spec.md) remain, with the increments below.
 
 ## 1. Common conventions and safe failures
@@ -274,7 +274,7 @@ search/filter/sort/page behavior and add:
 
 | Query | Validation and predicate |
 |---|---|
-| currentStatus | One of all eight Ticket enums (Requester currently only accepts NEW; expand in Lab 4) |
+| currentStatus | One of all eight Ticket enums (Requesters and Staff both accept all eight) |
 | statusGroup | active (BR-21) or resolved (RESOLVED/CLOSED); cannot combine with currentStatus |
 | updatedFrom / updatedTo | UTC ISO lower/upper inclusive bound on updatedAt; either optional; lower<=upper |
 | resolvedFrom / resolvedTo | Same bounds on lastResolvedAt; unknown/null dates do not match |

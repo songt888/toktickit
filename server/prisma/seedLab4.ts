@@ -112,8 +112,15 @@ async function ensureUser(
   role: "REQUESTER" | "IT_STAFF",
 ) {
   const existing = await tx.user.findUnique({ where: { email: seed.email } });
-  if (existing) return existing;
   const password = process.env.LAB3_SEED_INITIAL_PASSWORD?.trim();
+  if (existing) {
+    // Same rule as the Lab 3 seed: only an account still on the migration placeholder gets the initial password.
+    if (!password || existing.passwordHash !== MIGRATION_PLACEHOLDER_HASH) return existing;
+    return tx.user.update({
+      where: { id: existing.id },
+      data: { passwordHash: hashPassword(password), mustChangePassword: true, passwordChangedAt: null },
+    });
+  }
   return tx.user.create({
     data: {
       ...seed,

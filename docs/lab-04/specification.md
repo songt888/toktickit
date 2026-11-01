@@ -358,7 +358,7 @@ is Passed except DOC-01 and RELEASE-01, which stay Pending until the release. Th
 - [ ] Final verification evidence corrected through a reviewed follow-up PR; #73 closes only after that follow-up merges.
 
 Ticked items are checked by the pre-release run on the #73 branch at `bfc9e87` ([tests.md](tests.md)
-sections 2 and 4.1, [reviewer.md](reviewer.md)) AC-23/AC-24, the README, AI-use and the release items stay open
+sections 2 and 4.1, [reviewer.md](reviewer.md)). AC-23/AC-24, the README, AI-use and the release items stay open
 until #73's docs PR, release PR and final-main follow-up are reviewed and merged.
 
 ## 11. Assumptions and decisions requiring review

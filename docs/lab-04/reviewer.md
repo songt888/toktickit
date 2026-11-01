@@ -15,7 +15,7 @@ counted as approval.
 | [#74](https://github.com/songt888/toktickit/pull/74) Engineering contract and test plan | [#65](https://github.com/songt888/toktickit/issues/65) | 2 | `7f793c2` | `6a36b0a` |
 | [#75](https://github.com/songt888/toktickit/pull/75) Stop tracking Lab_3_Report.pdf | [#76](https://github.com/songt888/toktickit/issues/76) | 1 | `16a25f5` | `e9744b9` |
 | [#77](https://github.com/songt888/toktickit/pull/77) Data foundation, migration and seed | [#66](https://github.com/songt888/toktickit/issues/66) | 3 | `5689123` | `29f5c9f` |
-| [#78](https://github.com/songt888/toktickit/pull/78) Actions Taken API, authorization and lifecycle | [#67](https://github.com/songt888/toktickit/issues/67) | 2 | `b2eec02` | `5bc23ad` |
+| [#78](https://github.com/songt888/toktickit/pull/78) Actions Taken API, authorization and lifecycle | [#67](https://github.com/songt888/toktickit/issues/67) | 2 (the second was posted twice) | `b2eec02` | `5bc23ad` |
 | [#79](https://github.com/songt888/toktickit/pull/79) Ticket workflow and resolution gate | [#69](https://github.com/songt888/toktickit/issues/69) | 1 | `cae2076` | `0457a58` |
 | [#80](https://github.com/songt888/toktickit/pull/80) Actions Taken UI and Requester read-only view | [#68](https://github.com/songt888/toktickit/issues/68) | 3 | `18d6a0e` | `79cf0ec` |
 | [#81](https://github.com/songt888/toktickit/pull/81) Requester Dashboard API and UI | [#70](https://github.com/songt888/toktickit/issues/70) | 2 | `9422cfd` | `07bc662` |

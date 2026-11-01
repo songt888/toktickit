@@ -50,7 +50,7 @@ I used Codex to turn the handout into a reviewable contract, but I did not treat
 its first answer as the specification. The contract states which choices the
 handout leaves open (Action assignee versus performer, append-only revisions,
 the exact resolution gate, seven-day windows) and lists them as decisions for
-review. My partner reviewed it twice in PR #74 before any feature code started,
+review. My partner requested changes twice in PR #74 and then approved it before any feature code started,
 and the out-of-scope PDF change and the paging rule were corrected there.
 
 During coding I checked Claude Code's output against the approved contract, the

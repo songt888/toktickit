@@ -166,7 +166,7 @@ PERF-01 is skipped inside `npm test` by design, so a release that does not run
 
 ### 4.1 Pre-release run for #73 (2026-11-01)
 
-Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 into `lab4-staging` as `0512c04`, plus the #73 docs, one client change, one seed change and their tests), local Docker PostgreSQL 16, Node v24.19.0. After this commit only documentation (`tests.md`, `reviewer.md`, `ai-use.md`, `issue-plan.md`, `specification.md`) and the name of one seed test (DB-03c to DB-03j) changed; no code behaviour changed.
+Run on branch `feature/lab4-09-docs-release` at `bfc9e87` (the merge of PR #83 into `lab4-staging` as `0512c04`, plus the #73 docs, one client change, one seed change and their tests), local Docker PostgreSQL 16, Node v24.19.0. After this commit only documentation (`tests.md`, `reviewer.md`, `ai-use.md`, `issue-plan.md`, `specification.md`) and the name of one seed test (DB-03c to DB-03j) changed; no code behaviour changed. The suites, builds and Playwright were run again at `fa95675` with the same counts (server 186 + 1 skipped, perf 1, client 132, Playwright 26).
 
 | Command | Result |
 |---|---|

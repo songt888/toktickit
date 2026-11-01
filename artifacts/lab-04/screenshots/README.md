@@ -46,7 +46,7 @@ Every PNG here is written by a Playwright spec under `e2e/lab-04/`, so it can be
 | `requester-dashboard/zero-state.png` | Zero state for a new Requester | `dashboards.spec.ts` |
 | `requester-dashboard/refresh-failure.png` | A failed refresh keeping older data | `dashboards.spec.ts` |
 | `requester-dashboard/forbidden.png` | Forbidden state after an injected 403 | `dashboards.spec.ts` |
-| `responsive/requester-my-tickets-*.png` | Requester My Tickets with a long unbroken summary and WAITING_FOR_REQUESTER and IN_PROGRESS badges wrapping in the table and cards | `responsive.spec.ts` |
+| `responsive/requester-my-tickets-*.png` | Requester My Tickets with a long unbroken summary and WAITING_FOR_REQUESTER and IN_PROGRESS badges (wrapped after the underscore in the table; the cards at 390 px do not wrap them) | `responsive.spec.ts` |
 | `actions-taken/requester-*.png`, `responsive/requester-detail-actions-*.png` | Requester Ticket Detail with read-only Actions | `actions-taken-flow.spec.ts`, `responsive.spec.ts` |
 | `../../lab-03/screenshots/`, `../../lab-02/screenshots/` | Labs 2-3 screens still produced by their own specs in the same run | `e2e/lab-02/`, `e2e/lab-03/` |
 

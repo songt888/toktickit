@@ -124,16 +124,16 @@ test("RESP-01 every Lab 4 screen fits at 1280, 820 and 390 px", async ({ page })
   await checkLayouts(page, "requester-my-tickets", "My Tickets");
   await page.getByRole("button", { name: "Logout" }).click();
 
-  // Raise their IT priority now, which updates them last, so they sort first in the Unassigned drill-down whatever other specs did meanwhile.
+  await signIn(page, staff);
+  await expect(page.getByRole("heading", { name: "Unassigned Tickets", exact: true })).toBeVisible();
+  await checkLayouts(page, "staff-dashboard", "Unassigned Tickets");
+  // The Queue sorts by Last updated. Raising their IT priority bumps updatedAt, so the two Tickets lead the list; do it
+  // right before the click that loads it, so other specs' writes during the screenshots above cannot push them off the first page.
   for (const { id } of statusTickets) {
     const current = await (await staffApi.get(`/api/staff/tickets/${id}`)).json();
     expect((await staffApi.patch(`/api/staff/tickets/${id}/it-priority`, { data: { itPriority: "MEDIUM", updatedAt: current.updatedAt } })).status()).toBe(200);
   }
   await staffApi.dispose();
-
-  await signIn(page, staff);
-  await expect(page.getByRole("heading", { name: "Unassigned Tickets", exact: true })).toBeVisible();
-  await checkLayouts(page, "staff-dashboard", "Unassigned Tickets");
   await page.getByRole("button", { name: "View Unassigned Tickets in the Ticket Queue" }).click();
   // The drill-down view itself: scope banner plus its rows. Apply filters clears the scope, so measure it first.
   const banner = page.getByText("Unassigned active Tickets");
